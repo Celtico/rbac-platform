@@ -21,7 +21,7 @@ import { SeedService } from './common/seed.service';
       type: 'sqlite',
       database: 'db.sqlite',
       entities: [User, Role, Permission, Album],
-      synchronize: false,
+      synchronize: true,
     }),
     ServeStaticModule.forRoot({
       rootPath: join(process.cwd(), 'client', 'dist'),
