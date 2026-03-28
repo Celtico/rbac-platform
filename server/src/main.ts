@@ -11,6 +11,11 @@ async function bootstrap() {
     fs.mkdirSync(uploadDir, { recursive: true });
   }
 
+  const dataDir = join(process.cwd(), 'data');
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
+
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({

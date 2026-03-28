@@ -4,6 +4,6 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./data:/app/server/db.sqlite
+      - ./data:/app/data
       - ./uploads:/app/uploads
     restart: always

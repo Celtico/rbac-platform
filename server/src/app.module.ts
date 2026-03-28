@@ -19,7 +19,7 @@ import { SeedService } from './common/seed.service';
   imports: [
     TypeOrmModule.forRoot({
       type: 'sqlite',
-      database: 'db.sqlite',
+      database: join(process.cwd(), 'data', 'db.sqlite'),
       entities: [User, Role, Permission, Album],
       synchronize: true,
     }),
