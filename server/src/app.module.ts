@@ -21,10 +21,10 @@ import { SeedService } from './common/seed.service';
       type: 'sqlite',
       database: 'db.sqlite',
       entities: [User, Role, Permission, Album],
-      synchronize: false, // Changed to false for stability
+      synchronize: false,
     }),
     ServeStaticModule.forRoot({
-      rootPath: join(process.cwd(), 'client', 'dist'), // Using process.cwd() for reliability
+      rootPath: join(process.cwd(), 'client', 'dist'),
       exclude: ['/api/:path*', '/uploads/:path*'],
     }),
     ServeStaticModule.forRoot({
