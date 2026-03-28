@@ -12,9 +12,9 @@ Aquesta opció és la més senzilla i aïllada. Només necessites tenir instal·
 
 1.  **Construir i aixecar el contenidor:**
     ```bash
-    docker-compose up -d --build
+    docker compose up -d --build
     ```
-2.  L'aplicació estarà disponible a `http://localhost:3000`.
+2.  L'aplicació estarà disponible a `http://192.168.1.55:3000`.
 3.  Les dades de la base de dades i les imatges pujades es guardaran a les carpetes locals `./data` i `./uploads` respectivament.
 
 ### Opció 2: Desplegament Manual
