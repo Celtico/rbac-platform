@@ -5,5 +5,5 @@ services:
       - "3000:3000"
     volumes:
       - ./data:/app/server/db.sqlite
-      - ./uploads:/app/server/uploads
+      - ./uploads:/app/uploads
     restart: always
