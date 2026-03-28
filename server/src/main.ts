@@ -7,12 +7,22 @@ import { join } from 'path';
 
 async function bootstrap() {
   const uploadDir = join(process.cwd(), 'uploads');
+  console.log(`### Checking uploads directory: ${uploadDir} ###`);
   if (!fs.existsSync(uploadDir)) {
+    console.log(`### Creating uploads directory: ${uploadDir} ###`);
     fs.mkdirSync(uploadDir, { recursive: true });
+  } else {
+    console.log(
+      `### Uploads directory exists. Current contents: ${
+        fs.readdirSync(uploadDir).length
+      } files. ###`,
+    );
   }
 
   const dataDir = join(process.cwd(), 'data');
+  console.log(`### Checking data directory: ${dataDir} ###`);
   if (!fs.existsSync(dataDir)) {
+    console.log(`### Creating data directory: ${dataDir} ###`);
     fs.mkdirSync(dataDir, { recursive: true });
   }
 
