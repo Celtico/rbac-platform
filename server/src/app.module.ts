@@ -28,7 +28,7 @@ import { SeedService } from './common/seed.service';
       exclude: ['/api/:path*', '/uploads/:path*'],
     }),
     ServeStaticModule.forRoot({
-      rootPath: join(process.cwd(), 'server', 'uploads'),
+      rootPath: join(process.cwd(), 'uploads'),
       serveRoot: '/uploads',
       serveStaticOptions: {
         index: false,
