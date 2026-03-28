@@ -2,8 +2,15 @@ import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
+import * as fs from 'fs';
+import { join } from 'path';
 
 async function bootstrap() {
+  const uploadDir = join(process.cwd(), 'uploads');
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+
   const app = await NestFactory.create(AppModule);
 
   app.enableCors(); // Important for React frontend
