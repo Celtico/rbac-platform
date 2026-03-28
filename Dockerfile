@@ -28,7 +28,7 @@ COPY --from=build-backend /app/server/dist ./server/dist
 COPY --from=build-frontend /app/client/dist ./client/dist
 
 # Create uploads folder
-RUN mkdir -p /app/server/uploads
+RUN mkdir -p /app/uploads
 
 # Environment variables
 ENV NODE_ENV=production
