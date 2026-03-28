@@ -8,6 +8,7 @@ async function bootstrap() {
 
   app.enableCors(); // Important for React frontend
   app.useGlobalPipes(new ValidationPipe());
+  app.setGlobalPrefix('api');
 
   const config = new DocumentBuilder()
     .setTitle('API REST RBAC MVC OAuth2')
@@ -16,7 +17,7 @@ async function bootstrap() {
     .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+  SwaggerModule.setup('docs', app, document);
 
   await app.listen(3000);
 }

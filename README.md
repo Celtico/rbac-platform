@@ -1,73 +1,58 @@
-# React + TypeScript + Vite
+# Album Manager
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Sistema de gestió d'àlbums amb NestJS (Backend) i React (Frontend).
 
-Currently, two official plugins are available:
+## Desplegament (Deployment)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Tens dues opcions principals per desplegar l'aplicació:
 
-## React Compiler
+### Opció 1: Amb Docker (Recomanat)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Aquesta opció és la més senzilla i aïllada. Només necessites tenir instal·lat Docker i Docker Compose.
 
-## Expanding the ESLint configuration
+1.  **Construir i aixecar el contenidor:**
+    ```bash
+    docker-compose up -d --build
+    ```
+2.  L'aplicació estarà disponible a `http://localhost:3000`.
+3.  Les dades de la base de dades i les imatges pujades es guardaran a les carpetes locals `./data` i `./uploads` respectivament.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Opció 2: Desplegament Manual
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Si prefereixes no utilitzar Docker, segueix aquests passos:
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+#### 1. Preparar el Frontend (Client)
+```bash
+cd client
+npm install
+npm run build
+```
+Això crearà una carpeta `client/dist`.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+#### 2. Preparar el Backend (Server)
+```bash
+cd ../server
+npm install
+npm run build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+#### 3. Executar en producció
+El backend està configurat per servir el frontend des de `../client/dist` automàticament.
+```bash
+# Dins de la carpeta server
+npm run start:prod
 ```
+L'aplicació estarà disponible a `http://localhost:3000`.
+
+## Característiques d'Estil Personalitzables
+L'admin permet configurar:
+- 4 Temes de colors (Default, Ocean, Forest, Sunset).
+- 6 Nivells de cantos arrodonits.
+- Mode Dia/Nit compatible.
+
+## Desenvolupament
+Per a desenvolupament local amb HMR:
+1. Backend: `cd server && npm run start:dev` (Port 3000)
+2. Frontend: `cd client && npm run dev` (Port 5173)
+
+El frontend té un proxy configurat cap al backend per evitar problemes de CORS.

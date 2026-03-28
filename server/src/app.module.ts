@@ -27,6 +27,10 @@ import { SeedService } from './common/seed.service';
       rootPath: join(__dirname, '..', 'uploads'),
       serveRoot: '/uploads',
     }),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', '..', 'client', 'dist'),
+      exclude: ['/api/(.*)', '/uploads/(.*)'],
+    }),
     UsersModule,
     RolesModule,
     PermissionsModule,
