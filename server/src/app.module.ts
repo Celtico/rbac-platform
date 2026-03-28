@@ -26,6 +26,9 @@ import { SeedService } from './common/seed.service';
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'uploads'),
       serveRoot: '/uploads',
+      serveStaticOptions: {
+        index: false,
+      },
     }),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', '..', 'client', 'dist'),
