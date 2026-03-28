@@ -12,11 +12,11 @@ async function bootstrap() {
     console.log(`### Creating uploads directory: ${uploadDir} ###`);
     fs.mkdirSync(uploadDir, { recursive: true });
   } else {
+    const files = fs.readdirSync(uploadDir);
     console.log(
-      `### Uploads directory exists. Current contents: ${
-        fs.readdirSync(uploadDir).length
-      } files. ###`,
+      `### Uploads directory exists. Current contents: ${files.length} files. ###`,
     );
+    console.log(`### Files in uploads: ${files.join(', ')} ###`);
   }
 
   const dataDir = join(process.cwd(), 'data');

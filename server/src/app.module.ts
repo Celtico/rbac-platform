@@ -24,21 +24,20 @@ import { SeedService } from './common/seed.service';
       synchronize: true,
     }),
     ServeStaticModule.forRoot({
-      rootPath: join(process.cwd(), 'client', 'dist'),
-      exclude: ['/api/(.*)', '/uploads/(.*)'],
-    }),
-    ServeStaticModule.forRoot({
       rootPath: join(process.cwd(), 'uploads'),
       serveRoot: '/uploads',
       serveStaticOptions: {
         index: false,
-        fallthrough: false,
         setHeaders: (res, path) => {
           if (path.endsWith('.avif')) {
             res.setHeader('Content-Type', 'image/avif');
           }
         },
       },
+    }),
+    ServeStaticModule.forRoot({
+      rootPath: join(process.cwd(), 'client', 'dist'),
+      exclude: ['/api/(.*)', '/uploads/(.*)'],
     }),
     UsersModule,
     RolesModule,
