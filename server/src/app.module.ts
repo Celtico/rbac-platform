@@ -32,6 +32,11 @@ import { SeedService } from './common/seed.service';
       serveRoot: '/uploads',
       serveStaticOptions: {
         index: false,
+        setHeaders: (res, path) => {
+          if (path.endsWith('.avif')) {
+            res.setHeader('Content-Type', 'image/avif');
+          }
+        },
       },
     }),
     UsersModule,
