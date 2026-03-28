@@ -6,7 +6,7 @@ import * as fs from 'fs';
 import { join } from 'path';
 
 async function bootstrap() {
-  const uploadDir = join(process.cwd(), 'uploads');
+  const uploadDir = join(process.cwd(), 'server', 'uploads');
   if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
   }
