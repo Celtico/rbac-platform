@@ -33,6 +33,8 @@ echo "Directori actual: $(pwd)" >> "$LOG_FILE"
 # Actualitzar codi si és un repo git
 if [ -d ".git" ]; then
     echo "Actualitzant codi existent des de Git..." >> "$LOG_FILE"
+    # Configurar directori segur per evitar error de 'dubious ownership'
+    git config --global --add safe.directory /app >> "$LOG_FILE" 2>&1
     # Usar git pull silenciosament per no bloquejar si hi ha problemes de credencials
     git pull origin main >> "$LOG_FILE" 2>&1
 else
