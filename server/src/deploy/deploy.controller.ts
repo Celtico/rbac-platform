@@ -1,13 +1,15 @@
 import {
   Controller,
   Post,
+  Get,
   UseGuards,
   InternalServerErrorException,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { exec } from 'child_process';
 import { join } from 'path';
-import { existsSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -39,30 +41,47 @@ export class DeployController {
       );
     }
 
-    this.logger.log(`Iniciant desplegament: ${scriptPath}`);
+    this.logger.log(`Iniciant desplegament en segon pla: ${scriptPath}`);
 
-    // Nota: L'execució pot trigar. En un entorn real potser voldríem un
-    // sistema de cues, però per ara ho fem directe.
-    return new Promise((resolve, reject) => {
+    // Executem en segon pla per evitar tallar la connexió abans de respondre
+    // i perquè el script pugui reiniciar el contenidor sense que el client vegi un error de xarxa.
+    setTimeout(() => {
       exec(scriptPath, (error, stdout, stderr) => {
         if (error) {
-          this.logger.error(`Error en el desplegament: ${error.message}`);
-          this.logger.error(`Stderr: ${stderr}`);
-          return reject(
-            new InternalServerErrorException(
-              `Error en el desplegament: ${error.message}`,
-            ),
+          this.logger.error(
+            `Error en el desplegament (segon pla): ${error.message}`,
           );
+          this.logger.error(`Stderr: ${stderr}`);
+          return;
         }
-
         this.logger.log(`Desplegament completat amb èxit.`);
-        this.logger.debug(`Stdout: ${stdout}`);
-
-        resolve({
-          message: 'Desplegament iniciat i completat amb èxit',
-          output: stdout,
-        });
       });
-    });
+    }, 1000);
+
+    return {
+      message:
+        "El desplegament s'ha iniciat correctament. El servidor es reiniciarà en breu.",
+    };
+  }
+
+  @Get('logs')
+  @Roles('admin')
+  @ApiOperation({ summary: 'Obté els logs del darrer desplegament' })
+  async getLogs() {
+    let logPath = join(process.cwd(), 'deploy.log');
+    if (!existsSync(logPath)) {
+      logPath = join(process.cwd(), '..', 'deploy.log');
+    }
+
+    if (!existsSync(logPath)) {
+      throw new NotFoundException('Fitxer de logs no trobat.');
+    }
+
+    try {
+      const logs = readFileSync(logPath, 'utf8');
+      return { logs };
+    } catch (error) {
+      throw new InternalServerErrorException('Error llegint el fitxer de logs');
+    }
   }
 }

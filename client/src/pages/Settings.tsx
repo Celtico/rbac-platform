@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useTheme } from "../context/ThemeContext";
 import type { ColorTheme, RadiusSize } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
+import api from "../api";
 
 const Settings: React.FC = () => {
   const { theme, setTheme, radius, setRadius } = useTheme();
@@ -11,6 +12,17 @@ const Settings: React.FC = () => {
     success: boolean;
     message: string;
   } | null>(null);
+  const [deployLogs, setDeployLogs] = useState<string | null>(null);
+  const [showLogs, setShowLogs] = useState(false);
+
+  const fetchLogs = async () => {
+    try {
+      const response = await api.get("/deploy/logs");
+      setDeployLogs(response.data.logs);
+    } catch (error) {
+      console.error("Error fetching logs:", error);
+    }
+  };
 
   const themes: { id: ColorTheme; name: string; class: string }[] = [
     { id: "default", name: "Default (Blue)", class: "bg-blue-500" },
@@ -35,31 +47,18 @@ const Settings: React.FC = () => {
     setDeployResult(null);
 
     try {
-      const response = await fetch("/api/deploy", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
+      const response = await api.post("/deploy");
+
+      setDeployResult({
+        success: true,
+        message: response.data.message || "Desplegament completat amb èxit",
       });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setDeployResult({
-          success: true,
-          message: data.message || "Desplegament completat amb èxit",
-        });
-      } else {
-        setDeployResult({
-          success: false,
-          message: data.message || "Error durant el desplegament",
-        });
-      }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Deploy error:", error);
       setDeployResult({
         success: false,
-        message: "Error de connexió al servidor",
+        message:
+          error.response?.data?.message || "Error de connexió al servidor",
       });
     } finally {
       setIsDeploying(false);
@@ -165,14 +164,41 @@ const Settings: React.FC = () => {
               </button>
 
               {deployResult && (
-                <div
-                  className={`mt-4 p-4 rounded-custom border ${
-                    deployResult.success
-                      ? "bg-green-50 border-green-200 text-green-700 dark:bg-green-900/20 dark:border-green-800 dark:text-green-400"
-                      : "bg-red-50 border-red-200 text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400"
-                  }`}
-                >
-                  {deployResult.message}
+                <div className="mt-4">
+                  <div
+                    className={`p-4 rounded-custom border ${
+                      deployResult.success
+                        ? "bg-green-50 border-green-200 text-green-700 dark:bg-green-900/20 dark:border-green-800 dark:text-green-400"
+                        : "bg-red-50 border-red-200 text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400"
+                    }`}
+                  >
+                    {deployResult.message}
+                  </div>
+                  <div className="mt-2 flex gap-2">
+                    <button
+                      onClick={() => {
+                        setShowLogs(!showLogs);
+                        if (!showLogs) fetchLogs();
+                      }}
+                      className="text-sm text-primary hover:underline font-medium"
+                    >
+                      {showLogs ? "Amagar logs" : "Veure logs de depuració"}
+                    </button>
+                    {showLogs && (
+                      <button
+                        onClick={fetchLogs}
+                        className="text-sm text-gray-500 hover:underline"
+                      >
+                        Actualitzar
+                      </button>
+                    )}
+                  </div>
+
+                  {showLogs && (
+                    <div className="mt-2 p-4 bg-black text-green-400 font-mono text-xs rounded-custom overflow-auto max-h-60 whitespace-pre-wrap">
+                      {deployLogs || "Carregant logs..."}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

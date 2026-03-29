@@ -15,24 +15,25 @@ RUN npm install
 COPY server/ ./
 RUN npm run build
 
-# 3. Final Image
+# Final Image
 FROM node:20-alpine
 WORKDIR /app
 
 # Install bash, git and docker CLI + docker-compose (as plugin for alpine)
 RUN apk add --no-cache bash git docker-cli docker-cli-compose
 
-# Copy script
-COPY deploy.sh ./deploy.sh
-RUN chmod +x ./deploy.sh
-
-# Install production dependencies for server
+# Production dependencies for server
 COPY server/package*.json ./server/
 RUN cd server && npm install --production
 
-# Copy built assets
+# Copy built assets (we copy them but they might be overwritten by the volume in dev,
+# but in production/deploy they are useful if the volume is not there or for initial start)
 COPY --from=build-backend /app/server/dist ./server/dist
 COPY --from=build-frontend /app/client/dist ./client/dist
+
+# Copy script and make it executable
+COPY deploy.sh ./deploy.sh
+RUN chmod +x ./deploy.sh
 
 # Create uploads folder
 RUN mkdir -p /app/uploads
