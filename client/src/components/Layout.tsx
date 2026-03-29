@@ -53,13 +53,6 @@ const Layout: React.FC = () => {
           )}
 
           <Link
-            to="/"
-            className="flex items-center p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-          >
-            <Globe className="w-5 h-5 mr-3" /> Public View
-          </Link>
-
-          <Link
             to="/admin/settings"
             className="flex items-center p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
           >
@@ -91,6 +84,21 @@ const Layout: React.FC = () => {
               </Link>
             </>
           )}
+
+          <a
+            href="/"
+            target={"_blank"}
+            className="flex items-center p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+          >
+            <Globe className="w-5 h-5 mr-3" /> Public View
+          </a>
+          <a
+            href="/api/docs"
+            target={"_blank"}
+            className="flex items-center p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+          >
+            <Globe className="w-5 h-5 mr-3" /> Swagger
+          </a>
         </nav>
       </aside>
 

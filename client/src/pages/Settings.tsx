@@ -94,10 +94,127 @@ const Settings: React.FC = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="x-auto">
       <h1 className="text-3xl font-bold mb-8 dark:text-white transition-colors">
         System Settings
       </h1>
+
+      {hasRole("admin") && (
+        <section className="pt-8 mb-8 border-t dark:border-gray-700">
+          <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100">
+            Administració del Sistema
+          </h2>
+          <div className="bg-gray-50 dark:bg-gray-900 p-6 rounded-custom border border-gray-200 dark:border-gray-700">
+            <p className="mb-4 text-gray-600 dark:text-gray-400">
+              Pots desplegar la darrera versió de l'aplicació directament des
+              d'aquí. Això executarà el script de desplegament al servidor.
+            </p>
+            <button
+              onClick={handleDeploy}
+              disabled={isDeploying}
+              className={`px-6 py-3 bg-accent text-white rounded-custom shadow hover:opacity-90 transition-all flex items-center gap-2 ${
+                isDeploying ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+            >
+              {isDeploying ? (
+                <>
+                  <svg
+                    className="animate-spin h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Desplegant...
+                </>
+              ) : (
+                "Desplegar Aplicació"
+              )}
+            </button>
+
+            {versionInfo && (
+              <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4 border-t dark:border-gray-800 pt-4">
+                <div>
+                  <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold block mb-1">
+                    Versió del Projecte
+                  </span>
+                  <span className="text-sm font-medium dark:text-white">
+                    {versionInfo.name} v{versionInfo.version}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold block mb-1">
+                    Entorn
+                  </span>
+                  <span className="text-sm font-medium dark:text-white">
+                    {versionInfo.environment}
+                  </span>
+                </div>
+                <div className="sm:col-span-2">
+                  <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold block mb-1">
+                    Darrer Commit
+                  </span>
+                  <span className="text-sm font-mono bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded dark:text-gray-300 break-all">
+                    {versionInfo.lastCommit}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {deployResult && (
+              <div className="mt-4">
+                <div
+                  className={`p-4 rounded-custom border ${
+                    deployResult.success
+                      ? "bg-green-50 border-green-200 text-green-700 dark:bg-green-900/20 dark:border-green-800 dark:text-green-400"
+                      : "bg-red-50 border-red-200 text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400"
+                  }`}
+                >
+                  {deployResult.message}
+                </div>
+                <div className="mt-2 flex gap-2">
+                  <button
+                    onClick={() => {
+                      setShowLogs(!showLogs);
+                      if (!showLogs) fetchLogs();
+                    }}
+                    className="text-sm text-primary hover:underline font-medium"
+                  >
+                    {showLogs ? "Amagar logs" : "Veure logs de depuració"}
+                  </button>
+                  {showLogs && (
+                    <button
+                      onClick={fetchLogs}
+                      className="text-sm text-gray-500 hover:underline"
+                    >
+                      Actualitzar
+                    </button>
+                  )}
+                </div>
+
+                {showLogs && (
+                  <div className="mt-2 p-4 bg-black text-green-400 font-mono text-xs rounded-custom overflow-auto max-h-60 whitespace-pre-wrap">
+                    {deployLogs || "Carregant logs..."}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       <div className="bg-white dark:bg-gray-800 p-8 rounded-custom shadow-md transition-colors">
         <section className="mb-10">
@@ -144,123 +261,6 @@ const Settings: React.FC = () => {
             ))}
           </div>
         </section>
-
-        {hasRole("admin") && (
-          <section className="pt-8 border-t dark:border-gray-700">
-            <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100">
-              Administració del Sistema
-            </h2>
-            <div className="bg-gray-50 dark:bg-gray-900 p-6 rounded-custom border border-gray-200 dark:border-gray-700">
-              <p className="mb-4 text-gray-600 dark:text-gray-400">
-                Pots desplegar la darrera versió de l'aplicació directament des
-                d'aquí. Això executarà el script de desplegament al servidor.
-              </p>
-              <button
-                onClick={handleDeploy}
-                disabled={isDeploying}
-                className={`px-6 py-3 bg-accent text-white rounded-custom shadow hover:opacity-90 transition-all flex items-center gap-2 ${
-                  isDeploying ? "opacity-50 cursor-not-allowed" : ""
-                }`}
-              >
-                {isDeploying ? (
-                  <>
-                    <svg
-                      className="animate-spin h-5 w-5 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    Desplegant...
-                  </>
-                ) : (
-                  "Desplegar Aplicació"
-                )}
-              </button>
-
-              {versionInfo && (
-                <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4 border-t dark:border-gray-800 pt-4">
-                  <div>
-                    <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold block mb-1">
-                      Versió del Projecte
-                    </span>
-                    <span className="text-sm font-medium dark:text-white">
-                      {versionInfo.name} v{versionInfo.version}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold block mb-1">
-                      Entorn
-                    </span>
-                    <span className="text-sm font-medium dark:text-white">
-                      {versionInfo.environment}
-                    </span>
-                  </div>
-                  <div className="sm:col-span-2">
-                    <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold block mb-1">
-                      Darrer Commit
-                    </span>
-                    <span className="text-sm font-mono bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded dark:text-gray-300 break-all">
-                      {versionInfo.lastCommit}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {deployResult && (
-                <div className="mt-4">
-                  <div
-                    className={`p-4 rounded-custom border ${
-                      deployResult.success
-                        ? "bg-green-50 border-green-200 text-green-700 dark:bg-green-900/20 dark:border-green-800 dark:text-green-400"
-                        : "bg-red-50 border-red-200 text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400"
-                    }`}
-                  >
-                    {deployResult.message}
-                  </div>
-                  <div className="mt-2 flex gap-2">
-                    <button
-                      onClick={() => {
-                        setShowLogs(!showLogs);
-                        if (!showLogs) fetchLogs();
-                      }}
-                      className="text-sm text-primary hover:underline font-medium"
-                    >
-                      {showLogs ? "Amagar logs" : "Veure logs de depuració"}
-                    </button>
-                    {showLogs && (
-                      <button
-                        onClick={fetchLogs}
-                        className="text-sm text-gray-500 hover:underline"
-                      >
-                        Actualitzar
-                      </button>
-                    )}
-                  </div>
-
-                  {showLogs && (
-                    <div className="mt-2 p-4 bg-black text-green-400 font-mono text-xs rounded-custom overflow-auto max-h-60 whitespace-pre-wrap">
-                      {deployLogs || "Carregant logs..."}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </section>
-        )}
 
         <div className="mt-12 p-6 border-t dark:border-gray-700">
           <h3 className="text-lg font-medium mb-4 dark:text-white">

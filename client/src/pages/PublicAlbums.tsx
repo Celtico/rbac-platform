@@ -44,7 +44,7 @@ const PublicAlbums: React.FC = () => {
       <div className="max-w-6xl mx-auto">
         <header className="flex justify-between items-center mb-12">
           <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white">
-            Music Collection
+            Music
           </h1>
           <div className="flex items-center space-x-4">
             <button

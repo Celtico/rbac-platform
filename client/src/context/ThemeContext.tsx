@@ -40,8 +40,10 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
     // Manage Dark Mode
     if (mode === "dark") {
       root.classList.add("dark");
+      root.classList.remove("light");
     } else {
       root.classList.remove("dark");
+      root.classList.add("light");
     }
     localStorage.setItem("theme-mode", mode);
 
@@ -70,6 +72,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useTheme = () => {
   const context = useContext(ThemeContext);
   if (context === undefined) {
