@@ -8,4 +8,3 @@ uploads
 *.log
 Dockerfile
 docker-compose.yaml
-deploy.sh
