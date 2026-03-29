@@ -27,18 +27,10 @@ import { SeedService } from './common/seed.service';
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', '..', 'uploads'),
       serveRoot: '/uploads',
-      serveStaticOptions: {
-        index: false,
-        setHeaders: (res, path) => {
-          if (path.endsWith('.avif')) {
-            res.setHeader('Content-Type', 'image/avif');
-          }
-        },
-      },
     }),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', '..', 'client', 'dist'),
-      exclude: ['/api*', '/uploads*'],
+      exclude: ['/api*', '/uploads*', '/*'],
     }),
     UsersModule,
     RolesModule,
