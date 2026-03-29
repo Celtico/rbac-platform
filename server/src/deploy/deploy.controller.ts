@@ -153,7 +153,7 @@ export class DeployController {
     // Intentar obtenir el darrer commit si git està disponible
     let lastCommit = 'N/A';
     try {
-      lastCommit = execSync('git log -1 --format=%h - %s', {
+      lastCommit = execSync('git log -1 --format="%h - %s"', {
         encoding: 'utf8',
       }).trim();
     } catch (e) {
