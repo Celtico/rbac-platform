@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { AppController } from './app.controller';
+import { DeployController } from './deploy/deploy.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { RolesModule } from './roles/roles.module';
@@ -45,7 +46,7 @@ import { SeedService } from './common/seed.service';
     AlbumsModule,
     AuthModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, DeployController],
   providers: [AppService, SeedService],
 })
 export class AppModule {}
