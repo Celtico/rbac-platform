@@ -20,12 +20,12 @@ import { SeedService } from './common/seed.service';
   imports: [
     TypeOrmModule.forRoot({
       type: 'sqlite',
-      database: join(process.cwd(), 'data', 'db.sqlite'),
+      database: join(__dirname, '..', '..', 'data', 'db.sqlite'),
       entities: [User, Role, Permission, Album],
       synchronize: true,
     }),
     ServeStaticModule.forRoot({
-      rootPath: join(process.cwd(), 'uploads'),
+      rootPath: join(__dirname, '..', '..', 'uploads'),
       serveRoot: '/uploads',
       serveStaticOptions: {
         index: false,
@@ -37,7 +37,7 @@ import { SeedService } from './common/seed.service';
       },
     }),
     ServeStaticModule.forRoot({
-      rootPath: join(process.cwd(), 'client', 'dist'),
+      rootPath: join(__dirname, '..', '..', 'client', 'dist'),
       exclude: ['/api*', '/uploads*'],
     }),
     UsersModule,
