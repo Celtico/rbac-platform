@@ -7,4 +7,6 @@ services:
       - ./data:/app/data
       - ./uploads:/app/uploads
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./docker-compose.yaml:/app/docker-compose.yaml
+      - ./.git:/app/.git
     restart: always

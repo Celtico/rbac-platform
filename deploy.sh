@@ -10,7 +10,7 @@ PROJECT_DIR="/app"
 echo "### Iniciant desplegament a $PROJECT_DIR ###"
 
 # Fitxer de log per a depuració (redirigim stdout i stderr aquí)
-LOG_FILE="/app/deploy.log"
+LOG_FILE="deploy.log"
 
 echo "### Iniciant desplegament: $(date) ###" > "$LOG_FILE"
 echo "Directori actual: $(pwd)" >> "$LOG_FILE"
@@ -19,7 +19,7 @@ echo "Directori actual: $(pwd)" >> "$LOG_FILE"
 # el volum del projecte hauria d'estar muntat.
 # En aquest cas, assumim que el directori de treball és l'arrel del projecte.
 
-cd $PROJECT_DIR >> "$LOG_FILE" 2>&1
+# cd $PROJECT_DIR >> "$LOG_FILE" 2>&1 # Estem ja a /app pel Dockerfile WORKDIR
 
 # Actualitzar codi si és un repo git
 if [ -d ".git" ]; then
