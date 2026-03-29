@@ -3,26 +3,25 @@
 # Script per desplegar l'aplicació al servidor 192.168.1.55
 # Creat per Junie
 
-PROJECT_DIR="/app"
-# Si estem en local i no existeix .git, potser no volem clonar a /app si ja hi som.
-# Però el script anterior usava /home/cel/album-manager que no existeix en el contenidor.
-
-echo "### Iniciant desplegament a $PROJECT_DIR ###"
-
-# Fitxer de log per a depuració (usem ruta absoluta dins del contenidor o relativa)
+# Fitxer de log per a depuració
 LOG_FILE="deploy.log"
 
-# Si estem en un entorn on /app és el WORKDIR, assegurem-nos que existeix
-if [ ! -d "/app" ]; then
-    # Si no existeix /app (cas local fora de docker), intentem crear-lo o usem el directori actual
-    mkdir -p /app 2>/dev/null || PROJECT_DIR="."
+# Intentem anar al directori /app si existeix, si no al directori on és el script
+if [ -d "/app" ]; then
+    cd /app
+    PROJECT_DIR="/app"
+else
+    cd "$(dirname "$0")"
+    PROJECT_DIR="$(pwd)"
 fi
 
 # Intentar crear el fitxer de log per assegurar-nos que és escrivible
 touch "$LOG_FILE" 2>/dev/null || LOG_FILE="/tmp/deploy.log"
 
-echo "### Iniciant desplegament: $(date) ###" > "$LOG_FILE"
+echo "### Iniciant desplegament a $PROJECT_DIR ###" > "$LOG_FILE"
+echo "### Data: $(date) ###" >> "$LOG_FILE"
 echo "Directori actual: $(pwd)" >> "$LOG_FILE"
+echo "Usuari: $(whoami)" >> "$LOG_FILE"
 
 # Si el script s'executa dins del contenidor i volem actualitzar el codi de la màquina host,
 # el volum del projecte hauria d'estar muntat.
@@ -44,20 +43,17 @@ fi
 # Iniciar amb Docker Compose (usant v2 'docker compose')
 echo "Construint i aixecant contenidors amb Docker Compose..." >> "$LOG_FILE"
 
-# Modificació temporal de Dockerfile per utilitzar els directoris muntats
-# per si de cas el context de build és diferent, però realment
-# el build hauria de funcionar si fem servir el context correcte.
-# Com que hem muntat ./client a /app/client-src i ./server a /app/server-src,
-# necessitem que el Dockerfile apunti a aquests llocs SI s'executa des de dins.
-# PERÒ: docker compose up --build s'executa a l'host normalment.
-# Aquí el script corre DINS del contenidor, però la comanda docker afecta a l'HOST.
-# Per tant, el Dockerfile llegit per l'engine de Docker de l'host serà el real.
-# L'únic problema és que el context del build (el directori .) a l'host ha de ser correcte.
+# Verifiquem si docker compose està disponible
+if ! command -v docker &> /dev/null; then
+    echo "ERROR: La comanda 'docker' no s'ha trobat." >> "$LOG_FILE"
+    exit 1
+fi
 
+# Executem docker compose up -d --build
+# Redirigim stdout i stderr al log
 docker compose up -d --build --force-recreate >> "$LOG_FILE" 2>&1 &
-# El & al final permet que el script acabi mentre docker compose segueix en segon pla (si cal)
-# Tot i que docker compose up -d ja és 'detached' pel que fa als contenidors.
-# Però així ens assegurem que el script no quedi penjat si docker compose triga.
+DOCKER_PID=$!
+echo "Docker Compose s'està executant en segon pla (PID: $DOCKER_PID)..." >> "$LOG_FILE"
 
 sleep 2 # Donem un moment perquè el log s'escrigui
 
