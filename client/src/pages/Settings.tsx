@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useTheme } from "../context/ThemeContext";
 import type { ColorTheme, RadiusSize } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
@@ -14,6 +14,27 @@ const Settings: React.FC = () => {
   } | null>(null);
   const [deployLogs, setDeployLogs] = useState<string | null>(null);
   const [showLogs, setShowLogs] = useState(false);
+  const [versionInfo, setVersionInfo] = useState<{
+    version: string;
+    name: string;
+    lastCommit: string;
+    environment: string;
+  } | null>(null);
+
+  const fetchVersion = async () => {
+    try {
+      const response = await api.get("/deploy/version");
+      setVersionInfo(response.data);
+    } catch (error) {
+      console.error("Error fetching version:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (hasRole("admin")) {
+      fetchVersion();
+    }
+  }, []);
 
   const fetchLogs = async () => {
     try {
@@ -162,6 +183,35 @@ const Settings: React.FC = () => {
                   "Desplegar Aplicació"
                 )}
               </button>
+
+              {versionInfo && (
+                <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4 border-t dark:border-gray-800 pt-4">
+                  <div>
+                    <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold block mb-1">
+                      Versió del Projecte
+                    </span>
+                    <span className="text-sm font-medium dark:text-white">
+                      {versionInfo.name} v{versionInfo.version}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold block mb-1">
+                      Entorn
+                    </span>
+                    <span className="text-sm font-medium dark:text-white">
+                      {versionInfo.environment}
+                    </span>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold block mb-1">
+                      Darrer Commit
+                    </span>
+                    <span className="text-sm font-mono bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded dark:text-gray-300 break-all">
+                      {versionInfo.lastCommit}
+                    </span>
+                  </div>
+                </div>
+              )}
 
               {deployResult && (
                 <div className="mt-4">

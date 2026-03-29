@@ -7,7 +7,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { exec } from 'child_process';
+import { exec, execSync } from 'child_process';
 import { join } from 'path';
 import { existsSync, readFileSync } from 'fs';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -68,7 +68,7 @@ export class DeployController {
   @Get('logs')
   @Roles('admin')
   @ApiOperation({ summary: 'Obté els logs del darrer desplegament' })
-  async getLogs() {
+  getLogs() {
     let logPath = join(process.cwd(), 'deploy.log');
     if (!existsSync(logPath)) {
       logPath = join(process.cwd(), '..', 'deploy.log');
@@ -82,7 +82,49 @@ export class DeployController {
       const logs = readFileSync(logPath, 'utf8');
       return { logs };
     } catch (error) {
+      this.logger.error(`Error llegint els logs: ${error.message}`);
       throw new InternalServerErrorException('Error llegint el fitxer de logs');
     }
+  }
+
+  @Get('version')
+  @Roles('admin')
+  @ApiOperation({ summary: 'Obté la versió actual del sistema' })
+  getVersion() {
+    const pkgPath = join(process.cwd(), 'package.json');
+    let version = 'unknown';
+    let name = 'unknown';
+
+    if (existsSync(pkgPath)) {
+      try {
+        const pkg = JSON.parse(readFileSync(pkgPath, 'utf8')) as {
+          version?: string;
+          name?: string;
+        };
+        version = pkg.version || 'unknown';
+        name = pkg.name || 'unknown';
+      } catch (e) {
+        this.logger.error(`Error parsejant package.json: ${e.message}`);
+      }
+    }
+
+    // Intentar obtenir el darrer commit si git està disponible
+    let lastCommit = 'N/A';
+    try {
+      lastCommit = execSync('git log -1 --format=%h - %s', {
+        encoding: 'utf8',
+      }).trim();
+    } catch (e) {
+      this.logger.warn(
+        `No s'ha pogut obtenir el darrer commit de Git: ${e.message}`,
+      );
+    }
+
+    return {
+      version,
+      name,
+      lastCommit,
+      environment: process.env.NODE_ENV || 'development',
+    };
   }
 }
