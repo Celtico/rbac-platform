@@ -19,6 +19,13 @@ RUN npm run build
 FROM node:20-alpine
 WORKDIR /app
 
+# Install git and docker CLI + docker-compose (as plugin for alpine)
+RUN apk add --no-cache git docker-cli docker-cli-compose
+
+# Copy script
+COPY deploy.sh ./deploy.sh
+RUN chmod +x ./deploy.sh
+
 # Install production dependencies for server
 COPY server/package*.json ./server/
 RUN cd server && npm install --production

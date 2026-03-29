@@ -28,6 +28,9 @@ chmod -R 777 $PROJECT_DIR/uploads
 
 # Iniciar amb Docker Compose (usant v2 'docker compose')
 echo "Construint i aixecant contenidors..."
+# Nota: Dins d'un contenidor, pot ser necessari utilitzar el context de l'host si és possible,
+# però normalment amb el socket muntat n'hi ha prou.
+# Afegim sudo només si és necessari, però en alpine no sol venir per defecte.
 docker compose up -d --build --force-recreate
 
 echo "### Desplegament completat! ###"
