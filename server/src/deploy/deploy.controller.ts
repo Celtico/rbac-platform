@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { exec } from 'child_process';
 import { join } from 'path';
+import { existsSync } from 'fs';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -23,7 +24,20 @@ export class DeployController {
   @Roles('admin')
   @ApiOperation({ summary: 'Executa el script de desplegament' })
   async deploy() {
-    const scriptPath = join(process.cwd(), 'deploy.sh');
+    // Intentem localitzar el script a l'arrel o a la carpeta pare segons on s'executi
+    let scriptPath = join(process.cwd(), 'deploy.sh');
+    if (!existsSync(scriptPath)) {
+      scriptPath = join(process.cwd(), '..', 'deploy.sh');
+    }
+
+    if (!existsSync(scriptPath)) {
+      this.logger.error(
+        `No s'ha trobat el script de desplegament a cap de les rutes provades.`,
+      );
+      throw new InternalServerErrorException(
+        'Script de desplegament no trobat.',
+      );
+    }
 
     this.logger.log(`Iniciant desplegament: ${scriptPath}`);
 
