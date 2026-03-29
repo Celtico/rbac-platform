@@ -25,7 +25,7 @@ export class DeployController {
   @Post()
   @Roles('admin')
   @ApiOperation({ summary: 'Executa el script de desplegament' })
-  async deploy() {
+  deploy() {
     // Intentem localitzar el script a l'arrel o a la carpeta pare segons on s'executi
     let scriptPath = join(__dirname, '..', '..', 'deploy.sh');
     if (!existsSync(scriptPath)) {
@@ -72,23 +72,35 @@ export class DeployController {
   @Roles('admin')
   @ApiOperation({ summary: 'Obté els logs del darrer desplegament' })
   getLogs() {
-    let logPath = join(__dirname, '..', '..', 'deploy.log');
-    if (!existsSync(logPath)) {
-      logPath = join(process.cwd(), 'deploy.log');
-    }
-    if (!existsSync(logPath)) {
-      logPath = join(process.cwd(), '..', 'deploy.log');
+    const pathsToTry = [
+      join(__dirname, '..', '..', 'deploy.log'),
+      join(process.cwd(), 'deploy.log'),
+      join(process.cwd(), '..', 'deploy.log'),
+      '/app/deploy.log',
+      '/tmp/deploy.log',
+    ];
+
+    let logPath = null;
+    for (const p of pathsToTry) {
+      if (existsSync(p)) {
+        logPath = p;
+        break;
+      }
     }
 
-    if (!existsSync(logPath)) {
-      throw new NotFoundException('Fitxer de logs no trobat.');
+    if (!logPath) {
+      return {
+        logs: 'No hi ha logs disponibles encara. Inicia un desplegament per generar-los.',
+      };
     }
 
     try {
       const logs = readFileSync(logPath, 'utf8');
       return { logs };
     } catch (error) {
-      this.logger.error(`Error llegint els logs: ${error.message}`);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.error(`Error llegint els logs: ${errorMessage}`);
       throw new InternalServerErrorException('Error llegint el fitxer de logs');
     }
   }
@@ -97,15 +109,25 @@ export class DeployController {
   @Roles('admin')
   @ApiOperation({ summary: 'Obté la versió actual del sistema' })
   getVersion() {
-    let pkgPath = join(__dirname, '..', '..', 'package.json');
-    if (!existsSync(pkgPath)) {
-      pkgPath = join(process.cwd(), 'package.json');
+    const pkgPaths = [
+      join(__dirname, '..', '..', 'package.json'),
+      join(process.cwd(), 'package.json'),
+      '/app/server/package.json',
+      '/app/package.json',
+    ];
+
+    let pkgPath = null;
+    for (const p of pkgPaths) {
+      if (existsSync(p)) {
+        pkgPath = p;
+        break;
+      }
     }
 
     let version = 'unknown';
     let name = 'unknown';
 
-    if (existsSync(pkgPath)) {
+    if (pkgPath) {
       try {
         const pkg = JSON.parse(readFileSync(pkgPath, 'utf8')) as {
           version?: string;
@@ -114,7 +136,11 @@ export class DeployController {
         version = pkg.version || 'unknown';
         name = pkg.name || 'unknown';
       } catch (e) {
-        this.logger.error(`Error parsejant package.json: ${e.message}`);
+        this.logger.error(
+          `Error parsejant package.json: ${
+            e instanceof Error ? e.message : String(e)
+          }`,
+        );
       }
     }
 
@@ -126,7 +152,9 @@ export class DeployController {
       }).trim();
     } catch (e) {
       this.logger.warn(
-        `No s'ha pogut obtenir el darrer commit de Git: ${e.message}`,
+        `No s'ha pogut obtenir el darrer commit de Git: ${
+          e instanceof Error ? e.message : String(e)
+        }`,
       );
     }
 
