@@ -25,8 +25,14 @@ const Settings: React.FC = () => {
     try {
       const response = await api.get("/deploy/version");
       setVersionInfo(response.data);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching version:", error);
+      setVersionInfo({
+        version: "error",
+        name: "error",
+        lastCommit: "Error en carregar informació",
+        environment: "error",
+      });
     }
   };
 
@@ -40,8 +46,9 @@ const Settings: React.FC = () => {
     try {
       const response = await api.get("/deploy/logs");
       setDeployLogs(response.data.logs);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching logs:", error);
+      setDeployLogs("Error al carregar els logs del servidor.");
     }
   };
 

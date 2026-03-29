@@ -27,7 +27,10 @@ export class DeployController {
   @ApiOperation({ summary: 'Executa el script de desplegament' })
   async deploy() {
     // Intentem localitzar el script a l'arrel o a la carpeta pare segons on s'executi
-    let scriptPath = join(process.cwd(), 'deploy.sh');
+    let scriptPath = join(__dirname, '..', '..', 'deploy.sh');
+    if (!existsSync(scriptPath)) {
+      scriptPath = join(process.cwd(), 'deploy.sh');
+    }
     if (!existsSync(scriptPath)) {
       scriptPath = join(process.cwd(), '..', 'deploy.sh');
     }
@@ -69,7 +72,10 @@ export class DeployController {
   @Roles('admin')
   @ApiOperation({ summary: 'Obté els logs del darrer desplegament' })
   getLogs() {
-    let logPath = join(process.cwd(), 'deploy.log');
+    let logPath = join(__dirname, '..', '..', 'deploy.log');
+    if (!existsSync(logPath)) {
+      logPath = join(process.cwd(), 'deploy.log');
+    }
     if (!existsSync(logPath)) {
       logPath = join(process.cwd(), '..', 'deploy.log');
     }
@@ -91,7 +97,11 @@ export class DeployController {
   @Roles('admin')
   @ApiOperation({ summary: 'Obté la versió actual del sistema' })
   getVersion() {
-    const pkgPath = join(process.cwd(), 'package.json');
+    let pkgPath = join(__dirname, '..', '..', 'package.json');
+    if (!existsSync(pkgPath)) {
+      pkgPath = join(process.cwd(), 'package.json');
+    }
+
     let version = 'unknown';
     let name = 'unknown';
 
