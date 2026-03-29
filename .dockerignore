@@ -1,0 +1,11 @@
+node_modules
+dist
+data
+uploads
+.git
+.idea
+.vscode
+*.log
+Dockerfile
+docker-compose.yaml
+deploy.sh

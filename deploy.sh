@@ -6,8 +6,11 @@
 # Fitxer de log per a depuració
 LOG_FILE="deploy.log"
 
-# Intentem anar al directori /app si existeix, si no al directori on és el script
-if [ -d "/app" ]; then
+# Intentem anar al directori del host-project si existeix (muntat en Docker)
+if [ -d "/app/host-project" ]; then
+    cd /app/host-project
+    PROJECT_DIR="/app/host-project"
+elif [ -d "/app" ]; then
     cd /app
     PROJECT_DIR="/app"
 else
@@ -16,6 +19,12 @@ else
 fi
 
 # Intentar crear el fitxer de log per assegurar-nos que és escrivible
+# Si estem al contenidor, l'escrivim a /app/deploy.log perquè sigui llegible pel controlador
+if [ -d "/app" ]; then
+    LOG_FILE="/app/deploy.log"
+else
+    LOG_FILE="deploy.log"
+fi
 touch "$LOG_FILE" 2>/dev/null || LOG_FILE="/tmp/deploy.log"
 
 echo "### Iniciant desplegament a $PROJECT_DIR ###" > "$LOG_FILE"
@@ -23,21 +32,15 @@ echo "### Data: $(date) ###" >> "$LOG_FILE"
 echo "Directori actual: $(pwd)" >> "$LOG_FILE"
 echo "Usuari: $(whoami)" >> "$LOG_FILE"
 
-# Si el script s'executa dins del contenidor i volem actualitzar el codi de la màquina host,
-# el volum del projecte hauria d'estar muntat.
-# En aquest cas, assumim que el directori de treball és l'arrel del projecte.
-
-# cd $PROJECT_DIR >> "$LOG_FILE" 2>&1 # Estem ja a /app pel Dockerfile WORKDIR
-
 # Actualitzar codi si és un repo git
 if [ -d ".git" ]; then
     echo "Actualitzant codi existent des de Git..." >> "$LOG_FILE"
     # Configurar directori segur per evitar error de 'dubious ownership'
-    git config --global --add safe.directory /app >> "$LOG_FILE" 2>&1
+    git config --global --add safe.directory "$PROJECT_DIR" >> "$LOG_FILE" 2>&1
     # Usar git pull silenciosament per no bloquejar si hi ha problemes de credencials
     git pull origin main >> "$LOG_FILE" 2>&1
 else
-    echo "Directori .git no trobat. S'omet l'actualització de Git." >> "$LOG_FILE"
+    echo "Directori .git no trobat a $PROJECT_DIR. S'omet l'actualització de Git." >> "$LOG_FILE"
 fi
 
 # Iniciar amb Docker Compose (usant v2 'docker compose')

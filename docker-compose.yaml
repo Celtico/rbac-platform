@@ -7,10 +7,5 @@ services:
       - ./data:/app/data
       - ./uploads:/app/uploads
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./docker-compose.yaml:/app/docker-compose.yaml
-      - ./.git:/app/.git
-      - ./Dockerfile:/app/Dockerfile
-      - ./client:/app/client-src
-      - ./server:/app/server-src
-      - ./deploy.sh:/app/deploy.sh
+      - ./:/app/host-project
     restart: always
