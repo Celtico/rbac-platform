@@ -80,7 +80,7 @@ export class DeployController {
       '/tmp/deploy.log',
     ];
 
-    let logPath = null;
+    let logPath: string | null = null;
     for (const p of pathsToTry) {
       if (existsSync(p)) {
         logPath = p;
@@ -116,7 +116,7 @@ export class DeployController {
       '/app/package.json',
     ];
 
-    let pkgPath = null;
+    let pkgPath: string | null = null;
     for (const p of pkgPaths) {
       if (existsSync(p)) {
         pkgPath = p;
