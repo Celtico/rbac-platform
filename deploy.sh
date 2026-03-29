@@ -43,9 +43,17 @@ fi
 
 # Iniciar amb Docker Compose (usant v2 'docker compose')
 echo "Construint i aixecant contenidors amb Docker Compose..." >> "$LOG_FILE"
-# Nota: docker compose podria aturar aquest mateix contenidor.
-# Afegim --no-deps o --quiet si cal, però el principal és el --build.
-# El --force-recreate és útil per assegurar que els volums no estiguin interferint.
+
+# Modificació temporal de Dockerfile per utilitzar els directoris muntats
+# per si de cas el context de build és diferent, però realment
+# el build hauria de funcionar si fem servir el context correcte.
+# Com que hem muntat ./client a /app/client-src i ./server a /app/server-src,
+# necessitem que el Dockerfile apunti a aquests llocs SI s'executa des de dins.
+# PERÒ: docker compose up --build s'executa a l'host normalment.
+# Aquí el script corre DINS del contenidor, però la comanda docker afecta a l'HOST.
+# Per tant, el Dockerfile llegit per l'engine de Docker de l'host serà el real.
+# L'únic problema és que el context del build (el directori .) a l'host ha de ser correcte.
+
 docker compose up -d --build --force-recreate >> "$LOG_FILE" 2>&1 &
 # El & al final permet que el script acabi mentre docker compose segueix en segon pla (si cal)
 # Tot i que docker compose up -d ja és 'detached' pel que fa als contenidors.

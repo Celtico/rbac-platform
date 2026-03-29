@@ -10,7 +10,7 @@ services:
       - ./docker-compose.yaml:/app/docker-compose.yaml
       - ./.git:/app/.git
       - ./Dockerfile:/app/Dockerfile
-      - ./client:/app/client
-      - ./server:/app/server
+      - ./client:/app/client-src
+      - ./server:/app/server-src
       - ./deploy.sh:/app/deploy.sh
     restart: always
