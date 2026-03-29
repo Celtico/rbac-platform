@@ -45,8 +45,9 @@ export class DeployController {
 
     // Executem en segon pla per evitar tallar la connexió abans de respondre
     // i perquè el script pugui reiniciar el contenidor sense que el client vegi un error de xarxa.
+    const scriptDir = join(scriptPath, '..');
     setTimeout(() => {
-      exec(scriptPath, (error, stdout, stderr) => {
+      exec(scriptPath, { cwd: scriptDir }, (error, stdout, stderr) => {
         if (error) {
           this.logger.error(
             `Error en el desplegament (segon pla): ${error.message}`,

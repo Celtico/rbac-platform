@@ -9,8 +9,17 @@ PROJECT_DIR="/app"
 
 echo "### Iniciant desplegament a $PROJECT_DIR ###"
 
-# Fitxer de log per a depuració (redirigim stdout i stderr aquí)
+# Fitxer de log per a depuració (usem ruta absoluta dins del contenidor o relativa)
 LOG_FILE="deploy.log"
+
+# Si estem en un entorn on /app és el WORKDIR, assegurem-nos que existeix
+if [ ! -d "/app" ]; then
+    # Si no existeix /app (cas local fora de docker), intentem crear-lo o usem el directori actual
+    mkdir -p /app 2>/dev/null || PROJECT_DIR="."
+fi
+
+# Intentar crear el fitxer de log per assegurar-nos que és escrivible
+touch "$LOG_FILE" 2>/dev/null || LOG_FILE="/tmp/deploy.log"
 
 echo "### Iniciant desplegament: $(date) ###" > "$LOG_FILE"
 echo "Directori actual: $(pwd)" >> "$LOG_FILE"
@@ -32,10 +41,15 @@ fi
 
 # Iniciar amb Docker Compose (usant v2 'docker compose')
 echo "Construint i aixecant contenidors amb Docker Compose..." >> "$LOG_FILE"
-# Redirigim tot al log. Nota: docker compose podria aturar aquest mateix contenidor.
+# Nota: docker compose podria aturar aquest mateix contenidor.
 # Afegim --no-deps o --quiet si cal, però el principal és el --build.
 # El --force-recreate és útil per assegurar que els volums no estiguin interferint.
-docker compose up -d --build --force-recreate >> "$LOG_FILE" 2>&1
+docker compose up -d --build --force-recreate >> "$LOG_FILE" 2>&1 &
+# El & al final permet que el script acabi mentre docker compose segueix en segon pla (si cal)
+# Tot i que docker compose up -d ja és 'detached' pel que fa als contenidors.
+# Però així ens assegurem que el script no quedi penjat si docker compose triga.
+
+sleep 2 # Donem un moment perquè el log s'escrigui
 
 echo "### Desplegament completat a les $(date)! ###" >> "$LOG_FILE"
 echo "L'aplicació hauria d'estar disponible a http://192.168.1.55:3000" >> "$LOG_FILE"
