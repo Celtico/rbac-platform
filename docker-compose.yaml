@@ -4,7 +4,6 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - .:/app
       - ./data:/app/data
       - ./uploads:/app/uploads
       - /var/run/docker.sock:/var/run/docker.sock

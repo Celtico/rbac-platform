@@ -33,6 +33,8 @@ fi
 # Iniciar amb Docker Compose (usant v2 'docker compose')
 echo "Construint i aixecant contenidors amb Docker Compose..." >> "$LOG_FILE"
 # Redirigim tot al log. Nota: docker compose podria aturar aquest mateix contenidor.
+# Afegim --no-deps o --quiet si cal, però el principal és el --build.
+# El --force-recreate és útil per assegurar que els volums no estiguin interferint.
 docker compose up -d --build --force-recreate >> "$LOG_FILE" 2>&1
 
 echo "### Desplegament completat a les $(date)! ###" >> "$LOG_FILE"
