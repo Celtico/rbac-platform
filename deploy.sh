@@ -5,12 +5,18 @@
 
 # Fitxer de log per a depuració
 # Si estem al contenidor, l'escrivim a /app/deploy.log perquè sigui llegible pel controlador
-if [ -d "/app" ]; then
+if [ -d "/home/cel/album-manager" ]; then
+    LOG_FILE="/home/cel/album-manager/deploy.log"
+elif [ -d "/app/album-manager" ]; then
+    LOG_FILE="/app/album-manager/deploy.log"
+elif [ -d "/app" ]; then
     LOG_FILE="/app/deploy.log"
 else
     LOG_FILE="deploy.log"
 fi
+# Intentem assegurar-nos que l'usuari tingui permisos si és root
 touch "$LOG_FILE" 2>/dev/null || LOG_FILE="/tmp/deploy.log"
+chmod 666 "$LOG_FILE" 2>/dev/null
 
 # Intentem anar al directori del host-project si existeix (muntat en Docker)
 if [ -d "/home/cel/album-manager" ]; then
