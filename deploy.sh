@@ -109,17 +109,20 @@ if [ "$IN_DOCKER" = true ]; then
     # Usem --init per gestionar senyals correctament
     # Usem --pull always per al deployer
     echo "Executant docker compose up des del contenidor 'deployer'..." >> "$LOG_FILE" 2>&1
-    # Usem un contenidor de debian/alpine que ja tingui docker instal·lat per estalviar temps
-    # I no fem sleep tan llarg si no és necessari, però prou per deixar que el pare s'aturi
-    # V0.0.33: Cicle de vida resilient: pull + build primer, i després un up amb un sleep de 15s al deployer.
-    # No fem 'rm -f' per no deixar el sistema buit si el 'up' falla.
+    # V0.0.34: Usem un mètode de desvinculació més agressiu al host via SSH-out-of-Docker
+    # o simplement un nohup al host que invoqui el docker compose up després d'una espera.
+    # Com que no podem fer ssh al host de forma fiable amb claus des de dins,
+    # usarem el motor de docker per llançar un contenidor que faci 'docker compose up'
+    # però aquesta vegada NO muntarem el directori del projecte per evitar problemes de bloqueig.
+    # Usem el context del host muntant el config de docker si cal.
     docker run -d --rm \
         --name album-manager-deployer-$(date +%s) \
         -v /var/run/docker.sock:/var/run/docker.sock \
+        -v /usr/bin/docker:/usr/bin/docker:ro \
         -v "$PROJECT_DIR":"$PROJECT_DIR" \
         -w "$PROJECT_DIR" \
         docker:cli \
-        sh -c "sleep 15; docker compose -p album-manager up -d --force-recreate --remove-orphans --timeout 0"
+        sh -c "sleep 5; docker compose -p album-manager up -d --force-recreate --remove-orphans --timeout 0"
 
     echo "Contenidor 'deployer' llançat en segon pla. El projecte es reiniciarà en breu." >> "$LOG_FILE" 2>&1
     exit 0
