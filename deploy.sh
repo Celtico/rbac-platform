@@ -79,12 +79,15 @@ echo "Construint i aixecant contenidors amb Docker Compose..." >> "$LOG_FILE"
 # Tanmateix, docker compose up -d --build --force-recreate REINICIARÀ aquest mateix contenidor.
 
 if [ "$IN_DOCKER" = true ]; then
-    echo "Executant des de dins de Docker. S'utilitzarà 'nohup' per sobreviure al reinici del contenidor pare." >> "$LOG_FILE"
+    echo "Executant des de dins de Docker. S'utilitzarà 'nohup' i 'trap' per sobreviure al reinici." >> "$LOG_FILE"
+    # Ignorem SIGTERM per donar temps al script de finalitzar quan Docker mati el contenidor pare
+    trap '' SIGTERM
     # Utilitzem nohup i redirigim tot per desvincular el procés del shell actual
     # Afegim --no-cache per assegurar que els canvis en package.json es reflecteixen
     # Usem --pull per assegurar imatges base fresques
     nohup docker compose -p album-manager build --no-cache --pull >> "$LOG_FILE" 2>&1
-    nohup docker compose -p album-manager up -d --force-recreate --remove-orphans >> "$LOG_FILE" 2>&1 &
+    # Usem --timeout 0 per accelerar el reinici i no esperar als 10 segons del pare
+    nohup docker compose -p album-manager up -d --force-recreate --remove-orphans --timeout 0 >> "$LOG_FILE" 2>&1 &
     DOCKER_PID=$!
     echo "Docker Compose s'està executant en segon pla (PID: $DOCKER_PID)..." >> "$LOG_FILE"
     echo "El contenidor es reiniciarà en breu." >> "$LOG_FILE"
