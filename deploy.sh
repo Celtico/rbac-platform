@@ -88,8 +88,11 @@ if [ "$IN_DOCKER" = true ]; then
     # Unifiquem build i up en un sol nohup per garantir que no es talli el flux entre comandes
     # Redirigim tota la sortida al log i usem '&' per desvincular el procés
     nohup bash -c "trap '' SIGTERM; \
+          docker version >> \"$LOG_FILE\" 2>&1; \
           docker compose -p album-manager build --no-cache --pull && \
-          docker compose -p album-manager up -d --force-recreate --remove-orphans --timeout 0" >> "$LOG_FILE" 2>&1 &
+          docker compose -p album-manager up -d --force-recreate --remove-orphans --timeout 0 && \
+          sleep 2 && \
+          docker ps --filter 'name=album-manager' >> \"$LOG_FILE\" 2>&1" >> "$LOG_FILE" 2>&1 &
     DOCKER_PID=$!
     echo "Docker Compose s'està executant en segon pla (PID: $DOCKER_PID)..." >> "$LOG_FILE"
     echo "El contenidor es reiniciarà en breu." >> "$LOG_FILE"
