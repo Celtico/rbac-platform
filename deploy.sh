@@ -3,23 +3,26 @@
 # Script de desplegament simplificat (v0.0.38)
 # Millorat per Junie per al servidor 192.168.1.55
 
-# 1. Determinar el directori del projecte
+# 1. Determinar el directori del projecte i fitxer de log
+# Fem servir camins absoluts consistents amb el muntatge de docker-compose
 if [ -d "/home/cel/album-manager" ]; then
     PROJECT_DIR="/home/cel/album-manager"
 elif [ -d "/app/album-manager" ]; then
     PROJECT_DIR="/app/album-manager"
-elif [ -d "/app" ]; then
-    PROJECT_DIR="/app"
 else
     PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 fi
 
 LOG_FILE="$PROJECT_DIR/deploy.log"
+# Forçar que el log estigui accessible pel servidor Nest
+[ -f "/app/album-manager/deploy.log" ] && LOG_FILE="/app/album-manager/deploy.log"
+
 touch "$LOG_FILE" 2>/dev/null || LOG_FILE="/tmp/deploy.log"
 chmod 666 "$LOG_FILE" 2>/dev/null
 
-echo "--- Iniciant desplegament: $(date) ---" > "$LOG_FILE"
+echo "--- Iniciant desplegament (v0.0.38): $(date) ---" > "$LOG_FILE"
 echo "Directori de treball: $PROJECT_DIR" >> "$LOG_FILE"
+echo "Fitxer de log: $LOG_FILE" >> "$LOG_FILE"
 
 cd "$PROJECT_DIR" || { echo "ERROR: No es pot accedir a $PROJECT_DIR" >> "$LOG_FILE"; exit 1; }
 
