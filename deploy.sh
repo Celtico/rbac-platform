@@ -100,13 +100,16 @@ echo "Construint i aixecant contenidors amb Docker Compose..." >> "$LOG_FILE"
 if [ "$IN_DOCKER" = true ]; then
     echo "Executant des de dins de Docker. S'utilitzarà 'nohup' per sobreviure al reinici del contenidor pare." >> "$LOG_FILE"
     # Utilitzem nohup i redirigim tot per desvincular el procés del shell actual
-    nohup docker compose -p album-manager up -d --build --force-recreate >> "$LOG_FILE" 2>&1 &
+    # Afegim --no-cache per assegurar que els canvis en package.json es reflecteixen
+    nohup docker compose -p album-manager build --no-cache >> "$LOG_FILE" 2>&1
+    nohup docker compose -p album-manager up -d --force-recreate >> "$LOG_FILE" 2>&1 &
     DOCKER_PID=$!
     echo "Docker Compose s'està executant en segon pla (PID: $DOCKER_PID)..." >> "$LOG_FILE"
     echo "El contenidor es reiniciarà en breu." >> "$LOG_FILE"
 else
     echo "Executant directament al Host." >> "$LOG_FILE"
-    docker compose -p album-manager up -d --build --force-recreate >> "$LOG_FILE" 2>&1
+    docker compose -p album-manager build --no-cache >> "$LOG_FILE" 2>&1
+    docker compose -p album-manager up -d --force-recreate >> "$LOG_FILE" 2>&1
 fi
 
 echo "### Procés de desplegament finalitzat a les $(date)! ###" >> "$LOG_FILE"
