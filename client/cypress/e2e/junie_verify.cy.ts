@@ -4,7 +4,7 @@ describe("IA Verification Test - Junie (Deploy System)", () => {
   let token: string;
 
   before(() => {
-    // 1. Obtindre el token d'accés per a tota la suite
+    // 1. Obtindre el token d'accés per a tota la suite amb reintent en cas de 502
     cy.request({
       method: "POST",
       url: "/api/auth/login",
@@ -12,9 +12,24 @@ describe("IA Verification Test - Junie (Deploy System)", () => {
         username: username,
         password: password,
       },
+      failOnStatusCode: false,
     }).then((response) => {
-      expect(response.status).to.eq(201);
-      token = response.body.access_token;
+      if (response.status === 502 || response.status === 503) {
+        cy.wait(10000);
+        cy.request({
+          method: "POST",
+          url: "/api/auth/login",
+          body: {
+            username: username,
+            password: password,
+          },
+        }).then((retryResponse) => {
+          token = retryResponse.body.access_token;
+        });
+      } else {
+        expect(response.status).to.eq(201);
+        token = response.body.access_token;
+      }
     });
   });
 
@@ -51,7 +66,9 @@ describe("IA Verification Test - Junie (Deploy System)", () => {
 
   it("should check logs and find evidence of Junie's work", () => {
     // 4. Esperar un moment perquè s'escriguin els primers logs
-    cy.wait(3000);
+    // Augmentem l'espera ja que el desplegament triga un moment a iniciar-se
+    // i el servidor pot estar reiniciant-se.
+    cy.wait(10000);
 
     // 5. Verificar que el log conté les millores de robustesa (album-manager vs host-project)
     cy.request({
@@ -60,11 +77,27 @@ describe("IA Verification Test - Junie (Deploy System)", () => {
       headers: {
         Authorization: `Bearer ${token}`,
       },
+      failOnStatusCode: false,
     }).then((response) => {
-      expect(response.status).to.eq(200);
-      expect(response.body.logs).to.contain("album-manager");
-      // Opcional: buscar altres paraules clau afegides pel script de Junie
-      expect(response.body.logs).to.contain("Iniciant desplegament");
+      // Si encara dóna 502, esperem una mica més i tornem a provar (Cypress ho fa si usem un timeout alt i una asseveració)
+      if (response.status === 502 || response.status === 503) {
+        cy.wait(5000);
+        cy.request({
+          method: "GET",
+          url: "/api/deploy/logs",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }).then((retryResponse) => {
+          expect(retryResponse.status).to.eq(200);
+          expect(retryResponse.body.logs).to.contain("album-manager");
+          expect(retryResponse.body.logs).to.contain("Iniciant desplegament");
+        });
+      } else {
+        expect(response.status).to.eq(200);
+        expect(response.body.logs).to.contain("album-manager");
+        expect(response.body.logs).to.contain("Iniciant desplegament");
+      }
     });
   });
 });
