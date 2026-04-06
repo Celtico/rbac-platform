@@ -1,5 +1,5 @@
 describe("Swagger Documentation", () => {
-  const swaggerUrl = "http://localhost:3000/api/docs";
+  const swaggerUrl = "https://album.serverscel.com/api/docs";
 
   it("should load the Swagger UI page", () => {
     // Visit the Swagger URL
