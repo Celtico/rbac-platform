@@ -17,9 +17,9 @@ if [ -d "/home/cel/album-manager" ]; then
     cd /home/cel/album-manager
     PROJECT_DIR="/home/cel/album-manager"
     IN_DOCKER=false
-elif [ -d "/app/host-project" ]; then
-    cd /app/host-project
-    PROJECT_DIR="/app/host-project"
+elif [ -d "/app/album-manager" ]; then
+    cd /app/album-manager
+    PROJECT_DIR="/app/album-manager"
     IN_DOCKER=true
 elif [ -d "/app" ]; then
     cd /app

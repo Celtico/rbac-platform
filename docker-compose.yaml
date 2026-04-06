@@ -7,5 +7,5 @@ services:
       - ./data:/app/data
       - ./uploads:/app/uploads
       - /var/run/docker.sock:/var/run/docker.sock
-      - /home/cel/album-manager:/app/host-project
+      - /home/cel/album-manager:/app/album-manager
     restart: always
