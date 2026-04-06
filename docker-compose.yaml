@@ -1,3 +1,4 @@
+name: album-manager
 services:
   app:
     build: .

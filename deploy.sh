@@ -55,6 +55,12 @@ if ! command -v docker &> /dev/null; then
 fi
 
 # Iniciar amb Docker Compose (usant v2 'docker compose')
+# Forcem el nom del projecte 'album-manager' per evitar conflictes si el directori canvia de nom.
+# També fem un 'down' previ per assegurar que el port 3000 s'allibera completament.
+echo "Aturant contenidors antics del projecte 'album-manager' i 'host-project' (si n'hi ha)..." >> "$LOG_FILE"
+docker compose -p album-manager down >> "$LOG_FILE" 2>&1
+docker compose -p host-project down >> "$LOG_FILE" 2>&1
+
 echo "Construint i aixecant contenidors amb Docker Compose..." >> "$LOG_FILE"
 
 # Si estem en Docker, hem d'assegurar que la comanda docker compose
@@ -64,13 +70,13 @@ echo "Construint i aixecant contenidors amb Docker Compose..." >> "$LOG_FILE"
 if [ "$IN_DOCKER" = true ]; then
     echo "Executant des de dins de Docker. S'utilitzarà 'nohup' per sobreviure al reinici del contenidor pare." >> "$LOG_FILE"
     # Utilitzem nohup i redirigim tot per desvincular el procés del shell actual
-    nohup docker compose up -d --build --force-recreate >> "$LOG_FILE" 2>&1 &
+    nohup docker compose -p album-manager up -d --build --force-recreate >> "$LOG_FILE" 2>&1 &
     DOCKER_PID=$!
     echo "Docker Compose s'està executant en segon pla (PID: $DOCKER_PID)..." >> "$LOG_FILE"
     echo "El contenidor es reiniciarà en breu." >> "$LOG_FILE"
 else
     echo "Executant directament al Host." >> "$LOG_FILE"
-    docker compose up -d --build --force-recreate >> "$LOG_FILE" 2>&1
+    docker compose -p album-manager up -d --build --force-recreate >> "$LOG_FILE" 2>&1
 fi
 
 echo "### Procés de desplegament finalitzat a les $(date)! ###" >> "$LOG_FILE"
