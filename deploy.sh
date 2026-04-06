@@ -58,8 +58,21 @@ fi
 # Forcem el nom del projecte 'album-manager' per evitar conflictes si el directori canvia de nom.
 # També fem un 'down' previ per assegurar que el port 3000 s'allibera completament.
 echo "Aturant contenidors antics del projecte 'album-manager' i 'host-project' (si n'hi ha)..." >> "$LOG_FILE"
+
+# Intentem aturar qualsevol contenidor que estigui usant el port 3000 directament
+echo "Buscant contenidors que usen el port 3000..." >> "$LOG_FILE"
+CONTAINERS_PORT_3000=$(docker ps --filter "publish=3000" --format "{{.ID}}" 2>/dev/null)
+if [ ! -z "$CONTAINERS_PORT_3000" ]; then
+    echo "Aturant contenidors que usen el port 3000: $CONTAINERS_PORT_3000" >> "$LOG_FILE"
+    docker stop $CONTAINERS_PORT_3000 >> "$LOG_FILE" 2>&1
+    docker rm $CONTAINERS_PORT_3000 >> "$LOG_FILE" 2>&1
+fi
+
 docker compose -p album-manager down >> "$LOG_FILE" 2>&1
 docker compose -p host-project down >> "$LOG_FILE" 2>&1
+
+# Donem un moment perquè el port s'alliberi realment al host
+sleep 2
 
 echo "Construint i aixecant contenidors amb Docker Compose..." >> "$LOG_FILE"
 
