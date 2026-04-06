@@ -114,12 +114,12 @@ export class DeployController {
   @ApiOperation({ summary: 'Obté la versió actual del sistema' })
   getVersion() {
     const pkgPaths = [
-      join(process.cwd(), 'server', 'package.json'),
-      join(process.cwd(), 'package.json'),
-      join(__dirname, '..', '..', 'package.json'),
       '/app/album-manager/server/package.json',
       '/app/server/package.json',
       '/app/package.json',
+      join(process.cwd(), 'server', 'package.json'),
+      join(process.cwd(), 'package.json'),
+      join(__dirname, '..', '..', 'package.json'),
     ];
 
     let pkgPath: string | null = null;
