@@ -46,6 +46,13 @@ if [ -d ".git" ]; then
     echo "Actualitzant codi existent des de Git..." >> "$LOG_FILE"
     # Configurar directori segur per evitar error de 'dubious ownership'
     git config --global --add safe.directory "$PROJECT_DIR" >> "$LOG_FILE" 2>&1
+
+    # Intentar corregir permisos si s'executa com a root
+    if [ "$(whoami)" = "root" ]; then
+        echo "Usuari root detectat. Intentant corregir permisos de .git per al pull..." >> "$LOG_FILE"
+        chmod -R g+w .git >> "$LOG_FILE" 2>&1
+    fi
+
     # Usar git pull silenciosament per no bloquejar si hi ha problemes de credencials
     git pull origin main >> "$LOG_FILE" 2>&1
 else
