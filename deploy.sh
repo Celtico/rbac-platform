@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script de desplegament simplificat (v0.0.42)
+# Script de desplegament simplificat (v0.0.43)
 # Millorat per Junie per al servidor 192.168.1.55
 
 # 1. Determinar el directori del projecte i fitxer de log
@@ -20,7 +20,7 @@ LOG_FILE="$PROJECT_DIR/deploy.log"
 touch "$LOG_FILE" 2>/dev/null || LOG_FILE="/tmp/deploy.log"
 chmod 666 "$LOG_FILE" 2>/dev/null
 
-echo "--- Iniciant desplegament (v0.0.42): $(date) ---" > "$LOG_FILE"
+echo "--- Iniciant desplegament (v0.0.43): $(date) ---" > "$LOG_FILE"
 echo "Directori de treball: $PROJECT_DIR" >> "$LOG_FILE"
 echo "Fitxer de log: $LOG_FILE" >> "$LOG_FILE"
 
@@ -52,14 +52,14 @@ if [ -f "/.dockerenv" ] || ( [ -f "/proc/1/cgroup" ] && grep -q "docker" /proc/1
     # Important: especifiquem el fitxer docker-compose.yaml explícitament
     # Hem d'assegurar que el fitxer existeix i la ruta és la del host
     # Nota: Dins del contenidor 'docker:cli', el directori de treball ha d'estar ben establert
-    RESTART_CMD="sleep 2; docker compose -f $PROJECT_DIR/docker-compose.yaml up -d --force-recreate --remove-orphans >> $LOG_FILE 2>&1"
+    RESTART_CMD="sleep 2; docker compose -f /home/cel/album-manager/docker-compose.yaml up -d --force-recreate --remove-orphans >> /home/cel/album-manager/deploy.log 2>&1"
 
-    echo "Llançant album-deployer (v0.0.42) amb: $RESTART_CMD" >> "$LOG_FILE"
+    echo "Llançant album-deployer (v0.0.43) amb: $RESTART_CMD" >> "$LOG_FILE"
 
     docker run -d --rm \
         --name album-deployer-$(date +%s) \
         -v /var/run/docker.sock:/var/run/docker.sock \
-        -v "$PROJECT_DIR":"$PROJECT_DIR" \
+        -v /home/cel/album-manager:/home/cel/album-manager \
         docker:cli \
         sh -c "$RESTART_CMD" >> "$LOG_FILE" 2>&1
 
