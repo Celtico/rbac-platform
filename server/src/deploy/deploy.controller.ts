@@ -6,7 +6,7 @@ import {
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
-import { exec, execSync } from 'child_process';
+import { exec, execSync, spawn } from 'child_process';
 import { join } from 'path';
 import { existsSync, readFileSync } from 'fs';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -45,27 +45,21 @@ export class DeployController {
 
     this.logger.log(`Iniciant desplegament en segon pla: ${scriptPath}`);
 
-    // Executem en segon pla per evitar tallar la connexió abans de respondre
-    // i perquè el script pugui reiniciar el contenidor sense que el client vegi un error de xarxa.
+    // Executem en segon pla de forma totalment desvinculada (detached)
+    // perquè el script pugui reiniciar el contenidor sense que el procés pare el talli.
     const scriptDir = join(scriptPath, '..');
+
+    // Fem un timeout de 1s per permetre que la resposta HTTP s'enviï primer
     setTimeout(() => {
       this.logger.log(`Executant: bash ${scriptPath} des de ${scriptDir}`);
-      exec(
-        `bash ${scriptPath}`,
-        { cwd: scriptDir },
-        (error, stdout, stderr) => {
-          if (error) {
-            this.logger.error(
-              `Error en el desplegament (segon pla): ${error.message}`,
-            );
-            this.logger.error(`Stdout: ${stdout}`);
-            this.logger.error(`Stderr: ${stderr}`);
-            return;
-          }
-          this.logger.log(`Desplegament completat amb èxit.`);
-          this.logger.log(`Stdout: ${stdout}`);
-        },
-      );
+
+      const subprocess = spawn('bash', [scriptPath], {
+        cwd: scriptDir,
+        detached: true,
+        stdio: 'ignore', // Desvincular els descriptors de fitxers per evitar que el pare esperi
+      });
+
+      subprocess.unref(); // Permet que el pare acabi mentre el fill continua
     }, 1000);
 
     return {
