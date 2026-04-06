@@ -94,19 +94,26 @@ if [ "$IN_DOCKER" = true ]; then
     # Unifiquem build i up en un sol nohup per garantir que no es talli el flux entre comandes
     # Redirigim tota la sortida al log i usem '&' per desvincular el procés
     # Afegim el flag --detach explicitament al docker compose up
-    # Intentarem forçar l'ús de docker-compose-plugin de forma més atòmica
-    # L'estratègia definitiva per sobreviure al 137 en DooD:
-    # 1. Fer el build.
-    # 2. Programar el 'up' perquè s'executi DESPRÉS que aquest script hagi sortit.
-    # Usem 'nohup' combinat amb una espera que permeti que el pare mori abans que el fill faci el Recreate.
-    nohup bash -c "trap '' SIGTERM; \
-          docker version >> \"$LOG_FILE\" 2>&1; \
-          echo 'Iniciant build...' >> \"$LOG_FILE\" 2>&1; \
-          docker compose -p album-manager build --no-cache --pull && \
-          echo 'Build finalitzat. Programant up asíncron...' >> \"$LOG_FILE\" 2>&1; \
-          (sleep 5; echo 'Executant up ARA...' >> \"$LOG_FILE\" 2>&1; docker compose -p album-manager up -d --force-recreate --remove-orphans --timeout 0 >> \"$LOG_FILE\" 2>&1) & \
-          echo 'Script deploy.sh finalitzat (el up seguirà en 5s).' >> \"$LOG_FILE\" 2>&1; \
-          exit 0" </dev/null >> "$LOG_FILE" 2>&1 &
+    # Estratègia definitiva (v0.0.22):
+    # En lloc d'intentar sobreviure des de dins, usarem el propi motor de docker del host
+    # per llançar un contenidor temporal que serà qui farà el 'docker compose up' del projecte real.
+    # Això garanteix un context de cicle de vida totalment independent.
+    echo "Llançant contenidor 'deployer' temporal per finalitzar el desplegament..." >> "$LOG_FILE" 2>&1
+
+    # 1. Fem el build primer (això és segur des de dins)
+    docker compose -p album-manager build --no-cache --pull >> "$LOG_FILE" 2>&1
+
+    # 2. Llançem el 'up' des d'un contenidor efímer (docker-out-of-docker pur)
+    # Muntem el socket i el directori del projecte
+    docker run --rm \
+        -v /var/run/docker.sock:/var/run/docker.sock \
+        -v "$PROJECT_DIR":"$PROJECT_DIR" \
+        -w "$PROJECT_DIR" \
+        docker:latest \
+        sh -c "sleep 5; docker compose -p album-manager up -d --force-recreate --remove-orphans --timeout 0" &
+
+    echo "Contenidor 'deployer' llançat en segon pla. El projecte es reiniciarà en breu." >> "$LOG_FILE" 2>&1
+    exit 0
     DOCKER_PID=$!
     disown $DOCKER_PID
     echo "Docker Compose s'està executant en segon pla (PID: $DOCKER_PID) i desvinculat (disown)..." >> "$LOG_FILE"
