@@ -21,6 +21,10 @@ elif [ -d "/app/album-manager" ]; then
     cd /app/album-manager
     PROJECT_DIR="/app/album-manager"
     IN_DOCKER=true
+elif [ -d "/app/host-project" ]; then
+    cd /app/host-project
+    PROJECT_DIR="/app/host-project"
+    IN_DOCKER=true
 elif [ -d "/app" ]; then
     cd /app
     PROJECT_DIR="/app"
@@ -72,6 +76,10 @@ fi
 echo "Netejant orfes de 'host-project' i 'album-manager'..." >> "$LOG_FILE"
 docker compose -p host-project down --remove-orphans >> "$LOG_FILE" 2>&1
 docker compose -p album-manager down --remove-orphans >> "$LOG_FILE" 2>&1
+
+# Forçar eliminació de qualsevol contenidor que es digui host-project-app-1
+echo "Eliminant contenidors específics pel seu nom si encara existeixen..." >> "$LOG_FILE"
+docker rm -f host-project-app-1 album-manager-app-1 >> "$LOG_FILE" 2>&1 || true
 
 # Donem un moment perquè el port s'alliberi realment al host
 sleep 3
