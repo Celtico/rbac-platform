@@ -1,4 +1,4 @@
-import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
@@ -15,7 +15,6 @@ import { Role } from './roles/entities/role.entity';
 import { Permission } from './permissions/entities/permission.entity';
 import { Album } from './albums/entities/album.entity';
 import { SeedService } from './common/seed.service';
-import { SpaMiddleware } from './common/middleware/spa.middleware';
 
 @Module({
   imports: [
@@ -31,7 +30,7 @@ import { SpaMiddleware } from './common/middleware/spa.middleware';
     }),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', '..', 'client', 'dist'),
-      exclude: ['/api/(.*)', '/uploads/(.*)'],
+      exclude: ['/api*', '/uploads*'],
     }),
     UsersModule,
     RolesModule,
@@ -42,8 +41,4 @@ import { SpaMiddleware } from './common/middleware/spa.middleware';
   controllers: [AppController, DeployController],
   providers: [AppService, SeedService],
 })
-export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer.apply(SpaMiddleware).forRoutes('*');
-  }
-}
+export class AppModule {}
