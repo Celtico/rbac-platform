@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
@@ -15,6 +15,7 @@ import { Role } from './roles/entities/role.entity';
 import { Permission } from './permissions/entities/permission.entity';
 import { Album } from './albums/entities/album.entity';
 import { SeedService } from './common/seed.service';
+import { SpaMiddleware } from './common/middleware/spa.middleware';
 
 @Module({
   imports: [
@@ -41,4 +42,8 @@ import { SeedService } from './common/seed.service';
   controllers: [AppController, DeployController],
   providers: [AppService, SeedService],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(SpaMiddleware).exclude('/api*', '/uploads*').forRoutes('*');
+  }
+}
