@@ -77,10 +77,11 @@ export class DeployController {
   @ApiOperation({ summary: 'Obté els logs del darrer desplegament' })
   getLogs() {
     const pathsToTry = [
-      join(__dirname, '..', '..', 'deploy.log'),
       join(process.cwd(), 'deploy.log'),
-      join(process.cwd(), '..', 'deploy.log'),
+      '/app/album-manager/deploy.log',
       '/app/deploy.log',
+      join(__dirname, '..', '..', 'deploy.log'),
+      join(process.cwd(), '..', 'deploy.log'),
       '/tmp/deploy.log',
     ];
 
