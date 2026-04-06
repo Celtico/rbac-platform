@@ -154,16 +154,30 @@ export class DeployController {
 
     // Intentar obtenir el darrer commit si git està disponible
     let lastCommit = 'N/A';
-    try {
-      lastCommit = execSync('git log -1 --format="%h - %s"', {
-        encoding: 'utf8',
-      }).trim();
-    } catch (e) {
-      this.logger.warn(
-        `No s'ha pogut obtenir el darrer commit de Git: ${
-          e instanceof Error ? e.message : String(e)
-        }`,
-      );
+    const gitDirs = [
+      process.cwd(),
+      join(process.cwd(), '..'),
+      '/app/album-manager',
+      '/app/host-project',
+      '/app',
+    ];
+
+    for (const dir of gitDirs) {
+      if (existsSync(join(dir, '.git'))) {
+        try {
+          lastCommit = execSync('git log -1 --format="%h - %s"', {
+            encoding: 'utf8',
+            cwd: dir,
+          }).trim();
+          break;
+        } catch (e) {
+          this.logger.warn(
+            `No s'ha pogut obtenir el darrer commit de Git a ${dir}: ${
+              e instanceof Error ? e.message : String(e)
+            }`,
+          );
+        }
+      }
     }
 
     return {

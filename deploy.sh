@@ -51,6 +51,8 @@ if [ -d ".git" ]; then
     if [ "$(whoami)" = "root" ]; then
         echo "Usuari root detectat. Intentant corregir permisos de .git per al pull..." >> "$LOG_FILE"
         chmod -R g+w .git >> "$LOG_FILE" 2>&1
+        # També ens assegurem que el directori sigui considerat segur per git
+        git config --global --add safe.directory "*" >> "$LOG_FILE" 2>&1
     fi
 
     # Usar git pull silenciosament per no bloquejar si hi ha problemes de credencials
