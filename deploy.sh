@@ -94,18 +94,18 @@ if [ "$IN_DOCKER" = true ]; then
     # Unifiquem build i up en un sol nohup per garantir que no es talli el flux entre comandes
     # Redirigim tota la sortida al log i usem '&' per desvincular el procés
     # Afegim el flag --detach explicitament al docker compose up
-    # Intentarem fer que el docker compose up s'executi totalment fora del context del pare
-    # Redirigint el grup de control si és possible
+    # Intentarem forçar l'ús de docker-compose-plugin de forma més atòmica
+    # I usem 'nohup' per tota la seqüència però sense esperar que el 'up' acabi si és ell mateix qui es mata
+    # Una altra opció és usar 'at' o un sistema de cues, però en Docker sovint no hi són.
+    # Provarem de delegar el 'up' a un procés que no depengui del TTY ni de la sessió.
     nohup bash -c "trap '' SIGTERM; \
           docker version >> \"$LOG_FILE\" 2>&1; \
           echo 'Iniciant build...' >> \"$LOG_FILE\" 2>&1; \
           docker compose -p album-manager build --no-cache --pull && \
-          echo 'Iniciant up...' >> \"$LOG_FILE\" 2>&1; \
-          (docker compose -p album-manager up -d --force-recreate --remove-orphans --timeout 0 >> \"$LOG_FILE\" 2>&1 &) && \
-          echo 'Comanda up llançada en subshell.' >> \"$LOG_FILE\" 2>&1; \
-          sleep 5; \
-          docker ps --filter 'name=album-manager' >> \"$LOG_FILE\" 2>&1; \
-          echo '### Procés de desplegament finalitzat a les \$(date)! ###' >> \"$LOG_FILE\"" </dev/null >> "$LOG_FILE" 2>&1 &
+          echo 'Iniciant up (bg)...' >> \"$LOG_FILE\" 2>&1; \
+          (sleep 2; docker compose -p album-manager up -d --force-recreate --remove-orphans --timeout 0 >> \"$LOG_FILE\" 2>&1) & \
+          echo 'Comanda up enviada al background del subshell.' >> \"$LOG_FILE\" 2>&1; \
+          exit 0" </dev/null >> "$LOG_FILE" 2>&1 &
     DOCKER_PID=$!
     disown $DOCKER_PID
     echo "Docker Compose s'està executant en segon pla (PID: $DOCKER_PID) i desvinculat (disown)..." >> "$LOG_FILE"
