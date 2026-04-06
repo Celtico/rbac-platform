@@ -41,4 +41,12 @@ import { SeedService } from './common/seed.service';
   controllers: [AppController, DeployController],
   providers: [AppService, SeedService],
 })
-export class AppModule {}
+export class AppModule {
+  constructor() {
+    // Imprime esto en tu consola para verificar si la ruta es real
+    console.log(
+      'Buscando React en:',
+      join(process.cwd(), '..', 'client', 'dist'),
+    );
+  }
+}
