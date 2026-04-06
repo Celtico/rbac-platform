@@ -95,16 +95,17 @@ if [ "$IN_DOCKER" = true ]; then
     # Redirigim tota la sortida al log i usem '&' per desvincular el procés
     # Afegim el flag --detach explicitament al docker compose up
     # Intentarem forçar l'ús de docker-compose-plugin de forma més atòmica
-    # I usem 'nohup' per tota la seqüència però sense esperar que el 'up' acabi si és ell mateix qui es mata
-    # Una altra opció és usar 'at' o un sistema de cues, però en Docker sovint no hi són.
-    # Provarem de delegar el 'up' a un procés que no depengui del TTY ni de la sessió.
+    # L'estratègia definitiva per sobreviure al 137 en DooD:
+    # 1. Fer el build.
+    # 2. Programar el 'up' perquè s'executi DESPRÉS que aquest script hagi sortit.
+    # Usem 'nohup' combinat amb una espera que permeti que el pare mori abans que el fill faci el Recreate.
     nohup bash -c "trap '' SIGTERM; \
           docker version >> \"$LOG_FILE\" 2>&1; \
           echo 'Iniciant build...' >> \"$LOG_FILE\" 2>&1; \
           docker compose -p album-manager build --no-cache --pull && \
-          echo 'Iniciant up (bg)...' >> \"$LOG_FILE\" 2>&1; \
-          (sleep 2; docker compose -p album-manager up -d --force-recreate --remove-orphans --timeout 0 >> \"$LOG_FILE\" 2>&1) & \
-          echo 'Comanda up enviada al background del subshell.' >> \"$LOG_FILE\" 2>&1; \
+          echo 'Build finalitzat. Programant up asíncron...' >> \"$LOG_FILE\" 2>&1; \
+          (sleep 5; echo 'Executant up ARA...' >> \"$LOG_FILE\" 2>&1; docker compose -p album-manager up -d --force-recreate --remove-orphans --timeout 0 >> \"$LOG_FILE\" 2>&1) & \
+          echo 'Script deploy.sh finalitzat (el up seguirà en 5s).' >> \"$LOG_FILE\" 2>&1; \
           exit 0" </dev/null >> "$LOG_FILE" 2>&1 &
     DOCKER_PID=$!
     disown $DOCKER_PID
