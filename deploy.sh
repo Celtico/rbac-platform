@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script de desplegament simplificat (v0.0.41)
+# Script de desplegament simplificat (v0.0.42)
 # Millorat per Junie per al servidor 192.168.1.55
 
 # 1. Determinar el directori del projecte i fitxer de log
@@ -20,7 +20,7 @@ LOG_FILE="$PROJECT_DIR/deploy.log"
 touch "$LOG_FILE" 2>/dev/null || LOG_FILE="/tmp/deploy.log"
 chmod 666 "$LOG_FILE" 2>/dev/null
 
-echo "--- Iniciant desplegament (v0.0.41): $(date) ---" > "$LOG_FILE"
+echo "--- Iniciant desplegament (v0.0.42): $(date) ---" > "$LOG_FILE"
 echo "Directori de treball: $PROJECT_DIR" >> "$LOG_FILE"
 echo "Fitxer de log: $LOG_FILE" >> "$LOG_FILE"
 
@@ -51,16 +51,15 @@ if [ -f "/.dockerenv" ] || ( [ -f "/proc/1/cgroup" ] && grep -q "docker" /proc/1
     # Comanda per reiniciar tot el projecte de forma neta
     # Important: especifiquem el fitxer docker-compose.yaml explícitament
     # Hem d'assegurar que el fitxer existeix i la ruta és la del host
-    COMPOSE_FILE="$PROJECT_DIR/docker-compose.yaml"
-    RESTART_CMD="sleep 2; cd $PROJECT_DIR && docker compose -f $COMPOSE_FILE up -d --force-recreate --remove-orphans >> $LOG_FILE 2>&1"
+    # Nota: Dins del contenidor 'docker:cli', el directori de treball ha d'estar ben establert
+    RESTART_CMD="sleep 2; docker compose -f $PROJECT_DIR/docker-compose.yaml up -d --force-recreate --remove-orphans >> $LOG_FILE 2>&1"
 
-    echo "Llançant album-deployer amb: $RESTART_CMD" >> "$LOG_FILE"
+    echo "Llançant album-deployer (v0.0.42) amb: $RESTART_CMD" >> "$LOG_FILE"
 
     docker run -d --rm \
         --name album-deployer-$(date +%s) \
         -v /var/run/docker.sock:/var/run/docker.sock \
         -v "$PROJECT_DIR":"$PROJECT_DIR" \
-        -w "$PROJECT_DIR" \
         docker:cli \
         sh -c "$RESTART_CMD" >> "$LOG_FILE" 2>&1
 
