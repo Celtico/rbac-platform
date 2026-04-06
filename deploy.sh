@@ -43,10 +43,11 @@ if [ -f "/.dockerenv" ] || ( [ -f "/proc/1/cgroup" ] && grep -q "docker" /proc/1
 
     # Llançem el 'up' des d'un contenidor efímer de docker:cli
     # Useu nohup i & per assegurar que sobrevisqui a la mort del contenidor actual
-    echo "Executant docker compose up en segon pla..." >> "$LOG_FILE"
+    echo "Executant docker compose up en segon pla (container: album-deployer)..." >> "$LOG_FILE"
 
     # Comanda per reiniciar tot el projecte de forma neta
-    RESTART_CMD="sleep 2; docker compose up -d --force-recreate --remove-orphans"
+    # Important: especifiquem el fitxer docker-compose.yaml explícitament
+    RESTART_CMD="sleep 2; docker compose -f $PROJECT_DIR/docker-compose.yaml up -d --force-recreate --remove-orphans"
 
     docker run -d --rm \
         --name album-deployer-$(date +%s) \
