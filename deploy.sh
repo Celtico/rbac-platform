@@ -86,7 +86,9 @@ if [ "$IN_DOCKER" = true ]; then
     # Afegim --no-cache per assegurar que els canvis en package.json es reflecteixen
     # Usem --pull per assegurar imatges base fresques
     # Unifiquem build i up en un sol nohup per garantir que no es talli el flux entre comandes
-    nohup bash -c "docker compose -p album-manager build --no-cache --pull && \
+    # Redirigim tota la sortida al log i usem '&' per desvincular el procés
+    nohup bash -c "trap '' SIGTERM; \
+          docker compose -p album-manager build --no-cache --pull && \
           docker compose -p album-manager up -d --force-recreate --remove-orphans --timeout 0" >> "$LOG_FILE" 2>&1 &
     DOCKER_PID=$!
     echo "Docker Compose s'està executant en segon pla (PID: $DOCKER_PID)..." >> "$LOG_FILE"
