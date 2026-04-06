@@ -93,12 +93,16 @@ if [ "$IN_DOCKER" = true ]; then
     # Usem --pull per assegurar imatges base fresques
     # Unifiquem build i up en un sol nohup per garantir que no es talli el flux entre comandes
     # Redirigim tota la sortida al log i usem '&' per desvincular el procés
+    # Afegim el flag --detach explicitament al docker compose up
     nohup bash -c "trap '' SIGTERM; \
           docker version >> \"$LOG_FILE\" 2>&1; \
+          echo 'Iniciant build...' >> \"$LOG_FILE\" 2>&1; \
           docker compose -p album-manager build --no-cache --pull && \
+          echo 'Iniciant up...' >> \"$LOG_FILE\" 2>&1; \
           docker compose -p album-manager up -d --force-recreate --remove-orphans --timeout 0 && \
+          echo 'Up completat!' >> \"$LOG_FILE\" 2>&1; \
           sleep 2 && \
-          docker ps --filter 'name=album-manager' >> \"$LOG_FILE\" 2>&1" < /dev/null > "$LOG_FILE" 2>&1 &
+          docker ps --filter 'name=album-manager' >> \"$LOG_FILE\" 2>&1" </dev/null >> "$LOG_FILE" 2>&1 &
     DOCKER_PID=$!
     disown $DOCKER_PID
     echo "Docker Compose s'està executant en segon pla (PID: $DOCKER_PID) i desvinculat (disown)..." >> "$LOG_FILE"
