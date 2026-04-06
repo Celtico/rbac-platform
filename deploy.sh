@@ -98,9 +98,10 @@ if [ "$IN_DOCKER" = true ]; then
           docker compose -p album-manager build --no-cache --pull && \
           docker compose -p album-manager up -d --force-recreate --remove-orphans --timeout 0 && \
           sleep 2 && \
-          docker ps --filter 'name=album-manager' >> \"$LOG_FILE\" 2>&1" >> "$LOG_FILE" 2>&1 &
+          docker ps --filter 'name=album-manager' >> \"$LOG_FILE\" 2>&1" < /dev/null > "$LOG_FILE" 2>&1 &
     DOCKER_PID=$!
-    echo "Docker Compose s'està executant en segon pla (PID: $DOCKER_PID)..." >> "$LOG_FILE"
+    disown $DOCKER_PID
+    echo "Docker Compose s'està executant en segon pla (PID: $DOCKER_PID) i desvinculat (disown)..." >> "$LOG_FILE"
     echo "El contenidor es reiniciarà en breu." >> "$LOG_FILE"
 else
     echo "Executant directament al Host." >> "$LOG_FILE"
