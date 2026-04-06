@@ -109,13 +109,15 @@ if [ "$IN_DOCKER" = true ]; then
     # Usem --init per gestionar senyals correctament
     # Usem --pull always per al deployer
     echo "Executant docker compose up des del contenidor 'deployer'..." >> "$LOG_FILE" 2>&1
+    # Usem un contenidor de debian/alpine que ja tingui docker instal·lat per estalviar temps
+    # I no fem sleep tan llarg si no és necessari, però prou per deixar que el pare s'aturi
     docker run -d --rm \
         --name album-manager-deployer-$(date +%s) \
         -v /var/run/docker.sock:/var/run/docker.sock \
         -v "$PROJECT_DIR":"$PROJECT_DIR" \
         -w "$PROJECT_DIR" \
-        docker:latest \
-        sh -c "sleep 10; docker compose -p album-manager up -d --force-recreate --remove-orphans --timeout 0"
+        docker:cli \
+        sh -c "sleep 5; docker compose -p album-manager stop app; docker compose -p album-manager up -d --force-recreate --remove-orphans --timeout 0"
 
     echo "Contenidor 'deployer' llançat en segon pla. El projecte es reiniciarà en breu." >> "$LOG_FILE" 2>&1
     exit 0
