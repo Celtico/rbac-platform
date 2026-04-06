@@ -33,7 +33,7 @@ describe("IA Verification Test - Junie (Deploy System)", () => {
     });
   });
 
-  it("should verify current system version", () => {
+  it("should verify current system version is 0.0.12", () => {
     // 2. Comprovar la versió actual i el darrer commit
     cy.request({
       method: "GET",
@@ -43,7 +43,7 @@ describe("IA Verification Test - Junie (Deploy System)", () => {
       },
     }).then((response) => {
       expect(response.status).to.eq(200);
-      expect(response.body).to.have.property("version");
+      expect(response.body.version).to.eq("0.0.12");
       expect(response.body).to.have.property("lastCommit");
       cy.log(`Versió actual: ${response.body.version}`);
       cy.log(`Darrer commit: ${response.body.lastCommit}`);

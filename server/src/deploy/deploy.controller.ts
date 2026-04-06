@@ -6,7 +6,7 @@ import {
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
-import { exec, execSync, spawn } from 'child_process';
+import { execSync, spawn } from 'child_process';
 import { join } from 'path';
 import { existsSync, readFileSync } from 'fs';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -56,11 +56,15 @@ export class DeployController {
       const subprocess = spawn('bash', [scriptPath], {
         cwd: scriptDir,
         detached: true,
-        stdio: 'ignore', // Desvincular els descriptors de fitxers per evitar que el pare esperi
+        stdio: 'ignore',
       });
 
-      subprocess.unref(); // Permet que el pare acabi mentre el fill continua
-    }, 1000);
+      // V0.0.35: Mètode "fire and forget" més primitiu
+      // Ens assegurem que el procés pare no esperi gens ni guardi referències
+      subprocess.unref();
+
+      // Forcem la sortida del procés fill del grup de processos si cal (opcional en detached)
+    }, 500);
 
     return {
       message:
