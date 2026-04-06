@@ -94,15 +94,18 @@ if [ "$IN_DOCKER" = true ]; then
     # Unifiquem build i up en un sol nohup per garantir que no es talli el flux entre comandes
     # Redirigim tota la sortida al log i usem '&' per desvincular el procés
     # Afegim el flag --detach explicitament al docker compose up
+    # Intentarem fer que el docker compose up s'executi totalment fora del context del pare
+    # Redirigint el grup de control si és possible
     nohup bash -c "trap '' SIGTERM; \
           docker version >> \"$LOG_FILE\" 2>&1; \
           echo 'Iniciant build...' >> \"$LOG_FILE\" 2>&1; \
           docker compose -p album-manager build --no-cache --pull && \
           echo 'Iniciant up...' >> \"$LOG_FILE\" 2>&1; \
-          docker compose -p album-manager up -d --force-recreate --remove-orphans --timeout 0 && \
-          echo 'Up completat!' >> \"$LOG_FILE\" 2>&1; \
-          sleep 2 && \
-          docker ps --filter 'name=album-manager' >> \"$LOG_FILE\" 2>&1" </dev/null >> "$LOG_FILE" 2>&1 &
+          (docker compose -p album-manager up -d --force-recreate --remove-orphans --timeout 0 >> \"$LOG_FILE\" 2>&1 &) && \
+          echo 'Comanda up llançada en subshell.' >> \"$LOG_FILE\" 2>&1; \
+          sleep 5; \
+          docker ps --filter 'name=album-manager' >> \"$LOG_FILE\" 2>&1; \
+          echo '### Procés de desplegament finalitzat a les \$(date)! ###' >> \"$LOG_FILE\"" </dev/null >> "$LOG_FILE" 2>&1 &
     DOCKER_PID=$!
     disown $DOCKER_PID
     echo "Docker Compose s'està executant en segon pla (PID: $DOCKER_PID) i desvinculat (disown)..." >> "$LOG_FILE"
