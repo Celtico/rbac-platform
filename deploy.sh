@@ -69,29 +69,8 @@ fi
 
 # Iniciar amb Docker Compose (usant v2 'docker compose')
 # Forcem el nom del projecte 'album-manager' per evitar conflictes si el directori canvia de nom.
-# També fem un 'down' previ per assegurar que el port 3000 s'allibera completament.
-echo "Aturant contenidors antics del projecte 'album-manager' i 'host-project' (si n'hi ha)..." >> "$LOG_FILE"
-
-# Intentem aturar qualsevol contenidor que estigui usant el port 3000 directament
-echo "Buscant contenidors que usen el port 3000..." >> "$LOG_FILE"
-CONTAINERS_PORT_3000=$(docker ps --filter "publish=3000" --format "{{.ID}}" 2>/dev/null)
-if [ ! -z "$CONTAINERS_PORT_3000" ]; then
-    echo "Aturant contenidors que usen el port 3000: $CONTAINERS_PORT_3000" >> "$LOG_FILE"
-    docker stop $CONTAINERS_PORT_3000 >> "$LOG_FILE" 2>&1
-    docker rm -f $CONTAINERS_PORT_3000 >> "$LOG_FILE" 2>&1
-fi
-
-# Netegem específicament l'antic projecte 'host-project' per evitar que 'recreate' s'equivoqui de nom
-echo "Netejant orfes de 'host-project' i 'album-manager'..." >> "$LOG_FILE"
-docker compose -p host-project down --remove-orphans >> "$LOG_FILE" 2>&1
-docker compose -p album-manager down --remove-orphans >> "$LOG_FILE" 2>&1
-
-# Forçar eliminació de qualsevol contenidor que es digui host-project-app-1
-echo "Eliminant contenidors específics pel seu nom si encara existeixen..." >> "$LOG_FILE"
-docker rm -f host-project-app-1 album-manager-app-1 >> "$LOG_FILE" 2>&1 || true
-
-# Donem un moment perquè el port s'alliberi realment al host
-sleep 3
+# NO fem 'down' ni 'rm' per evitar que el contenidor pare es tanqui prematurament.
+# La comanda 'up --force-recreate' s'encarregarà de reiniciar el contenidor de forma segura.
 
 echo "Construint i aixecant contenidors amb Docker Compose..." >> "$LOG_FILE"
 
