@@ -65,14 +65,16 @@ CONTAINERS_PORT_3000=$(docker ps --filter "publish=3000" --format "{{.ID}}" 2>/d
 if [ ! -z "$CONTAINERS_PORT_3000" ]; then
     echo "Aturant contenidors que usen el port 3000: $CONTAINERS_PORT_3000" >> "$LOG_FILE"
     docker stop $CONTAINERS_PORT_3000 >> "$LOG_FILE" 2>&1
-    docker rm $CONTAINERS_PORT_3000 >> "$LOG_FILE" 2>&1
+    docker rm -f $CONTAINERS_PORT_3000 >> "$LOG_FILE" 2>&1
 fi
 
-docker compose -p album-manager down >> "$LOG_FILE" 2>&1
-docker compose -p host-project down >> "$LOG_FILE" 2>&1
+# Netegem específicament l'antic projecte 'host-project' per evitar que 'recreate' s'equivoqui de nom
+echo "Netejant orfes de 'host-project' i 'album-manager'..." >> "$LOG_FILE"
+docker compose -p host-project down --remove-orphans >> "$LOG_FILE" 2>&1
+docker compose -p album-manager down --remove-orphans >> "$LOG_FILE" 2>&1
 
 # Donem un moment perquè el port s'alliberi realment al host
-sleep 2
+sleep 3
 
 echo "Construint i aixecant contenidors amb Docker Compose..." >> "$LOG_FILE"
 
