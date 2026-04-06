@@ -105,12 +105,17 @@ if [ "$IN_DOCKER" = true ]; then
 
     # 2. Llançem el 'up' des d'un contenidor efímer (docker-out-of-docker pur)
     # Muntem el socket i el directori del projecte
-    docker run --rm \
+    # Usem --name per evitar conflictes si el deployer anterior encara existeix
+    # Usem --init per gestionar senyals correctament
+    # Usem --pull always per al deployer
+    echo "Executant docker compose up des del contenidor 'deployer'..." >> "$LOG_FILE" 2>&1
+    docker run -d --rm \
+        --name album-manager-deployer-$(date +%s) \
         -v /var/run/docker.sock:/var/run/docker.sock \
         -v "$PROJECT_DIR":"$PROJECT_DIR" \
         -w "$PROJECT_DIR" \
         docker:latest \
-        sh -c "sleep 5; docker compose -p album-manager up -d --force-recreate --remove-orphans --timeout 0" &
+        sh -c "sleep 10; docker compose -p album-manager up -d --force-recreate --remove-orphans --timeout 0"
 
     echo "Contenidor 'deployer' llançat en segon pla. El projecte es reiniciarà en breu." >> "$LOG_FILE" 2>&1
     exit 0
