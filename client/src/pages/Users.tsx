@@ -2,11 +2,28 @@ import React, { useEffect, useState } from "react";
 import api from "../api";
 import { useAuth } from "../context/AuthContext";
 import { Plus, Edit2, Trash2 } from "lucide-react";
+import {
+  Box,
+  Button,
+  Flex,
+  Heading,
+  IconButton,
+  Input,
+  Stack,
+  Table,
+  Badge,
+  Portal,
+  HStack,
+  Field,
+  Text,
+  Checkbox,
+  VStack,
+} from "@chakra-ui/react";
 
 interface User {
   id: number;
   username: string;
-  roles: any[];
+  roles: { id: number; name: string }[];
 }
 
 interface Role {
@@ -61,81 +78,98 @@ const UsersPage: React.FC = () => {
   };
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold dark:text-white transition-colors">
-          Users Management
-        </h1>
+    <Box>
+      <Flex justify="space-between" align="center" mb="6">
+        <Heading size="lg">Users Management</Heading>
         {hasPermission("manage:users") && (
-          <button
+          <Button
+            colorPalette="green"
             onClick={() =>
               setEditing({ username: "", password: "", roleIds: [] })
             }
-            className="bg-green-500 text-white px-4 py-2 rounded flex items-center hover:bg-green-600 transition shadow-sm"
           >
-            <Plus className="w-4 h-4 mr-2" /> Add User
-          </button>
+            <Plus size={16} style={{ marginRight: "8px" }} /> Add User
+          </Button>
         )}
-      </div>
+      </Flex>
 
       {editing && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <form
-            onSubmit={handleSubmit}
-            className="bg-white dark:bg-gray-800 p-6 rounded shadow-lg w-full max-w-md transition-colors"
+        <Portal>
+          <Box
+            position="fixed"
+            top="0"
+            left="0"
+            w="full"
+            h="full"
+            bg="blackAlpha.600"
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            p="4"
+            zIndex="1000"
           >
-            <h2 className="text-xl font-bold mb-4 dark:text-white">
-              {editing.id ? "Edit" : "Add"} User
-            </h2>
-            <div className="space-y-4">
-              <input
-                className="w-full p-2 border dark:border-gray-700 rounded dark:bg-gray-900 dark:text-white"
-                placeholder="Username"
-                value={editing.username}
-                onChange={(e) =>
-                  setEditing({ ...editing, username: e.target.value })
-                }
-                required
-              />
-              {!editing.id && (
-                <input
-                  type="password"
-                  className="w-full p-2 border dark:border-gray-700 rounded dark:bg-gray-900 dark:text-white"
-                  placeholder="Password"
-                  value={editing.password}
-                  onChange={(e) =>
-                    setEditing({ ...editing, password: e.target.value })
-                  }
-                  required
-                />
-              )}
-              {editing.id && (
-                <input
-                  type="password"
-                  className="w-full p-2 border dark:border-gray-700 rounded dark:bg-gray-900 dark:text-white"
-                  placeholder="New Password (optional)"
-                  value={editing.password || ""}
-                  onChange={(e) =>
-                    setEditing({ ...editing, password: e.target.value })
-                  }
-                />
-              )}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Roles
-                </label>
-                <div className="space-y-1 max-h-32 overflow-y-auto border dark:border-gray-700 p-2 rounded dark:bg-gray-900">
-                  {roles.map((role) => (
-                    <label
-                      key={role.id}
-                      className="flex items-center dark:text-gray-300"
-                    >
-                      <input
-                        type="checkbox"
+            <Box
+              as="form"
+              onSubmit={handleSubmit}
+              bg="bg.panel"
+              p="6"
+              rounded="md"
+              shadow="lg"
+              w="full"
+              maxW="md"
+            >
+              <Heading size="md" mb="4">
+                {editing.id ? "Edit" : "Add"} User
+              </Heading>
+              <VStack gap="4" align="stretch">
+                <Field.Root>
+                  <Field.Label>Username</Field.Label>
+                  <Input
+                    placeholder="Username"
+                    value={editing.username}
+                    onChange={(e) =>
+                      setEditing({ ...editing, username: e.target.value })
+                    }
+                    required
+                  />
+                </Field.Root>
+
+                <Field.Root>
+                  <Field.Label>
+                    {editing.id ? "New Password (optional)" : "Password"}
+                  </Field.Label>
+                  <Input
+                    type="password"
+                    placeholder={
+                      editing.id ? "Leave blank to keep current" : "Password"
+                    }
+                    value={editing.password || ""}
+                    onChange={(e) =>
+                      setEditing({ ...editing, password: e.target.value })
+                    }
+                    required={!editing.id}
+                  />
+                </Field.Root>
+
+                <Box>
+                  <Text fontWeight="medium" mb="2" fontSize="sm">
+                    Roles
+                  </Text>
+                  <Stack
+                    gap="2"
+                    maxH="40"
+                    overflowY="auto"
+                    p="2"
+                    borderWidth="1px"
+                    rounded="md"
+                  >
+                    {roles.map((role) => (
+                      <Checkbox.Root
+                        key={role.id}
                         checked={editing.roleIds?.includes(role.id)}
-                        onChange={(e) => {
+                        onCheckedChange={(details) => {
                           const ids = editing.roleIds || [];
-                          if (e.target.checked) {
+                          if (details.checked) {
                             setEditing({
                               ...editing,
                               roleIds: [...ids, role.id],
@@ -149,93 +183,96 @@ const UsersPage: React.FC = () => {
                             });
                           }
                         }}
-                        className="mr-2"
-                      />
-                      {role.name}
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <div className="flex justify-end mt-6 space-x-2">
-              <button
-                type="button"
-                onClick={() => setEditing(null)}
-                className="px-4 py-2 text-gray-600 dark:text-gray-400"
-              >
-                Cancel
-              </button>
-              <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition">
-                Save
-              </button>
-            </div>
-          </form>
-        </div>
+                      >
+                        <Checkbox.HiddenInput />
+                        <Checkbox.Control>
+                          <Checkbox.Indicator />
+                        </Checkbox.Control>
+                        <Checkbox.Label fontSize="sm">
+                          {role.name}
+                        </Checkbox.Label>
+                      </Checkbox.Root>
+                    ))}
+                  </Stack>
+                </Box>
+              </VStack>
+
+              <Flex justify="flex-end" mt="6" gap="2">
+                <Button variant="ghost" onClick={() => setEditing(null)}>
+                  Cancel
+                </Button>
+                <Button type="submit" colorPalette="blue">
+                  Save
+                </Button>
+              </Flex>
+            </Box>
+          </Box>
+        </Portal>
       )}
 
-      <div className="bg-white dark:bg-gray-800 rounded shadow overflow-hidden transition-colors">
-        <table className="w-full">
-          <thead className="bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                Username
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                Roles
-              </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-            {users.map((user) => (
-              <tr
-                key={user.id}
-                className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-              >
-                <td className="px-6 py-4 dark:text-gray-300">
-                  {user.username}
-                </td>
-                <td className="px-6 py-4">
-                  {user.roles.map((r) => (
-                    <span
-                      key={r.id}
-                      className="inline-block bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 text-xs px-2 py-1 rounded mr-1"
-                    >
-                      {r.name}
-                    </span>
-                  ))}
-                </td>
-                <td className="px-6 py-4 text-right space-x-2">
+      <Box
+        bg="bg.panel"
+        rounded="md"
+        shadow="sm"
+        overflow="hidden"
+        borderWidth="1px"
+      >
+        <Table.Root>
+          <Table.Header bg="bg.muted">
+            <Table.Row>
+              <Table.ColumnHeader>Username</Table.ColumnHeader>
+              <Table.ColumnHeader>Roles</Table.ColumnHeader>
+              <Table.ColumnHeader textAlign="right">Actions</Table.ColumnHeader>
+            </Table.Row>
+          </Table.Header>
+          <Table.Body>
+            {users.map((u) => (
+              <Table.Row key={u.id} _hover={{ bg: "bg.muted/50" }}>
+                <Table.Cell fontWeight="medium">{u.username}</Table.Cell>
+                <Table.Cell>
+                  <Flex gap="1" flexWrap="wrap">
+                    {u.roles.map((r) => (
+                      <Badge key={r.id} colorPalette="blue" variant="subtle">
+                        {r.name}
+                      </Badge>
+                    ))}
+                  </Flex>
+                </Table.Cell>
+                <Table.Cell textAlign="right">
                   {hasPermission("manage:users") && (
-                    <>
-                      <button
+                    <HStack gap="2" justify="flex-end">
+                      <IconButton
+                        aria-label="Edit user"
+                        variant="ghost"
+                        colorPalette="blue"
+                        size="sm"
                         onClick={() =>
                           setEditing({
-                            ...user,
-                            roleIds: user.roles.map((r) => r.id),
+                            ...u,
+                            roleIds: u.roles.map((r: any) => r.id),
                           })
                         }
-                        className="text-blue-500 hover:text-blue-700 dark:hover:text-blue-400"
                       >
-                        <Edit2 className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(user.id)}
-                        className="text-red-500 hover:text-red-700 dark:hover:text-red-400"
+                        <Edit2 size={14} />
+                      </IconButton>
+                      <IconButton
+                        aria-label="Delete user"
+                        variant="ghost"
+                        colorPalette="red"
+                        size="sm"
+                        onClick={() => handleDelete(u.id)}
                       >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </>
+                        <Trash2 size={14} />
+                      </IconButton>
+                    </HStack>
                   )}
-                </td>
-              </tr>
+                </Table.Cell>
+              </Table.Row>
             ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+          </Table.Body>
+        </Table.Root>
+      </Box>
+    </Box>
   );
 };
 

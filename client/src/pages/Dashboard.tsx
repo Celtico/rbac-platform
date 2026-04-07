@@ -1,62 +1,88 @@
 import React from "react";
 import { useAuth } from "../context/AuthContext";
 import { Disc, Users, ShieldCheck, Lock } from "lucide-react";
+import { Box, Flex, Grid, Heading, Text, Stack } from "@chakra-ui/react";
+import type { LucideIcon } from "lucide-react";
+
+interface StatCardProps {
+  icon: LucideIcon;
+  label: string;
+  value: string | number;
+  color: string;
+}
+
+const StatCard = ({ icon: Icon, label, value, color }: StatCardProps) => (
+  <Box
+    bg="bg.panel"
+    p="6"
+    rounded="md"
+    shadow="sm"
+    borderLeftWidth="4px"
+    borderLeftColor={color}
+  >
+    <Flex align="center">
+      <Box color={color} mr="4">
+        <Icon size={48} />
+      </Box>
+      <Stack gap="0">
+        <Text
+          fontSize="xs"
+          fontWeight="bold"
+          color="fg.muted"
+          textTransform="uppercase"
+        >
+          {label}
+        </Text>
+        <Text fontSize="xl" fontWeight="bold">
+          {value}
+        </Text>
+      </Stack>
+    </Flex>
+  </Box>
+);
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold mb-8 dark:text-white transition-colors">
+    <Box>
+      <Heading size="2xl" mb="8">
         Dashboard Overview
-      </h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-custom shadow flex items-center border-l-4 border-primary transition-colors">
-          <Disc className="w-12 h-12 text-primary mr-4" />
-          <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400 uppercase font-bold">
-              Total Albums
-            </p>
-            <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">
-              Available
-            </p>
-          </div>
-        </div>
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-custom shadow flex items-center border-l-4 border-secondary transition-colors">
-          <Users className="w-12 h-12 text-secondary mr-4" />
-          <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400 uppercase font-bold">
-              Your Roles
-            </p>
-            <p className="text-lg font-bold text-gray-800 dark:text-gray-100">
-              {user?.roles.join(", ") || "None"}
-            </p>
-          </div>
-        </div>
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-custom shadow flex items-center border-l-4 border-accent transition-colors">
-          <ShieldCheck className="w-12 h-12 text-accent mr-4" />
-          <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400 uppercase font-bold">
-              Permissions
-            </p>
-            <p className="text-lg font-bold text-gray-800 dark:text-gray-100">
-              {user?.permissions.length || 0} active
-            </p>
-          </div>
-        </div>
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-custom shadow flex items-center border-l-4 border-gray-400 dark:border-gray-500 transition-colors">
-          <Lock className="w-12 h-12 text-gray-400 dark:text-gray-500 mr-4" />
-          <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400 uppercase font-bold">
-              Security
-            </p>
-            <p className="text-lg font-bold text-gray-800 dark:text-gray-100">
-              RBAC Enabled
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
+      </Heading>
+      <Grid
+        templateColumns={{
+          base: "1fr",
+          md: "repeat(2, 1fr)",
+          lg: "repeat(4, 1fr)",
+        }}
+        gap="6"
+      >
+        <StatCard
+          icon={Disc}
+          label="Total Albums"
+          value="Available"
+          color="blue.500"
+        />
+        <StatCard
+          icon={Users}
+          label="Your Roles"
+          value={user?.roles.join(", ") || "None"}
+          color="purple.500"
+        />
+        <StatCard
+          icon={ShieldCheck}
+          label="Permissions"
+          value={`${user?.permissions.length || 0} active`}
+          color="yellow.500"
+        />
+        <StatCard
+          icon={Lock}
+          label="Security"
+          value="RBAC Enabled"
+          color="gray.500"
+        />
+      </Grid>
+    </Box>
   );
 };
 

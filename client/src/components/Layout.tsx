@@ -15,6 +15,16 @@ import {
   SquareLibrary,
 } from "lucide-react";
 import { Link, useNavigate, Outlet } from "react-router-dom";
+import {
+  Box,
+  Flex,
+  VStack,
+  HStack,
+  Button,
+  IconButton,
+  Heading,
+  Separator,
+} from "@chakra-ui/react";
 
 const Layout: React.FC = () => {
   const { user, logout, hasPermission } = useAuth();
@@ -29,107 +39,127 @@ const Layout: React.FC = () => {
   if (!user) return <Outlet />;
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex transition-colors duration-200">
-      <aside className="w-64 bg-white dark:bg-gray-800 shadow-md">
-        <div className="p-6 border-b dark:border-gray-700">
-          <h1 className="text-xl font-bold text-gray-800 dark:text-white">
-            RBAC Album App
-          </h1>
-        </div>
-        <nav className="p-4 space-y-2">
-          <Link
-            to="/admin"
-            className="flex items-center p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-          >
-            <LayoutDashboard className="w-5 h-5 mr-3" /> Dashboard
+    <Flex minH="100vh" bg={mode === "light" ? "gray.50" : "gray.900"}>
+      {/* Sidebar */}
+      <Box
+        as="aside"
+        w="64"
+        bg={mode === "light" ? "white" : "gray.800"}
+        boxShadow="md"
+        display={{ base: "none", md: "block" }}
+      >
+        <Box p="6">
+          <Heading size="md">RBAC Album App</Heading>
+        </Box>
+        <Separator />
+        <VStack p="4" align="stretch" spaceY="2">
+          <Link to="/admin" style={{ textDecoration: "none" }}>
+            <Button variant="ghost" justifyContent="flex-start" width="full">
+              <LayoutDashboard size={20} style={{ marginRight: "8px" }} />
+              Dashboard
+            </Button>
           </Link>
 
           {hasPermission("read:albums") && (
-            <Link
-              to="/admin/albums"
-              className="flex items-center p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-            >
-              <Disc className="w-5 h-5 mr-3" /> Albums
+            <Link to="/admin/albums" style={{ textDecoration: "none" }}>
+              <Button variant="ghost" justifyContent="flex-start" width="full">
+                <Disc size={20} style={{ marginRight: "8px" }} />
+                Albums
+              </Button>
             </Link>
           )}
 
-          <Link
-            to="/admin/settings"
-            className="flex items-center p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-          >
-            <Settings className="w-5 h-5 mr-3" /> Settings
+          <Link to="/admin/settings" style={{ textDecoration: "none" }}>
+            <Button variant="ghost" justifyContent="flex-start" width="full">
+              <Settings size={20} style={{ marginRight: "8px" }} />
+              Settings
+            </Button>
           </Link>
 
           {hasPermission("read:users") && (
-            <Link
-              to="/admin/users"
-              className="flex items-center p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-            >
-              <Users className="w-5 h-5 mr-3" /> Users
+            <Link to="/admin/users" style={{ textDecoration: "none" }}>
+              <Button variant="ghost" justifyContent="flex-start" width="full">
+                <Users size={20} style={{ marginRight: "8px" }} />
+                Users
+              </Button>
             </Link>
           )}
 
           {hasPermission("read:roles") && (
             <>
-              <Link
-                to="/admin/roles"
-                className="flex items-center p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-              >
-                <ShieldCheck className="w-5 h-5 mr-3" /> Roles
+              <Link to="/admin/roles" style={{ textDecoration: "none" }}>
+                <Button
+                  variant="ghost"
+                  justifyContent="flex-start"
+                  width="full"
+                >
+                  <ShieldCheck size={20} style={{ marginRight: "8px" }} />
+                  Roles
+                </Button>
               </Link>
-              <Link
-                to="/admin/permissions"
-                className="flex items-center p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-              >
-                <Lock className="w-5 h-5 mr-3" /> Permissions
+              <Link to="/admin/permissions" style={{ textDecoration: "none" }}>
+                <Button
+                  variant="ghost"
+                  justifyContent="flex-start"
+                  width="full"
+                >
+                  <Lock size={20} style={{ marginRight: "8px" }} />
+                  Permissions
+                </Button>
               </Link>
             </>
           )}
-          <Link
-            to="/"
-            className="flex items-center p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-          >
-            <SquareLibrary className="w-5 h-5 mr-3" /> Public View
-          </Link>
-          <a
-            href="/api/docs"
-            className="flex items-center p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-          >
-            <Braces className="w-5 h-5 mr-3" /> Swagger
-          </a>
-        </nav>
-      </aside>
 
-      <main className="flex-1 overflow-auto">
-        <header className="bg-white dark:bg-gray-800 shadow-sm p-4 flex justify-between items-center transition-colors">
-          <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-200">
+          <Link to="/" style={{ textDecoration: "none" }}>
+            <Button variant="ghost" justifyContent="flex-start" width="full">
+              <SquareLibrary size={20} style={{ marginRight: "8px" }} />
+              Public View
+            </Button>
+          </Link>
+
+          <a href="/api/docs" style={{ textDecoration: "none" }}>
+            <Button variant="ghost" justifyContent="flex-start" width="full">
+              <Braces size={20} style={{ marginRight: "8px" }} />
+              Swagger
+            </Button>
+          </a>
+        </VStack>
+      </Box>
+
+      {/* Main Content */}
+      <Flex flex="1" direction="column">
+        <Box
+          as="header"
+          bg={mode === "light" ? "white" : "gray.800"}
+          boxShadow="sm"
+          p="4"
+          display="flex"
+          justifyContent="space-between"
+          alignItems="center"
+        >
+          <Heading size="sm" color={mode === "light" ? "gray.700" : "gray.200"}>
             Welcome, {user.username}
-          </h2>
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={toggleMode}
-              className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition-colors"
+          </Heading>
+          <HStack gap="4">
+            <IconButton
               aria-label="Toggle Theme"
+              variant="ghost"
+              onClick={toggleMode}
+              rounded="full"
             >
-              {mode === "light" ? (
-                <Moon className="w-5 h-5" />
-              ) : (
-                <Sun className="w-5 h-5" />
-              )}
-            </button>
-            <button
-              onClick={handleLogout}
-              className="flex items-center px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition shadow-sm"
-            >
-              <LogOut className="w-4 h-4 mr-2" /> Logout
-            </button>
-          </div>
-        </header>
-        <div className="p-8">
+              {mode === "light" ? <Moon size={20} /> : <Sun size={20} />}
+            </IconButton>
+            <Button colorPalette="red" onClick={handleLogout} size="sm">
+              <LogOut size={16} style={{ marginRight: "4px" }} />
+              Logout
+            </Button>
+          </HStack>
+        </Box>
+        <Box p="8" flex="1" overflow="auto">
           <Outlet />
-        </div>
-      </main>
-    </div>
+        </Box>
+      </Flex>
+    </Flex>
   );
 };
 
