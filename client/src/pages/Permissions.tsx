@@ -2,6 +2,19 @@ import React, { useEffect, useState } from "react";
 import api from "../api";
 import { useAuth } from "../context/AuthContext";
 import { Plus, Edit2, Trash2 } from "lucide-react";
+import {
+  Box,
+  Button,
+  Flex,
+  Heading,
+  IconButton,
+  Input,
+  Table,
+  Portal,
+  Field,
+  VStack,
+  HStack,
+} from "@chakra-ui/react";
 
 interface Permission {
   id: number;
@@ -44,102 +57,118 @@ const PermissionsPage: React.FC = () => {
   };
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold dark:text-white transition-colors">
-          Permissions Management
-        </h1>
+    <Box>
+      <Flex justify="space-between" align="center" mb="6">
+        <Heading size="lg">Permissions Management</Heading>
         {hasPermission("manage:roles") && (
-          <button
-            onClick={() => setEditing({ name: "" })}
-            className="bg-green-500 text-white px-4 py-2 rounded flex items-center hover:bg-green-600 transition shadow-sm"
-          >
-            <Plus className="w-4 h-4 mr-2" /> Add Permission
-          </button>
+          <Button colorPalette="green" onClick={() => setEditing({ name: "" })}>
+            <Plus size={16} style={{ marginRight: "8px" }} /> Add Permission
+          </Button>
         )}
-      </div>
+      </Flex>
 
       {editing && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <form
-            onSubmit={handleSubmit}
-            className="bg-white dark:bg-gray-800 p-6 rounded shadow-lg w-full max-w-md transition-colors"
+        <Portal>
+          <Box
+            position="fixed"
+            top="0"
+            left="0"
+            w="full"
+            h="full"
+            bg="blackAlpha.600"
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            p="4"
+            zIndex="1000"
           >
-            <h2 className="text-xl font-bold mb-4 dark:text-white">
-              {editing.id ? "Edit" : "Add"} Permission
-            </h2>
-            <div className="space-y-4">
-              <input
-                className="w-full p-2 border dark:border-gray-700 rounded dark:bg-gray-900 dark:text-white"
-                placeholder="Permission Name (e.g. read:albums)"
-                value={editing.name}
-                onChange={(e) =>
-                  setEditing({ ...editing, name: e.target.value })
-                }
-                required
-              />
-            </div>
-            <div className="flex justify-end mt-6 space-x-2">
-              <button
-                type="button"
-                onClick={() => setEditing(null)}
-                className="px-4 py-2 text-gray-600 dark:text-gray-400"
-              >
-                Cancel
-              </button>
-              <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition">
-                Save
-              </button>
-            </div>
-          </form>
-        </div>
+            <Box
+              as="form"
+              onSubmit={handleSubmit}
+              bg="bg.panel"
+              p="6"
+              rounded="md"
+              shadow="lg"
+              w="full"
+              maxW="md"
+            >
+              <Heading size="md" mb="4">
+                {editing.id ? "Edit" : "Add"} Permission
+              </Heading>
+              <VStack gap="4" align="stretch">
+                <Field.Root>
+                  <Field.Label>Permission Name</Field.Label>
+                  <Input
+                    placeholder="Permission Name (e.g. read:albums)"
+                    value={editing.name || ""}
+                    onChange={(e) =>
+                      setEditing({ ...editing, name: e.target.value })
+                    }
+                    required
+                  />
+                </Field.Root>
+              </VStack>
+              <Flex justify="flex-end" mt="6" gap="2">
+                <Button variant="ghost" onClick={() => setEditing(null)}>
+                  Cancel
+                </Button>
+                <Button type="submit" colorPalette="blue">
+                  Save
+                </Button>
+              </Flex>
+            </Box>
+          </Box>
+        </Portal>
       )}
 
-      <div className="bg-white dark:bg-gray-800 rounded shadow overflow-hidden transition-colors">
-        <table className="w-full">
-          <thead className="bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                Permission Name
-              </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+      <Box
+        bg="bg.panel"
+        rounded="md"
+        shadow="sm"
+        overflow="hidden"
+        borderWidth="1px"
+      >
+        <Table.Root>
+          <Table.Header bg="bg.muted">
+            <Table.Row>
+              <Table.ColumnHeader>Permission Name</Table.ColumnHeader>
+              <Table.ColumnHeader textAlign="right">Actions</Table.ColumnHeader>
+            </Table.Row>
+          </Table.Header>
+          <Table.Body>
             {permissions.map((perm) => (
-              <tr
-                key={perm.id}
-                className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-              >
-                <td className="px-6 py-4 dark:text-gray-300 font-medium">
-                  {perm.name}
-                </td>
-                <td className="px-6 py-4 text-right space-x-2">
+              <Table.Row key={perm.id} _hover={{ bg: "bg.muted/50" }}>
+                <Table.Cell fontWeight="medium">{perm.name}</Table.Cell>
+                <Table.Cell textAlign="right">
                   {hasPermission("manage:roles") && (
-                    <>
-                      <button
+                    <HStack gap="2" justify="flex-end">
+                      <IconButton
+                        aria-label="Edit permission"
+                        variant="ghost"
+                        colorPalette="blue"
+                        size="sm"
                         onClick={() => setEditing(perm)}
-                        className="text-blue-500 hover:text-blue-700 dark:hover:text-blue-400 transition-colors"
                       >
-                        <Edit2 className="w-4 h-4" />
-                      </button>
-                      <button
+                        <Edit2 size={14} />
+                      </IconButton>
+                      <IconButton
+                        aria-label="Delete permission"
+                        variant="ghost"
+                        colorPalette="red"
+                        size="sm"
                         onClick={() => handleDelete(perm.id)}
-                        className="text-red-500 hover:text-red-700 dark:hover:text-red-400 transition-colors"
                       >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </>
+                        <Trash2 size={14} />
+                      </IconButton>
+                    </HStack>
                   )}
-                </td>
-              </tr>
+                </Table.Cell>
+              </Table.Row>
             ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+          </Table.Body>
+        </Table.Root>
+      </Box>
+    </Box>
   );
 };
 

@@ -2,6 +2,20 @@ import React, { useEffect, useState, useRef } from "react";
 import api from "../api";
 import { useAuth } from "../context/AuthContext";
 import { Plus, Edit2, Trash2, Upload } from "lucide-react";
+import {
+  Box,
+  Button,
+  Flex,
+  Grid,
+  Heading,
+  IconButton,
+  Image,
+  Input,
+  Stack,
+  Text,
+  Field,
+  Portal,
+} from "@chakra-ui/react";
 
 interface Album {
   id: number;
@@ -70,13 +84,11 @@ const Albums: React.FC = () => {
   };
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold dark:text-white transition-colors">
-          Albums
-        </h1>
+    <Box>
+      <Flex justify="space-between" align="center" mb="6">
+        <Heading size="lg">Albums</Heading>
         {hasPermission("write:albums") && (
-          <button
+          <Button
             id="add-album-button"
             onClick={() =>
               setEditing({
@@ -86,157 +98,200 @@ const Albums: React.FC = () => {
                 coverUrl: "",
               })
             }
-            className="bg-primary text-white px-4 py-2 rounded-custom flex items-center hover:opacity-90 transition shadow-sm"
+            colorPalette="blue"
           >
-            <Plus className="w-4 h-4 mr-2" /> Add Album
-          </button>
+            <Plus size={16} style={{ marginRight: "8px" }} /> Add Album
+          </Button>
         )}
-      </div>
+      </Flex>
 
       {editing && (
-        <div
-          id="album-modal"
-          className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
-        >
-          <form
-            onSubmit={handleSubmit}
-            className="bg-white dark:bg-gray-800 p-6 rounded-custom shadow-lg w-full max-w-md transition-colors"
+        <Portal>
+          <Box
+            position="fixed"
+            top="0"
+            left="0"
+            w="full"
+            h="full"
+            bg="blackAlpha.600"
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            p="4"
+            zIndex="1000"
           >
-            <h2
-              id="modal-title"
-              className="text-xl font-bold mb-4 dark:text-white"
+            <Box
+              as="form"
+              onSubmit={handleSubmit}
+              bg="bg.panel"
+              p="6"
+              rounded="md"
+              shadow="lg"
+              w="full"
+              maxW="md"
             >
-              {editing.id ? "Edit" : "Add"} Album
-            </h2>
-            <div className="space-y-4">
-              <input
-                id="album-title"
-                className="w-full p-2 border dark:border-gray-700 rounded-custom dark:bg-gray-900 dark:text-white"
-                placeholder="Title"
-                value={editing.title}
-                onChange={(e) =>
-                  setEditing({ ...editing, title: e.target.value })
-                }
-                required
-              />
-              <input
-                id="album-artist"
-                className="w-full p-2 border dark:border-gray-700 rounded-custom dark:bg-gray-900 dark:text-white"
-                placeholder="Artist"
-                value={editing.artist}
-                onChange={(e) =>
-                  setEditing({ ...editing, artist: e.target.value })
-                }
-                required
-              />
-              <input
-                id="album-year"
-                type="number"
-                className="w-full p-2 border dark:border-gray-700 rounded-custom dark:bg-gray-900 dark:text-white"
-                placeholder="Year"
-                value={editing.year}
-                onChange={(e) =>
-                  setEditing({ ...editing, year: +e.target.value })
-                }
-              />
-              <input
-                id="album-cover"
-                className="w-full p-2 border dark:border-gray-700 rounded-custom dark:bg-gray-900 dark:text-white"
-                placeholder="Cover URL"
-                value={editing.coverUrl}
-                onChange={(e) =>
-                  setEditing({ ...editing, coverUrl: e.target.value })
-                }
-              />
-              <div className="flex items-center space-x-2">
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileUpload}
-                  className="hidden"
-                  accept="image/*"
-                />
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploading}
-                  className="flex items-center px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition disabled:opacity-50"
+              <Heading size="md" mb="4">
+                {editing.id ? "Edit" : "Add"} Album
+              </Heading>
+              <Stack gap="4">
+                <Field.Root>
+                  <Field.Label>Title</Field.Label>
+                  <Input
+                    id="album-title"
+                    placeholder="Title"
+                    value={editing.title}
+                    onChange={(e) =>
+                      setEditing({ ...editing, title: e.target.value })
+                    }
+                    required
+                  />
+                </Field.Root>
+                <Field.Root>
+                  <Field.Label>Artist</Field.Label>
+                  <Input
+                    id="album-artist"
+                    placeholder="Artist"
+                    value={editing.artist}
+                    onChange={(e) =>
+                      setEditing({ ...editing, artist: e.target.value })
+                    }
+                    required
+                  />
+                </Field.Root>
+                <Field.Root>
+                  <Field.Label>Year</Field.Label>
+                  <Input
+                    id="album-year"
+                    type="number"
+                    placeholder="Year"
+                    value={editing.year}
+                    onChange={(e) =>
+                      setEditing({ ...editing, year: +e.target.value })
+                    }
+                  />
+                </Field.Root>
+                <Field.Root>
+                  <Field.Label>Cover URL</Field.Label>
+                  <Input
+                    id="album-cover"
+                    placeholder="Cover URL"
+                    value={editing.coverUrl}
+                    onChange={(e) =>
+                      setEditing({ ...editing, coverUrl: e.target.value })
+                    }
+                  />
+                </Field.Root>
+                <Flex align="center" gap="2">
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileUpload}
+                    style={{ display: "none" }}
+                    accept="image/*"
+                  />
+                  <Button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    variant="surface"
+                    size="sm"
+                  >
+                    <Upload size={16} style={{ marginRight: "8px" }} />
+                    {uploading ? "Uploading..." : "Upload Image"}
+                  </Button>
+                  {editing.coverUrl && (
+                    <Text fontSize="xs" color="green.500">
+                      Image uploaded!
+                    </Text>
+                  )}
+                </Flex>
+              </Stack>
+              <Flex justify="flex-end" mt="6" gap="2">
+                <Button
+                  id="cancel-album-button"
+                  variant="ghost"
+                  onClick={() => setEditing(null)}
                 >
-                  <Upload className="w-4 h-4 mr-2" />
-                  {uploading ? "Uploading..." : "Upload Image"}
-                </button>
-                {editing.coverUrl && (
-                  <span className="text-xs text-green-500 truncate max-w-[150px]">
-                    Image uploaded!
-                  </span>
-                )}
-              </div>
-            </div>
-            <div className="flex justify-end mt-6 space-x-2">
-              <button
-                id="cancel-album-button"
-                type="button"
-                onClick={() => setEditing(null)}
-                className="px-4 py-2 text-gray-600 dark:text-gray-400"
-              >
-                Cancel
-              </button>
-              <button
-                id="save-album-button"
-                className="px-4 py-2 bg-primary text-white rounded-custom hover:opacity-90 transition shadow-sm"
-              >
-                Save
-              </button>
-            </div>
-          </form>
-        </div>
+                  Cancel
+                </Button>
+                <Button
+                  id="save-album-button"
+                  type="submit"
+                  colorPalette="blue"
+                >
+                  Save
+                </Button>
+              </Flex>
+            </Box>
+          </Box>
+        </Portal>
       )}
 
-      <div
+      <Grid
         id="albums-grid"
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        templateColumns={{
+          base: "1fr",
+          md: "repeat(2, 1fr)",
+          lg: "repeat(3, 1fr)",
+        }}
+        gap="6"
       >
         {albums.map((album) => (
-          <div
+          <Box
             key={album.id}
             data-testid={`album-card-${album.id}`}
-            className="bg-white dark:bg-gray-800 p-4 rounded-custom shadow flex flex-col album-card transition-colors border dark:border-gray-700"
+            bg="bg.panel"
+            p="4"
+            rounded="md"
+            shadow="sm"
+            display="flex"
+            flexDirection="column"
+            borderWidth="1px"
           >
             {album.coverUrl && (
-              <img
+              <Image
                 src={album.coverUrl}
                 alt={album.title}
-                className="w-full h-48 object-cover rounded-custom mb-4 shadow-sm"
+                w="full"
+                h="48"
+                objectFit="cover"
+                rounded="md"
+                mb="4"
+                shadow="sm"
               />
             )}
-            <h3 className="font-bold text-lg dark:text-white">{album.title}</h3>
-            <p className="text-gray-600 dark:text-gray-400">
+            <Heading size="md">{album.title}</Heading>
+            <Text color="fg.muted">
               {album.artist} ({album.year})
-            </p>
-            <div className="flex justify-end mt-4 space-x-2">
+            </Text>
+            <Flex justify="flex-end" mt="4" gap="2">
               {hasPermission("write:albums") && (
                 <>
-                  <button
+                  <IconButton
                     id={`edit-album-${album.id}`}
+                    aria-label="Edit Album"
                     onClick={() => setEditing(album)}
-                    className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded edit-album-btn transition-colors"
+                    variant="ghost"
+                    colorPalette="blue"
                   >
-                    <Edit2 className="w-4 h-4" />
-                  </button>
-                  <button
+                    <Edit2 size={16} />
+                  </IconButton>
+                  <IconButton
                     id={`delete-album-${album.id}`}
+                    aria-label="Delete Album"
                     onClick={() => handleDelete(album.id)}
-                    className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded delete-album-btn transition-colors"
+                    variant="ghost"
+                    colorPalette="red"
                   >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                    <Trash2 size={16} />
+                  </IconButton>
                 </>
               )}
-            </div>
-          </div>
+            </Flex>
+          </Box>
         ))}
-      </div>
-    </div>
+      </Grid>
+    </Box>
   );
 };
 

@@ -3,6 +3,19 @@ import api from "../api";
 import { useTheme } from "../context/ThemeContext";
 import { Moon, Sun, LayoutDashboard } from "lucide-react";
 import { Link } from "react-router-dom";
+import {
+  Box,
+  Flex,
+  Grid,
+  Heading,
+  Text,
+  Button,
+  IconButton,
+  Image,
+  Spinner,
+  Container,
+  Badge,
+} from "@chakra-ui/react";
 
 interface Album {
   id: number;
@@ -33,88 +46,118 @@ const PublicAlbums: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-white dark:bg-gray-900 transition-colors">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
+      <Flex justify="center" align="center" minH="100vh" bg="bg.muted">
+        <Spinner size="xl" color="blue.500" />
+      </Flex>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8 transition-colors text-gray-900 dark:text-gray-100">
-      <div className="max-w-6xl mx-auto">
-        <header className="flex justify-between items-center mb-12">
-          <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white">
+    <Box minH="100vh" bg="bg.muted" p="8" color="fg">
+      <Container maxW="6xl">
+        <Flex justify="space-between" align="center" mb="12">
+          <Heading size="3xl" fontWeight="extrabold">
             Music
-          </h1>
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={toggleMode}
-              className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition-colors"
+          </Heading>
+          <Flex gap="4" align="center">
+            <IconButton
               aria-label="Toggle Theme"
+              variant="ghost"
+              onClick={toggleMode}
+              rounded="full"
             >
-              {mode === "light" ? (
-                <Moon className="w-5 h-5" />
-              ) : (
-                <Sun className="w-5 h-5" />
-              )}
-            </button>
-            <Link
-              to="/admin"
-              className="flex items-center px-4 py-2 bg-primary text-white rounded-custom hover:opacity-90 transition font-medium shadow-sm"
-            >
-              <LayoutDashboard className="w-4 h-4 mr-2" /> Admin Area
+              {mode === "light" ? <Moon size={20} /> : <Sun size={20} />}
+            </IconButton>
+            <Link to="/admin" style={{ textDecoration: "none" }}>
+              <Button colorPalette="blue" shadow="sm">
+                <LayoutDashboard size={16} style={{ marginRight: "8px" }} />{" "}
+                Admin Area
+              </Button>
             </Link>
-          </div>
-        </header>
+          </Flex>
+        </Flex>
 
         {albums.length === 0 ? (
-          <div className="text-center py-20 bg-white dark:bg-gray-800 rounded-custom shadow-sm border dark:border-gray-700">
-            <p className="text-xl text-gray-500 dark:text-gray-400">
+          <Box
+            textAlign="center"
+            py="20"
+            bg="bg.panel"
+            rounded="md"
+            shadow="sm"
+            borderWidth="1px"
+          >
+            <Text fontSize="xl" color="fg.muted">
               No albums found in the collection.
-            </p>
-            <p className="mt-2 text-gray-400">
+            </Text>
+            <Text mt="2" color="fg.subtle">
               Check if the backend is running and contains data.
-            </p>
-          </div>
+            </Text>
+          </Box>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          <Grid
+            templateColumns={{
+              base: "1fr",
+              sm: "repeat(2, 1fr)",
+              lg: "repeat(3, 1fr)",
+              xl: "repeat(4, 1fr)",
+            }}
+            gap="8"
+          >
             {albums.map((album) => (
-              <div
+              <Box
                 key={album.id}
-                className="bg-white dark:bg-gray-800 rounded-custom overflow-hidden shadow-lg transition-all hover:scale-105 border dark:border-gray-700"
+                bg="bg.panel"
+                rounded="md"
+                overflow="hidden"
+                shadow="md"
+                transition="all 0.2s"
+                _hover={{ transform: "scale(1.05)" }}
+                borderWidth="1px"
               >
-                <div className="h-64 overflow-hidden bg-gray-200 dark:bg-gray-700">
+                <Box h="64" overflow="hidden" bg="bg.subtle">
                   {album.coverUrl ? (
-                    <img
+                    <Image
                       src={album.coverUrl}
                       alt={album.title}
-                      className="w-full h-full object-cover"
+                      w="full"
+                      h="full"
+                      objectFit="cover"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                    <Flex
+                      w="full"
+                      h="full"
+                      align="center"
+                      justify="center"
+                      color="fg.subtle"
+                    >
                       No Cover
-                    </div>
+                    </Flex>
                   )}
-                </div>
-                <div className="p-6">
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white truncate">
+                </Box>
+                <Box p="6">
+                  <Heading size="md" mb="1" truncate>
                     {album.title}
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-400 font-medium">
+                  </Heading>
+                  <Text color="fg.muted" fontWeight="medium">
                     {album.artist}
-                  </p>
-                  <div className="mt-4 flex items-center justify-between">
-                    <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-bold">
+                  </Text>
+                  <Flex mt="4" justify="space-between" align="center">
+                    <Badge
+                      colorPalette="blue"
+                      variant="subtle"
+                      fontWeight="bold"
+                    >
                       {album.year}
-                    </span>
-                  </div>
-                </div>
-              </div>
+                    </Badge>
+                  </Flex>
+                </Box>
+              </Box>
             ))}
-          </div>
+          </Grid>
         )}
-      </div>
-    </div>
+      </Container>
+    </Box>
   );
 };
 

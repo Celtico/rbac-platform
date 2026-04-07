@@ -3,6 +3,20 @@ import { useTheme } from "../context/ThemeContext";
 import type { ColorTheme, RadiusSize } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import api from "../api";
+import {
+  Box,
+  Button,
+  Heading,
+  Text,
+  HStack,
+  Grid,
+  Stack,
+  Code,
+  Spinner,
+  IconButton,
+  Circle,
+} from "@chakra-ui/react";
+import { RefreshCw } from "lucide-react";
 
 const Settings: React.FC = () => {
   const { theme, setTheme, radius, setRadius } = useTheme();
@@ -25,7 +39,7 @@ const Settings: React.FC = () => {
     try {
       const response = await api.get("/deploy/version");
       setVersionInfo(response.data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error fetching version:", error);
       setVersionInfo({
         version: "error",
@@ -46,17 +60,17 @@ const Settings: React.FC = () => {
     try {
       const response = await api.get("/deploy/logs");
       setDeployLogs(response.data.logs);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error fetching logs:", error);
       setDeployLogs("Error al carregar els logs del servidor.");
     }
   };
 
-  const themes: { id: ColorTheme; name: string; class: string }[] = [
-    { id: "default", name: "Default (Blue)", class: "bg-blue-500" },
-    { id: "ocean", name: "Ocean (Cyan)", class: "bg-cyan-500" },
-    { id: "forest", name: "Forest (Green)", class: "bg-emerald-500" },
-    { id: "sunset", name: "Sunset (Red/Orange)", class: "bg-rose-500" },
+  const themes: { id: ColorTheme; name: string; color: string }[] = [
+    { id: "default", name: "Default (Blue)", color: "#3b82f6" },
+    { id: "ocean", name: "Ocean (Cyan)", color: "#0891b2" },
+    { id: "forest", name: "Forest (Green)", color: "#10b981" },
+    { id: "sunset", name: "Sunset (Red/Orange)", color: "#f43f5e" },
   ];
 
   const radiuses: { id: RadiusSize; name: string }[] = [
@@ -81,12 +95,15 @@ const Settings: React.FC = () => {
         success: true,
         message: response.data.message || "Desplegament completat amb èxit",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const axiosError = error as {
+        response?: { data?: { message?: string } };
+      };
       console.error("Deploy error:", error);
       setDeployResult({
         success: false,
         message:
-          error.response?.data?.message || "Error de connexió al servidor",
+          axiosError.response?.data?.message || "Error de connexió al servidor",
       });
     } finally {
       setIsDeploying(false);
@@ -94,198 +111,227 @@ const Settings: React.FC = () => {
   };
 
   return (
-    <div className="x-auto">
-      <h1 className="text-3xl font-bold mb-8 dark:text-white transition-colors">
+    <Box>
+      <Heading size="2xl" mb="8">
         System Settings
-      </h1>
+      </Heading>
 
       {hasRole("admin") && (
-        <section className="pt-8 mb-8 border-t dark:border-gray-700">
-          <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100">
+        <Box pt="8" mb="8" borderTopWidth="1px">
+          <Heading size="md" mb="4">
             Administració del Sistema
-          </h2>
-          <div className="bg-gray-50 dark:bg-gray-900 p-6 rounded-custom border border-gray-200 dark:border-gray-700">
-            <p className="mb-4 text-gray-600 dark:text-gray-400">
+          </Heading>
+          <Box bg="bg.muted" p="6" rounded="md" borderWidth="1px">
+            <Text mb="4" color="fg.muted">
               Pots desplegar la darrera versió de l'aplicació directament des
               d'aquí. Això executarà el script de desplegament al servidor.
-            </p>
-            <button
+            </Text>
+            <Button
+              colorPalette="orange"
               onClick={handleDeploy}
-              disabled={isDeploying}
-              className={`px-6 py-3 bg-accent text-white rounded-custom shadow hover:opacity-90 transition-all flex items-center gap-2 ${
-                isDeploying ? "opacity-50 cursor-not-allowed" : ""
-              }`}
+              loading={isDeploying}
+              loadingText="Desplegant..."
             >
-              {isDeploying ? (
-                <>
-                  <svg
-                    className="animate-spin h-5 w-5 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                  Desplegant...
-                </>
-              ) : (
-                "Desplegar Aplicació"
-              )}
-            </button>
+              Desplegar Aplicació
+            </Button>
 
             {versionInfo && (
-              <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4 border-t dark:border-gray-800 pt-4">
-                <div>
-                  <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold block mb-1">
+              <Grid
+                mt="6"
+                templateColumns={{ base: "1fr", sm: "repeat(2, 1fr)" }}
+                gap="4"
+                borderTopWidth="1px"
+                pt="4"
+              >
+                <Box>
+                  <Text
+                    fontSize="xs"
+                    textTransform="uppercase"
+                    letterSpacing="wider"
+                    color="fg.muted"
+                    fontWeight="semibold"
+                    display="block"
+                    mb="1"
+                  >
                     Versió del Projecte
-                  </span>
-                  <span className="text-sm font-medium dark:text-white">
+                  </Text>
+                  <Text fontSize="sm" fontWeight="medium">
                     {versionInfo.name} v{versionInfo.version}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold block mb-1">
+                  </Text>
+                </Box>
+                <Box>
+                  <Text
+                    fontSize="xs"
+                    textTransform="uppercase"
+                    letterSpacing="wider"
+                    color="fg.muted"
+                    fontWeight="semibold"
+                    display="block"
+                    mb="1"
+                  >
                     Entorn
-                  </span>
-                  <span className="text-sm font-medium dark:text-white">
+                  </Text>
+                  <Text fontSize="sm" fontWeight="medium">
                     {versionInfo.environment}
-                  </span>
-                </div>
-                <div className="sm:col-span-2">
-                  <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold block mb-1">
+                  </Text>
+                </Box>
+                <Box gridColumn={{ sm: "span 2" }}>
+                  <Text
+                    fontSize="xs"
+                    textTransform="uppercase"
+                    letterSpacing="wider"
+                    color="fg.muted"
+                    fontWeight="semibold"
+                    display="block"
+                    mb="1"
+                  >
                     Darrer Commit
-                  </span>
-                  <span className="text-sm font-mono bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded dark:text-gray-300 break-all">
+                  </Text>
+                  <Code
+                    fontSize="sm"
+                    p="1"
+                    rounded="sm"
+                    variant="surface"
+                    wordBreak="break-all"
+                    display="block"
+                  >
                     {versionInfo.lastCommit}
-                  </span>
-                </div>
-              </div>
+                  </Code>
+                </Box>
+              </Grid>
             )}
 
             {deployResult && (
-              <div className="mt-4">
-                <div
-                  className={`p-4 rounded-custom border ${
-                    deployResult.success
-                      ? "bg-green-50 border-green-200 text-green-700 dark:bg-green-900/20 dark:border-green-800 dark:text-green-400"
-                      : "bg-red-50 border-red-200 text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400"
-                  }`}
+              <Box mt="4">
+                <Box
+                  p="4"
+                  rounded="md"
+                  borderWidth="1px"
+                  bg={deployResult.success ? "green.subtle" : "red.subtle"}
+                  borderColor={
+                    deployResult.success ? "green.border" : "red.border"
+                  }
+                  color={deployResult.success ? "green.fg" : "red.fg"}
                 >
                   {deployResult.message}
-                </div>
-                <div className="mt-2 flex gap-2">
-                  <button
+                </Box>
+                <HStack mt="2" gap="4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => {
                       setShowLogs(!showLogs);
                       if (!showLogs) fetchLogs();
                     }}
-                    className="text-sm text-primary hover:underline font-medium"
                   >
                     {showLogs ? "Amagar logs" : "Veure logs de depuració"}
-                  </button>
+                  </Button>
                   {showLogs && (
-                    <button
+                    <IconButton
+                      aria-label="Refresh logs"
+                      variant="ghost"
+                      size="sm"
                       onClick={fetchLogs}
-                      className="text-sm text-gray-500 hover:underline"
                     >
-                      Actualitzar
-                    </button>
+                      <RefreshCw size={16} />
+                    </IconButton>
                   )}
-                </div>
+                </HStack>
 
                 {showLogs && (
-                  <div className="mt-2 p-4 bg-black text-green-400 font-mono text-xs rounded-custom overflow-auto max-h-60 whitespace-pre-wrap">
-                    {deployLogs || "Carregant logs..."}
-                  </div>
+                  <Box
+                    mt="2"
+                    p="4"
+                    bg="black"
+                    color="green.400"
+                    fontFamily="mono"
+                    fontSize="xs"
+                    rounded="md"
+                    overflow="auto"
+                    maxH="60"
+                    whiteSpace="pre-wrap"
+                  >
+                    {deployLogs || <Spinner size="xs" />}
+                  </Box>
                 )}
-              </div>
+              </Box>
             )}
-          </div>
-        </section>
+          </Box>
+        </Box>
       )}
 
-      <div className="bg-white dark:bg-gray-800 p-8 rounded-custom shadow-md transition-colors">
-        <section className="mb-10">
-          <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100">
-            Color Theme
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {themes.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => setTheme(t.id)}
-                className={`p-4 rounded-custom border-2 transition-all flex flex-col items-center gap-2 ${
-                  theme === t.id
-                    ? "border-primary bg-primary/10"
-                    : "border-transparent bg-gray-50 dark:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
-                }`}
-              >
-                <div className={`w-8 h-8 rounded-full ${t.class}`} />
-                <span className="text-sm font-medium dark:text-gray-200">
-                  {t.name}
-                </span>
-              </button>
-            ))}
-          </div>
-        </section>
+      <Box bg="bg.panel" p="8" rounded="md" shadow="md">
+        <Stack gap="10">
+          <Box as="section">
+            <Heading size="md" mb="4">
+              Color Theme
+            </Heading>
+            <Grid
+              templateColumns={{ base: "repeat(2, 1fr)", sm: "repeat(4, 1fr)" }}
+              gap="4"
+            >
+              {themes.map((t) => (
+                <Button
+                  key={t.id}
+                  onClick={() => setTheme(t.id)}
+                  variant={theme === t.id ? "surface" : "ghost"}
+                  height="auto"
+                  p="4"
+                  borderWidth="2px"
+                  borderColor={theme === t.id ? "blue.500" : "transparent"}
+                  display="flex"
+                  flexDirection="column"
+                  gap="2"
+                  _hover={{
+                    borderColor: theme === t.id ? "blue.500" : "gray.300",
+                  }}
+                >
+                  <Circle size="8" bg={t.color} />
+                  <Text fontSize="sm" fontWeight="medium">
+                    {t.name}
+                  </Text>
+                </Button>
+              ))}
+            </Grid>
+          </Box>
 
-        <section className="mb-10">
-          <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100">
-            Rounded Corners (Border Radius)
-          </h2>
-          <div className="flex flex-wrap gap-3">
-            {radiuses.map((r) => (
-              <button
-                key={r.id}
-                onClick={() => setRadius(r.id)}
-                className={`px-4 py-2 rounded-custom border-2 transition-all ${
-                  radius === r.id
-                    ? "border-primary bg-primary text-white"
-                    : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-primary"
-                }`}
-              >
-                {r.name}
-              </button>
-            ))}
-          </div>
-        </section>
+          <Box as="section">
+            <Heading size="md" mb="4">
+              Rounded Corners (Border Radius)
+            </Heading>
+            <HStack flexWrap="wrap" gap="3">
+              {radiuses.map((r) => (
+                <Button
+                  key={r.id}
+                  onClick={() => setRadius(r.id)}
+                  variant={radius === r.id ? "solid" : "outline"}
+                  colorPalette={radius === r.id ? "blue" : "gray"}
+                >
+                  {r.name}
+                </Button>
+              ))}
+            </HStack>
+          </Box>
 
-        <div className="mt-12 p-6 border-t dark:border-gray-700">
-          <h3 className="text-lg font-medium mb-4 dark:text-white">
-            Preview Components
-          </h3>
-          <div className="flex flex-wrap gap-4">
-            <button className="px-6 py-2 bg-primary text-white rounded-custom shadow hover:opacity-90 transition-opacity">
-              Primary Button
-            </button>
-            <button className="px-6 py-2 bg-secondary text-white rounded-custom shadow hover:opacity-90 transition-opacity">
-              Secondary Button
-            </button>
-            <button className="px-6 py-2 bg-accent text-white rounded-custom shadow hover:opacity-90 transition-opacity">
-              Accent Button
-            </button>
-          </div>
-          <div className="mt-6 p-4 bg-gray-100 dark:bg-gray-900 rounded-custom border border-gray-200 dark:border-gray-700">
-            <p className="text-gray-600 dark:text-gray-400">
-              This is a preview of how cards and containers will look with your
-              current settings.
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
+          <Box pt="6" borderTopWidth="1px">
+            <Heading size="sm" mb="4">
+              Preview Components
+            </Heading>
+            <HStack flexWrap="wrap" gap="4" mb="6">
+              <Button colorPalette="blue">Primary Button</Button>
+              <Button colorPalette="purple">Secondary Button</Button>
+              <Button colorPalette="orange">Accent Button</Button>
+            </HStack>
+            <Box p="4" bg="bg.muted" rounded="md" borderWidth="1px">
+              <Text color="fg.muted">
+                This is a preview of how cards and containers will look with
+                your current settings.
+              </Text>
+            </Box>
+          </Box>
+        </Stack>
+      </Box>
+    </Box>
   );
 };
 

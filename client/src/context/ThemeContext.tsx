@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { useColorMode } from "../components/ui/color-mode";
 
 export type ColorTheme = "default" | "ocean" | "forest" | "sunset";
 export type RadiusSize = "none" | "sm" | "md" | "lg" | "xl" | "full";
-type Mode = "light" | "dark";
 
 interface ThemeContextType {
-  mode: Mode;
+  mode: "light" | "dark";
   theme: ColorTheme;
   radius: RadiusSize;
   toggleMode: () => void;
@@ -18,54 +18,38 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [mode, setMode] = useState<Mode>(() => {
-    const savedMode = localStorage.getItem("theme-mode");
-    if (savedMode === "dark" || savedMode === "light") return savedMode;
-    return window.matchMedia("(prefers-color-scheme: dark)").matches
-      ? "dark"
-      : "light";
-  });
+  const { colorMode, toggleColorMode } = useColorMode();
 
-  const [theme, setThemeState] = useState<ColorTheme>(() => {
-    return (localStorage.getItem("theme-color") as ColorTheme) || "default";
-  });
-
-  const [radius, setRadiusState] = useState<RadiusSize>(() => {
-    return (localStorage.getItem("theme-radius") as RadiusSize) || "md";
-  });
+  const [theme, setThemeState] = useState<ColorTheme>(
+    (localStorage.getItem("app-theme") as ColorTheme) || "default"
+  );
+  const [radius, setRadiusState] = useState<RadiusSize>(
+    (localStorage.getItem("app-radius") as RadiusSize) || "md"
+  );
 
   useEffect(() => {
-    const root = window.document.documentElement;
+    localStorage.setItem("app-theme", theme);
+    document.documentElement.setAttribute("data-theme", theme);
+  }, [theme]);
 
-    // Manage Dark Mode
-    if (mode === "dark") {
-      root.classList.add("dark");
-      root.classList.remove("light");
-    } else {
-      root.classList.remove("dark");
-      root.classList.add("light");
-    }
-    localStorage.setItem("theme-mode", mode);
-
-    // Manage Color Theme
-    root.setAttribute("data-theme", theme);
-    localStorage.setItem("theme-color", theme);
-
-    // Manage Radius
-    root.setAttribute("data-radius", radius);
-    localStorage.setItem("theme-radius", radius);
-  }, [mode, theme, radius]);
-
-  const toggleMode = () => {
-    setMode((prev) => (prev === "light" ? "dark" : "light"));
-  };
+  useEffect(() => {
+    localStorage.setItem("app-radius", radius);
+    document.documentElement.setAttribute("data-radius", radius);
+  }, [radius]);
 
   const setTheme = (newTheme: ColorTheme) => setThemeState(newTheme);
   const setRadius = (newRadius: RadiusSize) => setRadiusState(newRadius);
 
   return (
     <ThemeContext.Provider
-      value={{ mode, theme, radius, toggleMode, setTheme, setRadius }}
+      value={{
+        mode: colorMode as "light" | "dark",
+        theme,
+        radius,
+        toggleMode: toggleColorMode,
+        setTheme,
+        setRadius,
+      }}
     >
       {children}
     </ThemeContext.Provider>
