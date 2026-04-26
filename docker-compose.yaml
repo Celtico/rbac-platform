@@ -2,6 +2,9 @@ name: album-manager
 services:
   app:
     build: .
+    env_file:
+      - path: server/.env
+        required: true
     ports:
       - "3000:3000"
     volumes:
