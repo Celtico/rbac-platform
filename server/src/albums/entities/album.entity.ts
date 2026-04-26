@@ -1,18 +1,15 @@
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
-@Entity('albums')
-export class Album {
+@Entity('photos')
+export class Photo {
   @PrimaryGeneratedColumn()
   id: number;
 
   @Column()
   title: string;
 
-  @Column()
-  artist: string;
-
   @Column({ nullable: true })
-  year: number;
+  description: string;
 
   @Column({ nullable: true })
   coverUrl: string;

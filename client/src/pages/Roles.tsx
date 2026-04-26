@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import api from "../api";
-import { useAuth } from "../context/AuthContext";
-import { Plus, Edit2, Trash2 } from "lucide-react";
+import { useAuth } from "../context/AuthContext.ts";
+import { Plus, Edit2, Trash2, Shield } from "lucide-react";
 import {
   Box,
   Button,
+  Dialog,
+  EmptyState,
   Flex,
   Heading,
   IconButton,
@@ -12,13 +14,13 @@ import {
   Stack,
   Table,
   Badge,
-  Portal,
   Field,
   Checkbox,
   VStack,
   HStack,
   Text,
 } from "@chakra-ui/react";
+import { toaster } from "../components/ui/toaster";
 
 interface Role {
   id: number;
@@ -36,6 +38,8 @@ const RolesPage: React.FC = () => {
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const { hasPermission } = useAuth();
   const [editing, setEditing] = useState<any | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Role | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -46,7 +50,8 @@ const RolesPage: React.FC = () => {
       setRoles(rRes.data);
       setPermissions(pRes.data);
     } catch (err) {
-      console.error(err);
+      console.error("Error fetching roles/permissions:", err);
+      toaster.create({ type: "error", title: "Failed to load roles" });
     }
   };
 
@@ -54,147 +59,67 @@ const RolesPage: React.FC = () => {
     fetchData();
   }, []);
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm("Are you sure?")) return;
-    await api.delete(`/roles/${id}`);
-    fetchData();
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await api.delete(`/roles/${deleteTarget.id}`);
+      toaster.create({ type: "success", title: `"${deleteTarget.name}" deleted` });
+      fetchData();
+    } catch {
+      toaster.create({ type: "error", title: "Failed to delete role" });
+    } finally {
+      setDeleteTarget(null);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSaving(true);
     const payload = {
       name: editing.name,
       permissionIds: editing.permissionIds || [],
     };
 
-    if (editing.id) {
-      await api.patch(`/roles/${editing.id}`, payload);
-    } else {
-      await api.post("/roles", payload);
+    try {
+      if (editing.id) {
+        await api.patch(`/roles/${editing.id}`, payload);
+        toaster.create({ type: "success", title: "Role updated" });
+      } else {
+        await api.post("/roles", payload);
+        toaster.create({ type: "success", title: "Role created" });
+      }
+      setEditing(null);
+      fetchData();
+    } catch {
+      toaster.create({ type: "error", title: "Failed to save role" });
+    } finally {
+      setSaving(false);
     }
-    setEditing(null);
-    fetchData();
   };
 
   return (
     <Box>
-      <Flex justify="space-between" align="center" mb="6">
+      <Flex justify="space-between" align="center" mb="6" wrap="wrap" gap="4">
         <Heading size="lg">Roles Management</Heading>
         {hasPermission("manage:roles") && (
           <Button
             colorPalette="green"
             onClick={() => setEditing({ name: "", permissionIds: [] })}
+            size="sm"
           >
-            <Plus size={16} style={{ marginRight: "8px" }} /> Add Role
+            <Plus size={16} />
+            <Box as="span" display={{ base: "none", sm: "inline" }} ml="2">
+              Add Role
+            </Box>
           </Button>
         )}
       </Flex>
-
-      {editing && (
-        <Portal>
-          <Box
-            position="fixed"
-            top="0"
-            left="0"
-            w="full"
-            h="full"
-            bg="blackAlpha.600"
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-            p="4"
-            zIndex="1000"
-          >
-            <Box
-              as="form"
-              onSubmit={handleSubmit}
-              bg="bg.panel"
-              p="6"
-              rounded="md"
-              shadow="lg"
-              w="full"
-              maxW="md"
-            >
-              <Heading size="md" mb="4">
-                {editing.id ? "Edit" : "Add"} Role
-              </Heading>
-              <VStack gap="4" align="stretch">
-                <Field.Root>
-                  <Field.Label>Role Name</Field.Label>
-                  <Input
-                    placeholder="Role Name"
-                    value={editing.name}
-                    onChange={(e) =>
-                      setEditing({ ...editing, name: e.target.value })
-                    }
-                    required
-                  />
-                </Field.Root>
-
-                <Box>
-                  <Text fontWeight="medium" mb="2" fontSize="sm">
-                    Permissions
-                  </Text>
-                  <Stack
-                    gap="2"
-                    maxH="48"
-                    overflowY="auto"
-                    p="2"
-                    borderWidth="1px"
-                    rounded="md"
-                  >
-                    {permissions.map((perm) => (
-                      <Checkbox.Root
-                        key={perm.id}
-                        checked={editing.permissionIds?.includes(perm.id)}
-                        onCheckedChange={(details) => {
-                          const ids = editing.permissionIds || [];
-                          if (details.checked) {
-                            setEditing({
-                              ...editing,
-                              permissionIds: [...ids, perm.id],
-                            });
-                          } else {
-                            setEditing({
-                              ...editing,
-                              permissionIds: ids.filter(
-                                (id: number) => id !== perm.id
-                              ),
-                            });
-                          }
-                        }}
-                      >
-                        <Checkbox.HiddenInput />
-                        <Checkbox.Control>
-                          <Checkbox.Indicator />
-                        </Checkbox.Control>
-                        <Checkbox.Label fontSize="sm">
-                          {perm.name}
-                        </Checkbox.Label>
-                      </Checkbox.Root>
-                    ))}
-                  </Stack>
-                </Box>
-              </VStack>
-
-              <Flex justify="flex-end" mt="6" gap="2">
-                <Button variant="ghost" onClick={() => setEditing(null)}>
-                  Cancel
-                </Button>
-                <Button type="submit" colorPalette="blue">
-                  Save
-                </Button>
-              </Flex>
-            </Box>
-          </Box>
-        </Portal>
-      )}
 
       <Box
         bg="bg.panel"
         rounded="md"
         shadow="sm"
-        overflow="hidden"
+        overflowX="auto"
         borderWidth="1px"
       >
         <Table.Root>
@@ -240,7 +165,7 @@ const RolesPage: React.FC = () => {
                         variant="ghost"
                         colorPalette="red"
                         size="sm"
-                        onClick={() => handleDelete(role.id)}
+                        onClick={() => setDeleteTarget(role)}
                       >
                         <Trash2 size={14} />
                       </IconButton>
@@ -251,7 +176,132 @@ const RolesPage: React.FC = () => {
             ))}
           </Table.Body>
         </Table.Root>
+        {roles.length === 0 && (
+          <EmptyState.Root py="12">
+            <EmptyState.Content>
+              <EmptyState.Indicator>
+                <Shield size={32} />
+              </EmptyState.Indicator>
+              <EmptyState.Title>No roles yet</EmptyState.Title>
+              <EmptyState.Description>
+                Create your first role to manage permissions.
+              </EmptyState.Description>
+            </EmptyState.Content>
+          </EmptyState.Root>
+        )}
       </Box>
+
+      {/* Edit / Create modal */}
+      <Dialog.Root
+        open={!!editing}
+        onOpenChange={({ open }) => { if (!open) setEditing(null); }}
+      >
+        <Dialog.Backdrop />
+        <Dialog.Positioner>
+          <Dialog.Content>
+            <Dialog.Header>
+              <Dialog.Title>{editing?.id ? "Edit" : "Add"} Role</Dialog.Title>
+              <Dialog.CloseTrigger />
+            </Dialog.Header>
+            <Dialog.Body>
+              <form id="role-form" onSubmit={handleSubmit}>
+                <VStack gap="4" align="stretch">
+                  <Field.Root>
+                    <Field.Label>Role Name</Field.Label>
+                    <Input
+                      placeholder="Role Name"
+                      value={editing?.name || ""}
+                      onChange={(e) =>
+                        setEditing({ ...editing, name: e.target.value })
+                      }
+                      required
+                    />
+                  </Field.Root>
+
+                  <Box>
+                    <Text fontWeight="medium" mb="2" fontSize="sm">
+                      Permissions
+                    </Text>
+                    <Stack
+                      gap="2"
+                      maxH="48"
+                      overflowY="auto"
+                      p="2"
+                      borderWidth="1px"
+                      rounded="md"
+                    >
+                      {permissions.map((perm) => (
+                        <Checkbox.Root
+                          key={perm.id}
+                          checked={editing?.permissionIds?.includes(perm.id)}
+                          onCheckedChange={(details) => {
+                            const ids = editing?.permissionIds || [];
+                            if (details.checked) {
+                              setEditing({ ...editing, permissionIds: [...ids, perm.id] });
+                            } else {
+                              setEditing({
+                                ...editing,
+                                permissionIds: ids.filter((id: number) => id !== perm.id),
+                              });
+                            }
+                          }}
+                        >
+                          <Checkbox.HiddenInput />
+                          <Checkbox.Control>
+                            <Checkbox.Indicator />
+                          </Checkbox.Control>
+                          <Checkbox.Label fontSize="sm">{perm.name}</Checkbox.Label>
+                        </Checkbox.Root>
+                      ))}
+                    </Stack>
+                  </Box>
+                </VStack>
+              </form>
+            </Dialog.Body>
+            <Dialog.Footer>
+              <Button variant="ghost" onClick={() => setEditing(null)}>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                form="role-form"
+                colorPalette="blue"
+                loading={saving}
+              >
+                Save
+              </Button>
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Dialog.Root>
+
+      {/* Delete confirmation */}
+      <Dialog.Root
+        open={!!deleteTarget}
+        onOpenChange={({ open }) => { if (!open) setDeleteTarget(null); }}
+        role="alertdialog"
+      >
+        <Dialog.Backdrop />
+        <Dialog.Positioner>
+          <Dialog.Content>
+            <Dialog.Header>
+              <Dialog.Title>Delete Role</Dialog.Title>
+            </Dialog.Header>
+            <Dialog.Body>
+              Are you sure you want to delete role{" "}
+              <strong>{deleteTarget?.name}</strong>? This action cannot be undone.
+            </Dialog.Body>
+            <Dialog.Footer>
+              <Button variant="outline" onClick={() => setDeleteTarget(null)}>
+                Cancel
+              </Button>
+              <Button colorPalette="red" onClick={handleDelete} ml="2">
+                Delete
+              </Button>
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Dialog.Root>
     </Box>
   );
 };

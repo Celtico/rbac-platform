@@ -1,4 +1,4 @@
-import { IsString, IsNumber, IsOptional } from 'class-validator';
+import { IsString, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateAlbumDto {
@@ -6,14 +6,10 @@ export class CreateAlbumDto {
   @IsString()
   title: string;
 
-  @ApiProperty()
-  @IsString()
-  artist: string;
-
   @ApiProperty({ required: false })
   @IsOptional()
-  @IsNumber()
-  year?: number;
+  @IsString()
+  description?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()

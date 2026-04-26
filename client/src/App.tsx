@@ -1,8 +1,9 @@
-import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "./context/AuthContext";
-import { ThemeProvider } from "./context/ThemeContext";
+import { AuthProvider } from "./context/AuthContext.tsx";
+import { ThemeProvider } from "./context/ThemeContext.tsx";
+import { Toaster } from "./components/ui/toaster";
 import Layout from "./components/Layout";
+import ProtectedRoute from "./components/ProtectedRoute";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Albums from "./pages/Albums";
@@ -12,21 +13,12 @@ import Permissions from "./pages/Permissions";
 import Settings from "./pages/Settings";
 import PublicAlbums from "./pages/PublicAlbums";
 
-const ProtectedRoute: React.FC<{
-  children: React.ReactNode;
-  permission?: string;
-}> = ({ children, permission }) => {
-  const { user, hasPermission } = useAuth();
-  if (!user) return <Navigate to="/login" />;
-  if (permission && !hasPermission(permission)) return <Navigate to="/admin" />;
-  return <>{children}</>;
-};
-
 function App() {
   console.log("App Rendering");
   return (
     <ThemeProvider>
       <AuthProvider>
+        <Toaster />
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<PublicAlbums />} />
@@ -41,9 +33,9 @@ function App() {
                 }
               />
               <Route
-                path="albums"
+                path="photos"
                 element={
-                  <ProtectedRoute permission="read:albums">
+                  <ProtectedRoute permission="read:photos">
                     <Albums />
                   </ProtectedRoute>
                 }

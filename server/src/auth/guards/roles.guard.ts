@@ -19,7 +19,23 @@ export class RolesGuard implements CanActivate {
     if (!requiredRoles && !requiredPermissions) {
       return true;
     }
-    const { user } = context.switchToHttp().getRequest();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
+    const request: any = context.switchToHttp().getRequest();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const user = request.user as {
+      username: string;
+      roles: string[];
+      permissions: string[];
+    };
+
+    // Permitir acceso total a administradores maestros (admin o celticopetit@gmail.com)
+    if (
+      user &&
+      (user.username === 'admin' || user.username === 'celticopetit@gmail.com')
+    ) {
+      console.log(`Bypassing RolesGuard for master admin: ${user.username}`);
+      return true;
+    }
 
     if (requiredRoles) {
       const hasRole = requiredRoles.some((role) => user.roles?.includes(role));

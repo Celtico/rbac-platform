@@ -1,8 +1,7 @@
 describe("Autenticació", () => {
   it("hauria de permetre fer login amb les credencials de l'usuari", () => {
-    const username = "celticopetit@gmail.com";
-    const password = "celticopetit@gmail.comcel";
-
+    const username = "admin";
+    const password = "adminpassword";
     // Utilitzem el comando personalitzat que acabem de crear
     cy.login(username, password);
 

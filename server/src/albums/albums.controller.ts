@@ -9,6 +9,7 @@ import {
   UseGuards,
   UseInterceptors,
   UploadedFile,
+  Query,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -16,26 +17,34 @@ import { extname, join } from 'path';
 import { AlbumsService } from './albums.service';
 import { CreateAlbumDto } from './dto/create-album.dto';
 import { UpdateAlbumDto } from './dto/update-album.dto';
-import { ApiTags, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import { PaginationDto } from './dto/pagination.dto';
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiConsumes,
+  ApiBody,
+  ApiQuery,
+  ApiOperation,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Permissions, Public } from '../auth/decorators/roles.decorator';
 
-@ApiTags('albums')
+@ApiTags('photos')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Controller('albums')
+@Controller('photos')
 export class AlbumsController {
   constructor(private readonly albumsService: AlbumsService) {}
 
   @Post()
-  @Permissions('write:albums')
+  @Permissions('write:photos')
   create(@Body() createAlbumDto: CreateAlbumDto) {
     return this.albumsService.create(createAlbumDto);
   }
 
   @Post('upload')
-  @Permissions('write:albums')
+  @Permissions('write:photos')
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -68,10 +77,20 @@ export class AlbumsController {
     };
   }
 
+  @Get('page-sizes')
+  @Public()
+  @ApiOperation({ summary: 'Get available page size options' })
+  getPageSizes() {
+    return { pageSizes: [5, 10, 20, 50, 100] };
+  }
+
   @Get()
   @Public()
-  findAll() {
-    return this.albumsService.findAll();
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'search', required: false, type: String })
+  findAll(@Query() paginationDto: PaginationDto) {
+    return this.albumsService.findAll(paginationDto);
   }
 
   @Get(':id')
@@ -81,13 +100,13 @@ export class AlbumsController {
   }
 
   @Patch(':id')
-  @Permissions('write:albums')
+  @Permissions('write:photos')
   update(@Param('id') id: string, @Body() updateAlbumDto: UpdateAlbumDto) {
     return this.albumsService.update(+id, updateAlbumDto);
   }
 
   @Delete(':id')
-  @Permissions('write:albums')
+  @Permissions('write:photos')
   remove(@Param('id') id: string) {
     return this.albumsService.remove(+id);
   }

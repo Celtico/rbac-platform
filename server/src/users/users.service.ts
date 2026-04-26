@@ -47,6 +47,13 @@ export class UsersService {
   findOneByUsername(username: string) {
     return this.usersRepository.findOne({
       where: { username },
+      relations: ['roles', 'roles.permissions'],
+    });
+  }
+
+  findOneByUsernameWithPassword(username: string) {
+    return this.usersRepository.findOne({
+      where: { username },
       select: ['id', 'username', 'password'],
       relations: ['roles', 'roles.permissions'],
     });

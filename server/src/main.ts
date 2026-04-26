@@ -6,6 +6,7 @@ import * as fs from 'fs';
 import { join } from 'path';
 
 async function bootstrap() {
+  /*
   const uploadDir = join(process.cwd(), 'uploads');
   console.log(`### Checking uploads directory: ${uploadDir} ###`);
   if (!fs.existsSync(uploadDir)) {
@@ -24,7 +25,7 @@ async function bootstrap() {
   if (!fs.existsSync(dataDir)) {
     console.log(`### Creating data directory: ${dataDir} ###`);
     fs.mkdirSync(dataDir, { recursive: true });
-  }
+  }*/
 
   const app = await NestFactory.create(AppModule);
 
@@ -33,7 +34,7 @@ async function bootstrap() {
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
   app.setGlobalPrefix('api');
 
   const config = new DocumentBuilder()

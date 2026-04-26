@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import api from "../api";
-import { useAuth } from "../context/AuthContext";
-import { Plus, Edit2, Trash2 } from "lucide-react";
+import { useAuth } from "../context/AuthContext.ts";
+import { Plus, Edit2, Trash2, Users as UsersIcon } from "lucide-react";
 import {
   Box,
   Button,
+  Dialog,
+  EmptyState,
   Flex,
   Heading,
   IconButton,
@@ -12,13 +14,13 @@ import {
   Stack,
   Table,
   Badge,
-  Portal,
   HStack,
   Field,
   Text,
   Checkbox,
   VStack,
 } from "@chakra-ui/react";
+import { toaster } from "../components/ui/toaster";
 
 interface User {
   id: number;
@@ -36,6 +38,8 @@ const UsersPage: React.FC = () => {
   const [roles, setRoles] = useState<Role[]>([]);
   const { hasPermission } = useAuth();
   const [editing, setEditing] = useState<any | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -47,6 +51,7 @@ const UsersPage: React.FC = () => {
       setRoles(rRes.data);
     } catch (err) {
       console.error(err);
+      toaster.create({ type: "error", title: "Failed to load users" });
     }
   };
 
@@ -54,32 +59,48 @@ const UsersPage: React.FC = () => {
     fetchData();
   }, []);
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm("Are you sure?")) return;
-    await api.delete(`/users/${id}`);
-    fetchData();
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await api.delete(`/users/${deleteTarget.id}`);
+      toaster.create({ type: "success", title: `"${deleteTarget.username}" deleted` });
+      fetchData();
+    } catch {
+      toaster.create({ type: "error", title: "Failed to delete user" });
+    } finally {
+      setDeleteTarget(null);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSaving(true);
     const payload = {
       username: editing.username,
       roleIds: editing.roleIds || [],
     };
     if (editing.password) (payload as any).password = editing.password;
 
-    if (editing.id) {
-      await api.patch(`/users/${editing.id}`, payload);
-    } else {
-      await api.post("/users", payload);
+    try {
+      if (editing.id) {
+        await api.patch(`/users/${editing.id}`, payload);
+        toaster.create({ type: "success", title: "User updated" });
+      } else {
+        await api.post("/users", payload);
+        toaster.create({ type: "success", title: "User created" });
+      }
+      setEditing(null);
+      fetchData();
+    } catch {
+      toaster.create({ type: "error", title: "Failed to save user" });
+    } finally {
+      setSaving(false);
     }
-    setEditing(null);
-    fetchData();
   };
 
   return (
     <Box>
-      <Flex justify="space-between" align="center" mb="6">
+      <Flex justify="space-between" align="center" mb="6" wrap="wrap" gap="4">
         <Heading size="lg">Users Management</Heading>
         {hasPermission("manage:users") && (
           <Button
@@ -87,134 +108,21 @@ const UsersPage: React.FC = () => {
             onClick={() =>
               setEditing({ username: "", password: "", roleIds: [] })
             }
+            size="sm"
           >
-            <Plus size={16} style={{ marginRight: "8px" }} /> Add User
+            <Plus size={16} />
+            <Box as="span" display={{ base: "none", sm: "inline" }} ml="2">
+              Add User
+            </Box>
           </Button>
         )}
       </Flex>
-
-      {editing && (
-        <Portal>
-          <Box
-            position="fixed"
-            top="0"
-            left="0"
-            w="full"
-            h="full"
-            bg="blackAlpha.600"
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-            p="4"
-            zIndex="1000"
-          >
-            <Box
-              as="form"
-              onSubmit={handleSubmit}
-              bg="bg.panel"
-              p="6"
-              rounded="md"
-              shadow="lg"
-              w="full"
-              maxW="md"
-            >
-              <Heading size="md" mb="4">
-                {editing.id ? "Edit" : "Add"} User
-              </Heading>
-              <VStack gap="4" align="stretch">
-                <Field.Root>
-                  <Field.Label>Username</Field.Label>
-                  <Input
-                    placeholder="Username"
-                    value={editing.username}
-                    onChange={(e) =>
-                      setEditing({ ...editing, username: e.target.value })
-                    }
-                    required
-                  />
-                </Field.Root>
-
-                <Field.Root>
-                  <Field.Label>
-                    {editing.id ? "New Password (optional)" : "Password"}
-                  </Field.Label>
-                  <Input
-                    type="password"
-                    placeholder={
-                      editing.id ? "Leave blank to keep current" : "Password"
-                    }
-                    value={editing.password || ""}
-                    onChange={(e) =>
-                      setEditing({ ...editing, password: e.target.value })
-                    }
-                    required={!editing.id}
-                  />
-                </Field.Root>
-
-                <Box>
-                  <Text fontWeight="medium" mb="2" fontSize="sm">
-                    Roles
-                  </Text>
-                  <Stack
-                    gap="2"
-                    maxH="40"
-                    overflowY="auto"
-                    p="2"
-                    borderWidth="1px"
-                    rounded="md"
-                  >
-                    {roles.map((role) => (
-                      <Checkbox.Root
-                        key={role.id}
-                        checked={editing.roleIds?.includes(role.id)}
-                        onCheckedChange={(details) => {
-                          const ids = editing.roleIds || [];
-                          if (details.checked) {
-                            setEditing({
-                              ...editing,
-                              roleIds: [...ids, role.id],
-                            });
-                          } else {
-                            setEditing({
-                              ...editing,
-                              roleIds: ids.filter(
-                                (id: number) => id !== role.id
-                              ),
-                            });
-                          }
-                        }}
-                      >
-                        <Checkbox.HiddenInput />
-                        <Checkbox.Control>
-                          <Checkbox.Indicator />
-                        </Checkbox.Control>
-                        <Checkbox.Label fontSize="sm">
-                          {role.name}
-                        </Checkbox.Label>
-                      </Checkbox.Root>
-                    ))}
-                  </Stack>
-                </Box>
-              </VStack>
-
-              <Flex justify="flex-end" mt="6" gap="2">
-                <Button variant="ghost" onClick={() => setEditing(null)}>
-                  Cancel
-                </Button>
-                <Button type="submit" colorPalette="blue">
-                  Save
-                </Button>
-              </Flex>
-            </Box>
-          </Box>
-        </Portal>
-      )}
 
       <Box
         bg="bg.panel"
         rounded="md"
         shadow="sm"
-        overflow="hidden"
+        overflowX="auto"
         borderWidth="1px"
       >
         <Table.Root>
@@ -260,7 +168,7 @@ const UsersPage: React.FC = () => {
                         variant="ghost"
                         colorPalette="red"
                         size="sm"
-                        onClick={() => handleDelete(u.id)}
+                        onClick={() => setDeleteTarget(u)}
                       >
                         <Trash2 size={14} />
                       </IconButton>
@@ -271,7 +179,149 @@ const UsersPage: React.FC = () => {
             ))}
           </Table.Body>
         </Table.Root>
+        {users.length === 0 && (
+          <EmptyState.Root py="12">
+            <EmptyState.Content>
+              <EmptyState.Indicator>
+                <UsersIcon size={32} />
+              </EmptyState.Indicator>
+              <EmptyState.Title>No users yet</EmptyState.Title>
+              <EmptyState.Description>
+                Add your first user to get started.
+              </EmptyState.Description>
+            </EmptyState.Content>
+          </EmptyState.Root>
+        )}
       </Box>
+
+      {/* Edit / Create modal */}
+      <Dialog.Root
+        open={!!editing}
+        onOpenChange={({ open }) => { if (!open) setEditing(null); }}
+      >
+        <Dialog.Backdrop />
+        <Dialog.Positioner>
+          <Dialog.Content>
+            <Dialog.Header>
+              <Dialog.Title>{editing?.id ? "Edit" : "Add"} User</Dialog.Title>
+              <Dialog.CloseTrigger />
+            </Dialog.Header>
+            <Dialog.Body>
+              <form id="user-form" onSubmit={handleSubmit}>
+                <VStack gap="4" align="stretch">
+                  <Field.Root>
+                    <Field.Label>Username</Field.Label>
+                    <Input
+                      placeholder="Username"
+                      value={editing?.username || ""}
+                      onChange={(e) =>
+                        setEditing({ ...editing, username: e.target.value })
+                      }
+                      required
+                    />
+                  </Field.Root>
+
+                  <Field.Root>
+                    <Field.Label>
+                      {editing?.id ? "New Password (optional)" : "Password"}
+                    </Field.Label>
+                    <Input
+                      type="password"
+                      placeholder={
+                        editing?.id ? "Leave blank to keep current" : "Password"
+                      }
+                      value={editing?.password || ""}
+                      onChange={(e) =>
+                        setEditing({ ...editing, password: e.target.value })
+                      }
+                      required={!editing?.id}
+                    />
+                  </Field.Root>
+
+                  <Box>
+                    <Text fontWeight="medium" mb="2" fontSize="sm">
+                      Roles
+                    </Text>
+                    <Stack
+                      gap="2"
+                      maxH="40"
+                      overflowY="auto"
+                      p="2"
+                      borderWidth="1px"
+                      rounded="md"
+                    >
+                      {roles.map((role) => (
+                        <Checkbox.Root
+                          key={role.id}
+                          checked={editing?.roleIds?.includes(role.id)}
+                          onCheckedChange={(details) => {
+                            const ids = editing?.roleIds || [];
+                            if (details.checked) {
+                              setEditing({ ...editing, roleIds: [...ids, role.id] });
+                            } else {
+                              setEditing({
+                                ...editing,
+                                roleIds: ids.filter((id: number) => id !== role.id),
+                              });
+                            }
+                          }}
+                        >
+                          <Checkbox.HiddenInput />
+                          <Checkbox.Control>
+                            <Checkbox.Indicator />
+                          </Checkbox.Control>
+                          <Checkbox.Label fontSize="sm">{role.name}</Checkbox.Label>
+                        </Checkbox.Root>
+                      ))}
+                    </Stack>
+                  </Box>
+                </VStack>
+              </form>
+            </Dialog.Body>
+            <Dialog.Footer>
+              <Button variant="ghost" onClick={() => setEditing(null)}>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                form="user-form"
+                colorPalette="blue"
+                loading={saving}
+              >
+                Save
+              </Button>
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Dialog.Root>
+
+      {/* Delete confirmation */}
+      <Dialog.Root
+        open={!!deleteTarget}
+        onOpenChange={({ open }) => { if (!open) setDeleteTarget(null); }}
+        role="alertdialog"
+      >
+        <Dialog.Backdrop />
+        <Dialog.Positioner>
+          <Dialog.Content>
+            <Dialog.Header>
+              <Dialog.Title>Delete User</Dialog.Title>
+            </Dialog.Header>
+            <Dialog.Body>
+              Are you sure you want to delete user{" "}
+              <strong>{deleteTarget?.username}</strong>? This action cannot be undone.
+            </Dialog.Body>
+            <Dialog.Footer>
+              <Button variant="outline" onClick={() => setDeleteTarget(null)}>
+                Cancel
+              </Button>
+              <Button colorPalette="red" onClick={handleDelete} ml="2">
+                Delete
+              </Button>
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Dialog.Root>
     </Box>
   );
 };
