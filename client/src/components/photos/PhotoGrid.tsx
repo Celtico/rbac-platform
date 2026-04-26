@@ -41,16 +41,16 @@ export function PhotoGrid({
   const isSmall = viewMode === "grid-small";
 
   const titleSize: ChakraSize[] = isSmall
-    ? ["md", "lg", "xl", "2xl", "3xl"]
-    : ["sm", "md", "md", "md", "md"];
+    ? ["lg", "lg", "lg", "lg", "lg"]
+    : ["sm", "sm", "sm", "sm", "sm"];
 
   const descSize: ChakraSize[] = isSmall
-    ? ["xs", "sm", "md", "lg", "xl"]
-    : ["xs", "xs", "xs", "sm", "md"];
+    ? ["xs", "xs", "xs", "xs", "xs"]
+    : ["xs", "xs", "xs", "xs", "xs"];
 
   return (
     <SimpleGrid
-      columns={[isSmall ? 1 : 2, 2, 3, isSmall ? 5 : 10]}
+      columns={[isSmall ? 1 : 2, 2, 3, isSmall ? 5 : 7]}
       id="albums-grid-small"
       gap="4"
     >
@@ -59,9 +59,10 @@ export function PhotoGrid({
           key={photo.id}
           data-testid={`album-card-small-${photo.id}`}
           bg="bg.panel"
-          p="2"
+          p="6"
           rounded="md"
           shadow="sm"
+          minW="120px"
           display="flex"
           flexDirection="column"
           borderWidth="1px"
@@ -103,7 +104,7 @@ export function PhotoGrid({
           <Heading size={titleSize} truncate title={photo.title}>
             {photo.title}
           </Heading>
-          <Text fontSize={descSize} color="fg.muted" truncate>
+          <Text fontSize={descSize} color="fg.muted">
             {photo.description}
           </Text>
           <Flex justify="flex-end" mt="2" gap="1">
