@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.ts";
 import { ImageIcon, Users, ShieldCheck, Lock } from "lucide-react";
-import { Box, Flex, Heading, Text, Stack, SimpleGrid } from "@chakra-ui/react";
+import { Box, Heading, Text, Stack, SimpleGrid } from "@chakra-ui/react";
 import type { LucideIcon } from "lucide-react";
 
 interface StatCardProps {
