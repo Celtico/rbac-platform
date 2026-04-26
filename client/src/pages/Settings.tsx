@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { useTheme } from "../context/ThemeContext";
-import type { ColorTheme, RadiusSize } from "../context/ThemeContext";
-import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext.ts";
+import type { ColorTheme, RadiusSize } from "../context/ThemeContext.ts";
+import { useAuth } from "../context/AuthContext.ts";
 import api from "../api";
 import {
+  Alert,
   Box,
   Button,
+  Dialog,
   Heading,
   Text,
   HStack,
@@ -17,6 +19,7 @@ import {
   Circle,
 } from "@chakra-ui/react";
 import { RefreshCw } from "lucide-react";
+import { toaster } from "../components/ui/toaster";
 
 const Settings: React.FC = () => {
   const { theme, setTheme, radius, setRadius } = useTheme();
@@ -28,6 +31,7 @@ const Settings: React.FC = () => {
   } | null>(null);
   const [deployLogs, setDeployLogs] = useState<string | null>(null);
   const [showLogs, setShowLogs] = useState(false);
+  const [deployConfirmOpen, setDeployConfirmOpen] = useState(false);
   const [versionInfo, setVersionInfo] = useState<{
     version: string;
     name: string;
@@ -83,28 +87,25 @@ const Settings: React.FC = () => {
   ];
 
   const handleDeploy = async () => {
-    if (!window.confirm("Estàs segur que vols desplegar l'aplicació?")) return;
-
+    setDeployConfirmOpen(false);
     setIsDeploying(true);
     setDeployResult(null);
 
     try {
       const response = await api.post("/deploy");
-
       setDeployResult({
         success: true,
         message: response.data.message || "Desplegament completat amb èxit",
       });
+      toaster.create({ type: "success", title: "Deploy completed" });
     } catch (error: unknown) {
       const axiosError = error as {
         response?: { data?: { message?: string } };
       };
       console.error("Deploy error:", error);
-      setDeployResult({
-        success: false,
-        message:
-          axiosError.response?.data?.message || "Error de connexió al servidor",
-      });
+      const msg = axiosError.response?.data?.message || "Error de connexió al servidor";
+      setDeployResult({ success: false, message: msg });
+      toaster.create({ type: "error", title: "Deploy failed", description: msg });
     } finally {
       setIsDeploying(false);
     }
@@ -128,7 +129,7 @@ const Settings: React.FC = () => {
             </Text>
             <Button
               colorPalette="orange"
-              onClick={handleDeploy}
+              onClick={() => setDeployConfirmOpen(true)}
               loading={isDeploying}
               loadingText="Desplegant..."
             >
@@ -203,18 +204,13 @@ const Settings: React.FC = () => {
 
             {deployResult && (
               <Box mt="4">
-                <Box
-                  p="4"
+                <Alert.Root
+                  status={deployResult.success ? "success" : "error"}
                   rounded="md"
-                  borderWidth="1px"
-                  bg={deployResult.success ? "green.subtle" : "red.subtle"}
-                  borderColor={
-                    deployResult.success ? "green.border" : "red.border"
-                  }
-                  color={deployResult.success ? "green.fg" : "red.fg"}
                 >
-                  {deployResult.message}
-                </Box>
+                  <Alert.Indicator />
+                  <Alert.Description>{deployResult.message}</Alert.Description>
+                </Alert.Root>
                 <HStack mt="2" gap="4">
                   <Button
                     variant="ghost"
@@ -331,6 +327,34 @@ const Settings: React.FC = () => {
           </Box>
         </Stack>
       </Box>
+
+      {/* Deploy confirmation */}
+      <Dialog.Root
+        open={deployConfirmOpen}
+        onOpenChange={({ open }) => setDeployConfirmOpen(open)}
+        role="alertdialog"
+      >
+        <Dialog.Backdrop />
+        <Dialog.Positioner>
+          <Dialog.Content>
+            <Dialog.Header>
+              <Dialog.Title>Confirmar desplegament</Dialog.Title>
+            </Dialog.Header>
+            <Dialog.Body>
+              Estàs segur que vols desplegar l'aplicació? Això executarà el
+              script de desplegament al servidor.
+            </Dialog.Body>
+            <Dialog.Footer>
+              <Button variant="outline" onClick={() => setDeployConfirmOpen(false)}>
+                Cancel·lar
+              </Button>
+              <Button colorPalette="orange" onClick={handleDeploy} ml="2">
+                Desplegar
+              </Button>
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Dialog.Root>
     </Box>
   );
 };

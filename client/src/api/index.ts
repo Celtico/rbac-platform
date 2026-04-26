@@ -16,4 +16,25 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      console.warn(
+        "401 Unauthorized detected. Clearing token and redirecting..."
+      );
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+
+      // Emitir un evento para que AuthContext se entere
+      window.dispatchEvent(new Event("auth-error"));
+
+      if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default api;

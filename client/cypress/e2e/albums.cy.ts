@@ -2,8 +2,8 @@ describe("Albums Management", () => {
   beforeEach(() => {
     // Login as admin before each test
     cy.visit("/login");
-    cy.get("#username").type("celticopetit@gmail.com");
-    cy.get("#password").type("celticopetit@gmail.com");
+    cy.get("#username").type("admin");
+    cy.get("#password").type("adminpassword");
     cy.get("#login-button").click();
     cy.url().should("not.include", "/login");
     cy.contains("Albums", { timeout: 10000 }).click();
@@ -19,16 +19,16 @@ describe("Albums Management", () => {
     const artistName = "Test Artist";
 
     cy.get("#add-album-button").click();
-    cy.get("#album-modal").should("be.visible");
+    cy.url().should("include", "/admin/albums/new");
 
     cy.get("#album-title").type(albumTitle);
     cy.get("#album-artist").type(artistName);
     cy.get("#album-year").clear().type("2024");
-    cy.get("#album-cover").type("https://via.placeholder.com/150");
+    // cy.get("#album-cover").type("https://via.placeholder.com/150"); // Opcional si el componente lo permite
 
-    cy.get("#save-album-button").click();
+    cy.get("button").contains("Create Album").click();
 
-    cy.get("#album-modal").should("not.exist");
+    cy.url().should("include", "/admin/albums");
     cy.get("#albums-grid").should("contain", albumTitle);
     cy.get("#albums-grid").should("contain", artistName);
   });
@@ -37,28 +37,26 @@ describe("Albums Management", () => {
     const updatedTitle = "Updated Album Title " + Date.now();
 
     // Check if there is at least one album, if not create one
-    cy.get("#albums-grid").then(($grid) => {
-      if ($grid.find(".album-card").length === 0) {
+    cy.get("body").then(($body) => {
+      if ($body.find("[data-testid^=album-card-]").length === 0) {
         cy.get("#add-album-button").click();
         cy.get("#album-title").type("Temp Album");
         cy.get("#album-artist").type("Temp Artist");
-        cy.get("#album-year").clear().type("2024");
-        cy.get("#album-cover").type("https://via.placeholder.com/150");
-        cy.get("#save-album-button").click();
+        cy.get("button").contains("Create Album").click();
       }
     });
 
-    cy.get(".album-card")
+    cy.get("[data-testid^=album-card-]")
       .first()
       .within(() => {
-        cy.get(".edit-album-btn").click();
+        cy.get('[aria-label="Edit Album"]').click();
       });
 
-    cy.get("#album-modal").should("be.visible");
+    cy.url().should("match", /\/admin\/albums\/edit\/\d+/);
     cy.get("#album-title").clear().type(updatedTitle);
-    cy.get("#save-album-button").click();
+    cy.get("button").contains("Update Album").click();
 
-    cy.get("#album-modal").should("not.exist");
+    cy.url().should("include", "/admin/albums");
     cy.get("#albums-grid").should("contain", updatedTitle);
   });
 
@@ -68,15 +66,13 @@ describe("Albums Management", () => {
     cy.get("#add-album-button").click();
     cy.get("#album-title").type(deleteTitle);
     cy.get("#album-artist").type("Delete Artist");
-    cy.get("#album-year").clear().type("2024");
-    cy.get("#album-cover").type("https://via.placeholder.com/150");
-    cy.get("#save-album-button").click();
+    cy.get("button").contains("Create Album").click();
 
     cy.get("#albums-grid").should("contain", deleteTitle);
 
     // Find the card with the specific title and delete it
-    cy.contains(".album-card", deleteTitle).within(() => {
-      cy.get(".delete-album-btn").click();
+    cy.contains("[data-testid^=album-card-]", deleteTitle).within(() => {
+      cy.get('[aria-label="Delete Album"]').click();
     });
 
     // Handle confirmation dialog

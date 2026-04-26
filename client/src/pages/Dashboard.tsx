@@ -1,7 +1,8 @@
 import React from "react";
-import { useAuth } from "../context/AuthContext";
-import { Disc, Users, ShieldCheck, Lock } from "lucide-react";
-import { Box, Flex, Grid, Heading, Text, Stack } from "@chakra-ui/react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext.ts";
+import { ImageIcon, Users, ShieldCheck, Lock } from "lucide-react";
+import { Box, Flex, Heading, Text, Stack, SimpleGrid } from "@chakra-ui/react";
 import type { LucideIcon } from "lucide-react";
 
 interface StatCardProps {
@@ -9,37 +10,56 @@ interface StatCardProps {
   label: string;
   value: string | number;
   color: string;
+  to?: string;
 }
 
-const StatCard = ({ icon: Icon, label, value, color }: StatCardProps) => (
-  <Box
-    bg="bg.panel"
-    p="6"
-    rounded="md"
-    shadow="sm"
-    borderLeftWidth="4px"
-    borderLeftColor={color}
-  >
-    <Flex align="center">
-      <Box color={color} mr="4">
-        <Icon size={48} />
+const StatCard = ({ icon: Icon, label, value, color, to }: StatCardProps) => {
+  const content = (
+    <Box
+      bg="bg.panel"
+      p="6"
+      rounded="md"
+      shadow="sm"
+      borderLeftWidth="4px"
+      borderLeftColor={color}
+      transition="all 0.2s"
+      _hover={
+        to
+          ? { shadow: "md", transform: "translateY(-2px)", cursor: "pointer" }
+          : {}
+      }
+    >
+      <Box>
+        <Box color={color} mr="4" mb={3}>
+          <Icon size={40} />
+        </Box>
+        <Stack gap="0">
+          <Text
+            fontSize="xs"
+            fontWeight="bold"
+            color="fg.muted"
+            textTransform="uppercase"
+          >
+            {label}
+          </Text>
+          <Text fontSize="xs" fontWeight="bold">
+            {value}
+          </Text>
+        </Stack>
       </Box>
-      <Stack gap="0">
-        <Text
-          fontSize="xs"
-          fontWeight="bold"
-          color="fg.muted"
-          textTransform="uppercase"
-        >
-          {label}
-        </Text>
-        <Text fontSize="xl" fontWeight="bold">
-          {value}
-        </Text>
-      </Stack>
-    </Flex>
-  </Box>
-);
+    </Box>
+  );
+
+  if (to) {
+    return (
+      <Link to={to} style={{ textDecoration: "none" }}>
+        {content}
+      </Link>
+    );
+  }
+
+  return content;
+};
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -49,31 +69,34 @@ const Dashboard: React.FC = () => {
       <Heading size="2xl" mb="8">
         Dashboard Overview
       </Heading>
-      <Grid
-        templateColumns={{
-          base: "1fr",
-          md: "repeat(2, 1fr)",
-          lg: "repeat(4, 1fr)",
-        }}
-        gap="6"
-      >
+      <SimpleGrid columns={[2, 2, 3, 4]} gap="3">
         <StatCard
-          icon={Disc}
-          label="Total Albums"
+          icon={ImageIcon}
+          label="Total Photos"
           value="Available"
           color="blue.500"
+          to="/admin/photos"
+        />
+        <StatCard
+          icon={Users}
+          label="Total Users"
+          value="Manage"
+          color="teal.500"
+          to="/admin/users"
         />
         <StatCard
           icon={Users}
           label="Your Roles"
           value={user?.roles.join(", ") || "None"}
           color="purple.500"
+          to="/admin/roles"
         />
         <StatCard
           icon={ShieldCheck}
           label="Permissions"
           value={`${user?.permissions.length || 0} active`}
           color="yellow.500"
+          to="/admin/permissions"
         />
         <StatCard
           icon={Lock}
@@ -81,7 +104,7 @@ const Dashboard: React.FC = () => {
           value="RBAC Enabled"
           color="gray.500"
         />
-      </Grid>
+      </SimpleGrid>
     </Box>
   );
 };

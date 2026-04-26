@@ -1,19 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useColorMode } from "../components/ui/color-mode";
-
-export type ColorTheme = "default" | "ocean" | "forest" | "sunset";
-export type RadiusSize = "none" | "sm" | "md" | "lg" | "xl" | "full";
-
-interface ThemeContextType {
-  mode: "light" | "dark";
-  theme: ColorTheme;
-  radius: RadiusSize;
-  toggleMode: () => void;
-  setTheme: (theme: ColorTheme) => void;
-  setRadius: (radius: RadiusSize) => void;
-}
-
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+import { ThemeContext } from "./ThemeContext";
+import type { ColorTheme, RadiusSize } from "./ThemeContext";
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -54,13 +42,4 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
       {children}
     </ThemeContext.Provider>
   );
-};
-
-// eslint-disable-next-line react-refresh/only-export-components
-export const useTheme = () => {
-  const context = useContext(ThemeContext);
-  if (context === undefined) {
-    throw new Error("useTheme must be used within a ThemeProvider");
-  }
-  return context;
 };

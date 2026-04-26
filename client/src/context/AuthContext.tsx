@@ -1,28 +1,27 @@
-import React, { createContext, useContext, useState } from "react";
-
-interface User {
-  id: number;
-  username: string;
-  roles: string[];
-  permissions: string[];
-}
-
-interface AuthContextType {
-  user: User | null;
-  login: (token: string, user: User) => void;
-  logout: () => void;
-  hasPermission: (permission: string) => boolean;
-  hasRole: (role: string) => boolean;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+import React, { useState, useEffect, useCallback } from "react";
+import { AuthContext, isTokenExpired } from "./AuthContext";
+import type { User } from "./AuthContext";
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const test = localStorage.getItem("user");
-  const initialUser = test !== null ? JSON.parse(test) : null;
-  const [user, setUser] = useState<User | null>(initialUser);
+  const [user, setUser] = useState<User | null>(() => {
+    const storedUser = localStorage.getItem("user");
+    const token = localStorage.getItem("token");
+    console.log(isTokenExpired(token));
+    if (storedUser && token && !isTokenExpired(token)) {
+      try {
+        return JSON.parse(storedUser);
+      } catch {
+        return null;
+      }
+    } else {
+      // Limpiar datos inválidos o expirados
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+      return null;
+    }
+  });
 
   const login = (token: string, userData: User) => {
     localStorage.setItem("token", token);
@@ -30,11 +29,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setUser(userData);
   };
 
-  const logout = () => {
+  const logout = useCallback(() => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setUser(null);
-  };
+  }, []);
+
+  // Verificar expiración periódicamente o al montar
+  useEffect(() => {
+    const handleAuthError = () => {
+      setTimeout(() => logout(), 0);
+    };
+
+    window.addEventListener("auth-error", handleAuthError);
+
+    return () => {
+      window.removeEventListener("auth-error", handleAuthError);
+    };
+  }, [logout]);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token && isTokenExpired(token)) {
+      setTimeout(() => logout(), 0);
+    }
+  }, [logout]);
 
   const hasPermission = (permission: string) =>
     user?.permissions.includes(permission) || false;
@@ -47,13 +66,4 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       {children}
     </AuthContext.Provider>
   );
-};
-
-// eslint-disable-next-line react-refresh/only-export-components
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
 };

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script de desplegament simplificat (v0.0.43)
-# Millorat per Junie per al servidor 192.168.1.55
+# Millorat pel servidor 192.168.1.55
 
 # 1. Determinar el directori del projecte i fitxer de log
 # Fem servir camins absoluts consistents amb el muntatge de docker-compose
