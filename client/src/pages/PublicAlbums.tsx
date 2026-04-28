@@ -31,7 +31,13 @@ const PublicAlbums: React.FC = () => {
     setLoading(true);
     setError(false);
     try {
-      const res = await api.get("/photos");
+      const res = await api.get("/photos", {
+        params: {
+          page: 1,
+          limit: 100,
+          search: undefined,
+        },
+      });
       setPhotos(res.data.items);
     } catch (err) {
       console.error("Error fetching public photos:", err);
@@ -58,7 +64,13 @@ const PublicAlbums: React.FC = () => {
       <PublicHeader />
       <Container>
         {error ? (
-          <EmptyState.Root py="20" bg="bg.panel" rounded="md" shadow="sm" borderWidth="1px">
+          <EmptyState.Root
+            py="20"
+            bg="bg.panel"
+            rounded="md"
+            shadow="sm"
+            borderWidth="1px"
+          >
             <EmptyState.Content>
               <EmptyState.Indicator>
                 <TriangleAlert size={32} />
@@ -73,7 +85,13 @@ const PublicAlbums: React.FC = () => {
             </EmptyState.Content>
           </EmptyState.Root>
         ) : photos.length === 0 ? (
-          <EmptyState.Root py="20" bg="bg.panel" rounded="md" shadow="sm" borderWidth="1px">
+          <EmptyState.Root
+            py="20"
+            bg="bg.panel"
+            rounded="md"
+            shadow="sm"
+            borderWidth="1px"
+          >
             <EmptyState.Content>
               <EmptyState.Indicator>
                 <ImageIcon size={32} />
