@@ -10,11 +10,13 @@ import {
   Heading,
   Input,
   VStack,
+  IconButton,
 } from "@chakra-ui/react";
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -80,13 +82,29 @@ const Login: React.FC = () => {
 
               <Field.Root>
                 <Field.Label htmlFor="password">Password</Field.Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
+                <Box position="relative" w="full">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    pr="10"
+                  />
+                  <IconButton
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    variant="ghost"
+                    size="sm"
+                    position="absolute"
+                    right="1"
+                    top="50%"
+                    transform="translateY(-50%)"
+                    onClick={() => setShowPassword((v) => !v)}
+                    tabIndex={-1}
+                  >
+                    {showPassword ? "🙈" : "👁"}
+                  </IconButton>
+                </Box>
               </Field.Root>
             </VStack>
 
