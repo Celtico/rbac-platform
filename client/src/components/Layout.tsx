@@ -1,6 +1,7 @@
 import React from "react";
 import { useAuth } from "../context/AuthContext.ts";
 import { useTheme } from "../context/ThemeContext.ts";
+import { useNavConfig } from "../context/NavConfigContext.ts";
 import {
   LogOut,
   LayoutDashboard,
@@ -17,6 +18,12 @@ import {
   ChevronUp,
   Menu as IconMenu,
   MoreHorizontal,
+  Bot,
+  Palette,
+  Rocket,
+  SlidersHorizontal,
+  Building2,
+  Boxes,
 } from "lucide-react";
 import { Link, useNavigate, Outlet, useLocation } from "react-router-dom";
 import {
@@ -37,6 +44,7 @@ import {
 const Layout: React.FC = () => {
   const { user, logout, hasPermission } = useAuth();
   const { mode, toggleMode } = useTheme();
+  const { isEnabled } = useNavConfig();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -58,9 +66,17 @@ const Layout: React.FC = () => {
       location.pathname.startsWith("/admin/permissions")
   );
 
-  const [isPublicOpen, setIsPublicOpen] = React.useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = React.useState(
+    location.pathname.startsWith("/admin/settings")
+  );
 
-  const activeColor = "#863bff";
+  const [isPublicOpen, setIsPublicOpen] = React.useState(false);
+  const [isModuleOpen, setIsModuleOpen] = React.useState(
+    location.pathname.startsWith("/admin/photos") ||
+      location.pathname.startsWith("/admin/odoo")
+  );
+
+  const activeColor = "var(--theme-active, #863bff)";
 
   const NavContent = React.useCallback(
     ({ isMobile = false }: { isMobile?: boolean }) => (
@@ -77,106 +93,6 @@ const Layout: React.FC = () => {
             Dashboard
           </Button>
         </Link>
-
-        {hasPermission("read:photos") && (
-          <Link to="/admin/photos" style={{ textDecoration: "none" }}>
-            <Button
-              variant={isActive("/admin/photos") ? "subtle" : "ghost"}
-              colorPalette={isActive("/admin/photos") ? "purple" : undefined}
-              justifyContent="flex-start"
-              width="full"
-              size={isMobile ? "sm" : "md"}
-            >
-              <ImageIcon size={20} style={{ marginRight: "8px" }} />
-              Photos
-            </Button>
-          </Link>
-        )}
-
-        {(hasPermission("read:users") || hasPermission("read:roles")) && (
-          <Collapsible.Root
-            open={isAdminOpen}
-            onOpenChange={(e) => setIsAdminOpen(e.open)}
-          >
-            <Collapsible.Trigger asChild>
-              <Button
-                variant="ghost"
-                justifyContent="space-between"
-                width="full"
-                size={isMobile ? "sm" : "md"}
-              >
-                <HStack gap="2">
-                  <ShieldCheck size={20} />
-                  <span>Administration</span>
-                </HStack>
-                {isAdminOpen ? (
-                  <ChevronUp size={16} />
-                ) : (
-                  <ChevronDown size={16} />
-                )}
-              </Button>
-            </Collapsible.Trigger>
-            <Collapsible.Content>
-              <VStack align="stretch" spaceY="1" pl="4" mt="1">
-                {hasPermission("read:users") && (
-                  <Link to="/admin/users" style={{ textDecoration: "none" }}>
-                    <Button
-                      variant={isActive("/admin/users") ? "subtle" : "ghost"}
-                      colorPalette={
-                        isActive("/admin/users") ? "purple" : undefined
-                      }
-                      justifyContent="flex-start"
-                      width="full"
-                      size="sm"
-                    >
-                      <Users size={18} style={{ marginRight: "8px" }} />
-                      Users
-                    </Button>
-                  </Link>
-                )}
-
-                {hasPermission("read:roles") && (
-                  <>
-                    <Link to="/admin/roles" style={{ textDecoration: "none" }}>
-                      <Button
-                        variant={isActive("/admin/roles") ? "subtle" : "ghost"}
-                        colorPalette={
-                          isActive("/admin/roles") ? "purple" : undefined
-                        }
-                        justifyContent="flex-start"
-                        width="full"
-                        size="sm"
-                      >
-                        <ShieldCheck size={18} style={{ marginRight: "8px" }} />
-                        Roles
-                      </Button>
-                    </Link>
-                    <Link
-                      to="/admin/permissions"
-                      style={{ textDecoration: "none" }}
-                    >
-                      <Button
-                        variant={
-                          isActive("/admin/permissions") ? "subtle" : "ghost"
-                        }
-                        colorPalette={
-                          isActive("/admin/permissions") ? "purple" : undefined
-                        }
-                        justifyContent="flex-start"
-                        width="full"
-                        size="sm"
-                      >
-                        <Lock size={18} style={{ marginRight: "8px" }} />
-                        Permissions
-                      </Button>
-                    </Link>
-                  </>
-                )}
-              </VStack>
-            </Collapsible.Content>
-          </Collapsible.Root>
-        )}
-
         <Collapsible.Root
           open={isPublicOpen}
           onOpenChange={(e) => setIsPublicOpen(e.open)}
@@ -190,7 +106,7 @@ const Layout: React.FC = () => {
             >
               <HStack gap="2">
                 <SquareLibrary size={20} />
-                <span>Publico</span>
+                <span>Public</span>
               </HStack>
               {isPublicOpen ? (
                 <ChevronUp size={16} />
@@ -226,25 +142,311 @@ const Layout: React.FC = () => {
             </VStack>
           </Collapsible.Content>
         </Collapsible.Root>
-        <Link to="/admin/settings" style={{ textDecoration: "none" }}>
-          <Button
-            variant={isActive("/admin/settings") ? "subtle" : "ghost"}
-            colorPalette={isActive("/admin/settings") ? "purple" : undefined}
-            justifyContent="flex-start"
-            width="full"
-            size={isMobile ? "sm" : "md"}
+        {((isEnabled("sidebar", "photos") && hasPermission("read:photos")) ||
+          (isEnabled("sidebar", "odoo") && hasPermission("use:ai"))) && (
+          <Collapsible.Root
+            open={isModuleOpen}
+            onOpenChange={(e) => setIsModuleOpen(e.open)}
           >
-            <Settings size={20} style={{ marginRight: "8px" }} />
-            Settings
-          </Button>
-        </Link>
+            <Collapsible.Trigger asChild>
+              {(() => {
+                const moduleActive =
+                  isActive("/admin/photos") || isActive("/admin/odoo");
+                return (
+                  <Button
+                    variant={moduleActive ? "subtle" : "ghost"}
+                    colorPalette={moduleActive ? "purple" : undefined}
+                    justifyContent="space-between"
+                    width="full"
+                    size={isMobile ? "sm" : "md"}
+                  >
+                    <HStack gap="2">
+                      <Boxes size={20} />
+                      <span>Mòduls</span>
+                    </HStack>
+                    {isModuleOpen ? (
+                      <ChevronUp size={16} />
+                    ) : (
+                      <ChevronDown size={16} />
+                    )}
+                  </Button>
+                );
+              })()}
+            </Collapsible.Trigger>
+            <Collapsible.Content>
+              <VStack align="stretch" spaceY="1" pl="4" mt="1">
+                {isEnabled("sidebar", "photos") &&
+                  hasPermission("read:photos") && (
+                    <Link to="/admin/photos" style={{ textDecoration: "none" }}>
+                      <Button
+                        variant={isActive("/admin/photos") ? "subtle" : "ghost"}
+                        colorPalette={
+                          isActive("/admin/photos") ? "purple" : undefined
+                        }
+                        justifyContent="flex-start"
+                        width="full"
+                        size="sm"
+                      >
+                        <ImageIcon size={18} style={{ marginRight: "8px" }} />
+                        Photos
+                      </Button>
+                    </Link>
+                  )}
+                {isEnabled("sidebar", "odoo") && hasPermission("use:ai") && (
+                  <Link to="/admin/odoo" style={{ textDecoration: "none" }}>
+                    <Button
+                      variant={isActive("/admin/odoo") ? "subtle" : "ghost"}
+                      colorPalette={
+                        isActive("/admin/odoo") ? "purple" : undefined
+                      }
+                      justifyContent="flex-start"
+                      width="full"
+                      size="sm"
+                    >
+                      <Bot size={18} style={{ marginRight: "8px" }} />
+                      Odoo AI
+                    </Button>
+                  </Link>
+                )}
+              </VStack>
+            </Collapsible.Content>
+          </Collapsible.Root>
+        )}
+        {((isEnabled("sidebar", "users") && hasPermission("read:users")) ||
+          (isEnabled("sidebar", "roles") && hasPermission("read:roles")) ||
+          (isEnabled("sidebar", "permissions") &&
+            hasPermission("read:roles")) ||
+          (isEnabled("sidebar", "tenants") &&
+            (hasPermission("read:tenants") ||
+              hasPermission("manage:tenants")))) && (
+          <Collapsible.Root
+            open={isAdminOpen}
+            onOpenChange={(e) => setIsAdminOpen(e.open)}
+          >
+            <Collapsible.Trigger asChild>
+              {(() => {
+                const adminActive =
+                  isActive("/admin/users") ||
+                  isActive("/admin/roles") ||
+                  isActive("/admin/permissions") ||
+                  isActive("/admin/tenants");
+                return (
+                  <Button
+                    variant={adminActive ? "subtle" : "ghost"}
+                    colorPalette={adminActive ? "purple" : undefined}
+                    justifyContent="space-between"
+                    width="full"
+                    size={isMobile ? "sm" : "md"}
+                  >
+                    <HStack gap="2">
+                      <ShieldCheck size={20} />
+                      <span>Administration</span>
+                    </HStack>
+                    {isAdminOpen ? (
+                      <ChevronUp size={16} />
+                    ) : (
+                      <ChevronDown size={16} />
+                    )}
+                  </Button>
+                );
+              })()}
+            </Collapsible.Trigger>
+            <Collapsible.Content>
+              <VStack align="stretch" spaceY="1" pl="4" mt="1">
+                {isEnabled("sidebar", "users") &&
+                  hasPermission("read:users") && (
+                    <Link to="/admin/users" style={{ textDecoration: "none" }}>
+                      <Button
+                        variant={isActive("/admin/users") ? "subtle" : "ghost"}
+                        colorPalette={
+                          isActive("/admin/users") ? "purple" : undefined
+                        }
+                        justifyContent="flex-start"
+                        width="full"
+                        size="sm"
+                      >
+                        <Users size={18} style={{ marginRight: "8px" }} />
+                        Users
+                      </Button>
+                    </Link>
+                  )}
+
+                {isEnabled("sidebar", "roles") &&
+                  hasPermission("read:roles") && (
+                    <Link to="/admin/roles" style={{ textDecoration: "none" }}>
+                      <Button
+                        variant={isActive("/admin/roles") ? "subtle" : "ghost"}
+                        colorPalette={
+                          isActive("/admin/roles") ? "purple" : undefined
+                        }
+                        justifyContent="flex-start"
+                        width="full"
+                        size="sm"
+                      >
+                        <ShieldCheck size={18} style={{ marginRight: "8px" }} />
+                        Roles
+                      </Button>
+                    </Link>
+                  )}
+                {isEnabled("sidebar", "permissions") &&
+                  hasPermission("read:roles") && (
+                    <Link
+                      to="/admin/permissions"
+                      style={{ textDecoration: "none" }}
+                    >
+                      <Button
+                        variant={
+                          isActive("/admin/permissions") ? "subtle" : "ghost"
+                        }
+                        colorPalette={
+                          isActive("/admin/permissions") ? "purple" : undefined
+                        }
+                        justifyContent="flex-start"
+                        width="full"
+                        size="sm"
+                      >
+                        <Lock size={18} style={{ marginRight: "8px" }} />
+                        Permissions
+                      </Button>
+                    </Link>
+                  )}
+                {isEnabled("sidebar", "tenants") &&
+                  (hasPermission("read:tenants") ||
+                    hasPermission("manage:tenants")) && (
+                    <Link
+                      to="/admin/tenants"
+                      style={{ textDecoration: "none" }}
+                    >
+                      <Button
+                        variant={
+                          isActive("/admin/tenants") ? "subtle" : "ghost"
+                        }
+                        colorPalette={
+                          isActive("/admin/tenants") ? "purple" : undefined
+                        }
+                        justifyContent="flex-start"
+                        width="full"
+                        size="sm"
+                      >
+                        <Building2 size={18} style={{ marginRight: "8px" }} />
+                        Tenants
+                      </Button>
+                    </Link>
+                  )}
+              </VStack>
+            </Collapsible.Content>
+          </Collapsible.Root>
+        )}
+        <Collapsible.Root
+          open={isSettingsOpen}
+          onOpenChange={(e) => setIsSettingsOpen(e.open)}
+        >
+          <Collapsible.Trigger asChild>
+            {(() => {
+              const settingsActive = isActive("/admin/settings");
+              return (
+                <Button
+                  variant={settingsActive ? "subtle" : "ghost"}
+                  colorPalette={settingsActive ? "purple" : undefined}
+                  justifyContent="space-between"
+                  width="full"
+                  size={isMobile ? "sm" : "md"}
+                >
+                  <HStack gap="2">
+                    <Settings size={20} />
+                    <span>Settings</span>
+                  </HStack>
+                  {isSettingsOpen ? (
+                    <ChevronUp size={16} />
+                  ) : (
+                    <ChevronDown size={16} />
+                  )}
+                </Button>
+              );
+            })()}
+          </Collapsible.Trigger>
+          <Collapsible.Content>
+            <VStack align="stretch" spaceY="1" pl="4" mt="1">
+              {isEnabled("sidebar", "settings-styles") && (
+                <Link
+                  to="/admin/settings/styles"
+                  style={{ textDecoration: "none" }}
+                >
+                  <Button
+                    variant={
+                      isActive("/admin/settings/styles") ? "subtle" : "ghost"
+                    }
+                    colorPalette={
+                      isActive("/admin/settings/styles") ? "purple" : undefined
+                    }
+                    justifyContent="flex-start"
+                    width="full"
+                    size="sm"
+                  >
+                    <Palette size={18} style={{ marginRight: "8px" }} />
+                    Estils i Temes
+                  </Button>
+                </Link>
+              )}
+              {isEnabled("sidebar", "settings-deploy") &&
+                hasPermission("manage:deploy") && (
+                  <Link
+                    to="/admin/settings/deploy"
+                    style={{ textDecoration: "none" }}
+                  >
+                    <Button
+                      variant={
+                        isActive("/admin/settings/deploy") ? "subtle" : "ghost"
+                      }
+                      colorPalette={
+                        isActive("/admin/settings/deploy")
+                          ? "purple"
+                          : undefined
+                      }
+                      justifyContent="flex-start"
+                      width="full"
+                      size="sm"
+                    >
+                      <Rocket size={18} style={{ marginRight: "8px" }} />
+                      Desplegament
+                    </Button>
+                  </Link>
+                )}
+              <Link
+                to="/admin/settings/sidebar"
+                style={{ textDecoration: "none" }}
+              >
+                <Button
+                  variant={
+                    isActive("/admin/settings/sidebar") ? "subtle" : "ghost"
+                  }
+                  colorPalette={
+                    isActive("/admin/settings/sidebar") ? "purple" : undefined
+                  }
+                  justifyContent="flex-start"
+                  width="full"
+                  size="sm"
+                >
+                  <SlidersHorizontal size={18} style={{ marginRight: "8px" }} />
+                  Sidebar
+                </Button>
+              </Link>
+            </VStack>
+          </Collapsible.Content>
+        </Collapsible.Root>
       </VStack>
     ),
     [
       isActive,
       hasPermission,
+
+      isEnabled,
+      isModuleOpen,
+      setIsModuleOpen,
       isAdminOpen,
       setIsAdminOpen,
+      isSettingsOpen,
+      setIsSettingsOpen,
       isPublicOpen,
       setIsPublicOpen,
     ]
@@ -420,7 +622,7 @@ const Layout: React.FC = () => {
           active={isActive("/admin")}
         />
 
-        {hasPermission("read:photos") && (
+        {isEnabled("mobile", "photos") && hasPermission("read:photos") && (
           <BottomNavItem
             to="/admin/photos"
             icon={<ImageIcon size={22} />}
@@ -429,14 +631,28 @@ const Layout: React.FC = () => {
           />
         )}
 
+        {isEnabled("mobile", "odoo") && hasPermission("use:ai") && (
+          <BottomNavItem
+            to="/admin/odoo"
+            icon={<Bot size={22} />}
+            label="Odoo AI"
+            active={isActive("/admin/odoo")}
+          />
+        )}
+
         <BottomNavItem
-          to="/admin/settings"
+          to="/admin/settings/styles"
           icon={<Settings size={22} />}
           label="Settings"
           active={isActive("/admin/settings")}
         />
 
-        {(hasPermission("read:users") || hasPermission("read:roles")) && (
+        {((isEnabled("mobile", "users") && hasPermission("read:users")) ||
+          (isEnabled("mobile", "roles") && hasPermission("read:roles")) ||
+          (isEnabled("mobile", "permissions") && hasPermission("read:roles")) ||
+          (isEnabled("mobile", "tenants") &&
+            (hasPermission("read:tenants") ||
+              hasPermission("manage:tenants")))) && (
           <BottomNavItem
             to="/admin/users"
             icon={<Users size={22} />}
