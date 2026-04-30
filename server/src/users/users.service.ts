@@ -6,6 +6,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import { Role } from '../roles/entities/role.entity';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class UsersService {
@@ -51,6 +52,41 @@ export class UsersService {
     });
   }
 
+  async findOrCreateByGoogle(profile: {
+    googleId: string;
+    email: string;
+    displayName: string;
+  }): Promise<User> {
+    // 1. Try by googleId
+    let user = await this.usersRepository.findOne({
+      where: { googleId: profile.googleId },
+      relations: ['roles', 'roles.permissions'],
+    });
+    if (user) return user;
+
+    // 2. Try by email (link existing account)
+    user = await this.usersRepository.findOne({
+      where: { username: profile.email },
+      relations: ['roles', 'roles.permissions'],
+    });
+    if (user) {
+      user.googleId = profile.googleId;
+      return this.usersRepository.save(user);
+    }
+
+    // 3. Create new user — assign 'invitat' role by default
+    const invitatRole = await this.rolesRepository.findOne({
+      where: { name: 'invitat' },
+    });
+    const newUser = this.usersRepository.create({
+      username: profile.email,
+      googleId: profile.googleId,
+      password: await bcrypt.hash(crypto.randomUUID(), 10),
+      roles: invitatRole ? [invitatRole] : [],
+    });
+    return this.usersRepository.save(newUser);
+  }
+
   findOneByUsernameWithPassword(username: string) {
     return this.usersRepository.findOne({
       where: { username },
@@ -60,7 +96,7 @@ export class UsersService {
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {
-    const { roleIds, password, ...rest } = updateUserDto;
+    const { roleIds, password, tenantId, ...rest } = updateUserDto;
     const user = await this.usersRepository.preload({
       id: +id,
       ...rest,
@@ -74,6 +110,10 @@ export class UsersService {
 
     if (roleIds) {
       user.roles = await this.rolesRepository.findBy({ id: In(roleIds) });
+    }
+
+    if (tenantId !== undefined) {
+      user.tenantId = tenantId;
     }
 
     return this.usersRepository.save(user);

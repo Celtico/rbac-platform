@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext.tsx";
 import { ThemeProvider } from "./context/ThemeContext.tsx";
+import { NavConfigProvider } from "./context/NavConfigContext.tsx";
 import { Toaster } from "./components/ui/toaster";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -10,19 +11,26 @@ import Albums from "./pages/Albums";
 import Users from "./pages/Users";
 import Roles from "./pages/Roles";
 import Permissions from "./pages/Permissions";
-import Settings from "./pages/Settings";
+import SettingsStyles from "./pages/SettingsStyles";
+import SettingsDeploy from "./pages/SettingsDeploy";
+import SettingsSidebar from "./pages/SettingsSidebar";
+import Tenants from "./pages/Tenants";
+import AuthCallback from "./pages/AuthCallback";
 import PublicAlbums from "./pages/PublicAlbums";
+import OdooChat from "./pages/OdooChat";
 
 function App() {
   console.log("App Rendering");
   return (
     <ThemeProvider>
+      <NavConfigProvider>
       <AuthProvider>
         <Toaster />
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<PublicAlbums />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/admin" element={<Layout />}>
               <Route
                 index
@@ -41,12 +49,33 @@ function App() {
                 }
               />
               <Route
-                path="settings"
+                path="settings/styles"
                 element={
                   <ProtectedRoute>
-                    <Settings />
+                    <SettingsStyles />
                   </ProtectedRoute>
                 }
+              />
+              <Route
+                path="settings/deploy"
+                element={
+                  <ProtectedRoute>
+                    <SettingsDeploy />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="settings/sidebar"
+                element={
+                  <ProtectedRoute>
+                    <SettingsSidebar />
+                  </ProtectedRoute>
+                }
+              />
+              {/* Legacy redirect */}
+              <Route
+                path="settings"
+                element={<Navigate to="/admin/settings/styles" replace />}
               />
               <Route
                 path="users"
@@ -72,6 +101,22 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="odoo"
+                element={
+                  <ProtectedRoute permission="use:ai">
+                    <OdooChat />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="tenants"
+                element={
+                  <ProtectedRoute permission="read:tenants">
+                    <Tenants />
+                  </ProtectedRoute>
+                }
+              />
               {/* Fallback for unknown routes inside /admin */}
               <Route path="*" element={<Navigate to="/admin" />} />
             </Route>
@@ -80,6 +125,7 @@ function App() {
           </Routes>
         </BrowserRouter>
       </AuthProvider>
+      </NavConfigProvider>
     </ThemeProvider>
   );
 }

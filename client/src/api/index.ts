@@ -38,3 +38,22 @@ api.interceptors.response.use(
 );
 
 export default api;
+
+// Odoo AI Assistant
+export const odooChat = (question: string, include_raw_data = false) =>
+  api.post<{
+    answer: string;
+    intent: string;
+    confidence: number;
+    raw_data?: unknown;
+  }>("/odoo/chat", { question, include_raw_data });
+
+export const odooHealth = () =>
+  api.get<{ status: string; odoo_connected: boolean; odoo_url: string }>(
+    "/odoo/health"
+  );
+
+export const odooRawData = (domain: string, limit = 10) =>
+  api.get<{ domain: string; data: unknown }>(`/odoo/data/${domain}`, {
+    params: { limit },
+  });

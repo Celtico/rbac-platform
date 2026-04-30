@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useColorMode } from "../components/ui/color-mode";
 import { ThemeContext } from "./ThemeContext";
-import type { ColorTheme, RadiusSize } from "./ThemeContext";
+import type { ColorTheme, RadiusSize, FontFamily } from "./ThemeContext";
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -14,6 +14,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
   const [radius, setRadiusState] = useState<RadiusSize>(
     (localStorage.getItem("app-radius") as RadiusSize) || "md"
   );
+  const [font, setFontState] = useState<FontFamily>(
+    (localStorage.getItem("app-font") as FontFamily) || "system"
+  );
 
   useEffect(() => {
     localStorage.setItem("app-theme", theme);
@@ -25,8 +28,14 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
     document.documentElement.setAttribute("data-radius", radius);
   }, [radius]);
 
+  useEffect(() => {
+    localStorage.setItem("app-font", font);
+    document.documentElement.setAttribute("data-font", font);
+  }, [font]);
+
   const setTheme = (newTheme: ColorTheme) => setThemeState(newTheme);
   const setRadius = (newRadius: RadiusSize) => setRadiusState(newRadius);
+  const setFont = (newFont: FontFamily) => setFontState(newFont);
 
   return (
     <ThemeContext.Provider
@@ -34,9 +43,11 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
         mode: colorMode as "light" | "dark",
         theme,
         radius,
+        font,
         toggleMode: toggleColorMode,
         setTheme,
         setRadius,
+        setFont,
       }}
     >
       {children}

@@ -11,6 +11,8 @@ import {
   Input,
   VStack,
   IconButton,
+  Separator,
+  Text,
 } from "@chakra-ui/react";
 
 const Login: React.FC = () => {
@@ -117,6 +119,29 @@ const Login: React.FC = () => {
             >
               Sign In
             </Button>
+
+            <Box position="relative" py="2">
+              <Separator />
+              <Text
+                position="absolute"
+                top="50%"
+                left="50%"
+                transform="translate(-50%, -50%)"
+                bg="bg.panel"
+                px="3"
+                fontSize="xs"
+                color="fg.muted"
+              >
+                o
+              </Text>
+            </Box>
+
+            <a href="/api/auth/google" style={{ textDecoration: "none", display: "block" }}>
+              <Button variant="outline" size="lg" width="full">
+                <Box as="span" mr="2" fontSize="lg">G</Box>
+                Continua amb Google
+              </Button>
+            </a>
           </VStack>
         </Box>
       </Container>

@@ -1,37 +1,35 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.ts";
-import { ImageIcon, Users, ShieldCheck, Lock } from "lucide-react";
+import { useNavConfig } from "../context/NavConfigContext.ts";
 import { Box, Heading, Text, Stack, SimpleGrid } from "@chakra-ui/react";
+import type { NavItemDef } from "../context/NavConfigContext.ts";
 import type { LucideIcon } from "lucide-react";
 
-interface StatCardProps {
-  icon: LucideIcon;
-  label: string;
-  value: string | number;
-  color: string;
-  to?: string;
+interface NavCardProps {
+  item: NavItemDef;
 }
 
-const StatCard = ({ icon: Icon, label, value, color, to }: StatCardProps) => {
-  const content = (
-    <Box
-      bg="bg.panel"
-      p="6"
-      rounded="md"
-      shadow="sm"
-      borderLeftWidth="4px"
-      borderLeftColor={color}
-      transition="all 0.2s"
-      _hover={
-        to
-          ? { shadow: "md", transform: "translateY(-2px)", cursor: "pointer" }
-          : {}
-      }
-    >
-      <Box>
-        <Box color={color} mr="4" mb={3}>
-          <Icon size={40} />
+const NavCard: React.FC<NavCardProps> = ({ item }) => {
+  const Icon: LucideIcon = item.icon;
+  return (
+    <Link to={item.path} style={{ textDecoration: "none" }}>
+      <Box
+        bg="bg.panel"
+        p={[4, 4, 5, 7, 8]}
+        rounded="md"
+        shadow="sm"
+        borderLeftWidth="4px"
+        borderLeftColor={item.color}
+        transition="all 0.2s"
+        _hover={{
+          shadow: "md",
+          transform: "translateY(-2px)",
+          cursor: "pointer",
+        }}
+      >
+        <Box color={item.color} mb={2}>
+          <Icon size={36} />
         </Box>
         <Stack gap="0">
           <Text
@@ -39,72 +37,50 @@ const StatCard = ({ icon: Icon, label, value, color, to }: StatCardProps) => {
             fontWeight="bold"
             color="fg.muted"
             textTransform="uppercase"
+            letterSpacing="wider"
           >
-            {label}
-          </Text>
-          <Text fontSize="xs" fontWeight="bold">
-            {value}
+            {item.label}
           </Text>
         </Stack>
       </Box>
-    </Box>
+    </Link>
   );
-
-  if (to) {
-    return (
-      <Link to={to} style={{ textDecoration: "none" }}>
-        {content}
-      </Link>
-    );
-  }
-
-  return content;
 };
 
 const Dashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { hasPermission, hasRole } = useAuth();
+  const { items, isEnabled } = useNavConfig();
+
+  const visibleCards = items.filter(
+    (item) =>
+      isEnabled("dashboard", item.id) &&
+      (!item.permission || hasPermission(item.permission)) &&
+      (!item.role || hasRole(item.role))
+  );
 
   return (
     <Box>
       <Heading size="2xl" mb="8">
-        Dashboard Overview
+        Dashboard
       </Heading>
-      <SimpleGrid columns={[2, 2, 3, 4]} gap="3">
-        <StatCard
-          icon={ImageIcon}
-          label="Total Photos"
-          value="Available"
-          color="blue.500"
-          to="/admin/photos"
-        />
-        <StatCard
-          icon={Users}
-          label="Total Users"
-          value="Manage"
-          color="teal.500"
-          to="/admin/users"
-        />
-        <StatCard
-          icon={Users}
-          label="Your Roles"
-          value={user?.roles.join(", ") || "None"}
-          color="purple.500"
-          to="/admin/roles"
-        />
-        <StatCard
-          icon={ShieldCheck}
-          label="Permissions"
-          value={`${user?.permissions.length || 0} active`}
-          color="yellow.500"
-          to="/admin/permissions"
-        />
-        <StatCard
-          icon={Lock}
-          label="Security"
-          value="RBAC Enabled"
-          color="gray.500"
-        />
-      </SimpleGrid>
+      {visibleCards.length === 0 ? (
+        <Text color="fg.muted">
+          No hi ha elements actius. Configura el sidebar a{" "}
+          <Link
+            to="/admin/settings/sidebar"
+            style={{ color: "inherit", textDecoration: "underline" }}
+          >
+            Settings → Sidebar
+          </Link>
+          .
+        </Text>
+      ) : (
+        <SimpleGrid columns={[2, 2, 3, 4]} gap={[3, 4, 5, 7, 8]}>
+          {visibleCards.map((item) => (
+            <NavCard key={item.id} item={item} />
+          ))}
+        </SimpleGrid>
+      )}
     </Box>
   );
 };

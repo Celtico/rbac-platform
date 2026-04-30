@@ -2,6 +2,7 @@ import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { RolesService } from '../roles/roles.service';
 import { PermissionsService } from '../permissions/permissions.service';
+import { TenantsService } from '../tenants/tenants.service';
 import { Permission } from '../permissions/entities/permission.entity';
 
 @Injectable()
@@ -10,12 +11,13 @@ export class SeedService implements OnApplicationBootstrap {
     private usersService: UsersService,
     private rolesService: RolesService,
     private permissionsService: PermissionsService,
+    private tenantsService: TenantsService,
   ) {}
 
   async onApplicationBootstrap() {
     console.log('Checking and seeding initial data...');
 
-    // 1. Asegurar que los permisos existan
+    // 1. Permissions
     const permissionsToEnsure = [
       'read:photos',
       'write:photos',
@@ -24,34 +26,30 @@ export class SeedService implements OnApplicationBootstrap {
       'read:roles',
       'manage:roles',
       'use:ai',
+      'read:tenants',
+      'manage:tenants',
     ];
 
     const permissionEntities: Record<string, Permission> = {};
-
     const allPermissions = await this.permissionsService.findAll();
 
     for (const name of permissionsToEnsure) {
       let p = allPermissions.find((perm) => perm.name === name);
-      if (!p) {
-        p = await this.permissionsService.create({ name });
-      }
+      if (!p) p = await this.permissionsService.create({ name });
       permissionEntities[name] = p;
     }
 
-    // 2. Asegurar que los roles existan y tengan los permisos adecuados
+    // 2. Roles
     const allRoles = await this.rolesService.findAll();
-    let adminRole = allRoles.find((r) => r.name === 'admin');
-    const adminPermissionIds = Object.values(permissionEntities).map(
-      (p) => p.id,
-    );
+    const adminPermissionIds = Object.values(permissionEntities).map((p) => p.id);
 
+    let adminRole = allRoles.find((r) => r.name === 'admin');
     if (!adminRole) {
       adminRole = await this.rolesService.create({
         name: 'admin',
         permissionIds: adminPermissionIds,
       });
     } else {
-      // Actualizar permisos del rol admin si es necesario para incluir nuevos permisos como manage:knowledge
       await this.rolesService.update(adminRole.id, {
         name: 'admin',
         permissionIds: adminPermissionIds,
@@ -59,32 +57,64 @@ export class SeedService implements OnApplicationBootstrap {
     }
 
     let userRole = allRoles.find((r) => r.name === 'user');
-    const userPermissionIds = [permissionEntities['read:photos'].id];
-
     if (!userRole) {
       userRole = await this.rolesService.create({
         name: 'user',
-        permissionIds: userPermissionIds,
+        permissionIds: [permissionEntities['read:photos'].id],
       });
     }
 
-    // 3. Asegurar que los usuarios iniciales existan
+    let invitatRole = allRoles.find((r) => r.name === 'invitat');
+    if (!invitatRole) {
+      invitatRole = await this.rolesService.create({
+        name: 'invitat',
+        permissionIds: [],
+      });
+    }
+
+    // 3. Default tenant (from env vars)
+    const odooUrl = process.env.ODOO_URL;
+    let defaultTenantId: number | undefined;
+
+    if (odooUrl) {
+      const existing = await this.tenantsService.findAll();
+      let defaultTenant = existing.find((t) => t.name === 'Default');
+      if (!defaultTenant) {
+        defaultTenant = await this.tenantsService.create({
+          name: 'Default',
+          odooUrl,
+          odooDb: process.env.ODOO_DB ?? 'odoo_demo',
+          odooUser: process.env.ODOO_USER ?? 'admin',
+          odooPassword: process.env.ODOO_PASSWORD ?? 'admin',
+        });
+        console.log(`Created default tenant (${odooUrl})`);
+      }
+      defaultTenantId = defaultTenant.id;
+    }
+
+    // 4. Users
     const existingUsers = await this.usersService.findAll();
 
     if (!existingUsers.find((u) => u.username === 'celticopetit@gmail.com')) {
-      await this.usersService.create({
+      const u = await this.usersService.create({
         username: 'celticopetit@gmail.com',
         password: 'celticopetit@gmail.com',
         roleIds: [adminRole.id],
       });
+      if (defaultTenantId) {
+        await this.usersService.update(u.id, { tenantId: defaultTenantId });
+      }
     }
 
     if (!existingUsers.find((u) => u.username === 'admin')) {
-      await this.usersService.create({
+      const u = await this.usersService.create({
         username: 'admin',
         password: 'adminpassword',
         roleIds: [adminRole.id],
       });
+      if (defaultTenantId) {
+        await this.usersService.update(u.id, { tenantId: defaultTenantId });
+      }
     }
 
     if (!existingUsers.find((u) => u.username === 'user')) {
