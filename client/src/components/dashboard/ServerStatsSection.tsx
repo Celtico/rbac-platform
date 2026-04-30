@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from "react";
-import {
-  Box, HStack, SimpleGrid, Text,
-} from "@chakra-ui/react";
+import { Box, HStack, SimpleGrid, Text } from "@chakra-ui/react";
 import { Server, Cpu, MemoryStick, Clock, HardDrive } from "lucide-react";
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell,
 } from "recharts";
+import { Chart, useChart } from "@chakra-ui/charts";
 import { systemStats } from "../../api";
 import { useTheme } from "../../context/ThemeContext.ts";
 
@@ -59,9 +58,16 @@ const ServerStatsSection: React.FC = () => {
     return () => clearInterval(id);
   }, []);
 
+  const diskData = [
+    { value: latest?.disk_used_pct ?? 0 },
+    { value: 100 - (latest?.disk_used_pct ?? 0) },
+  ];
+
+  const cpuChart = useChart({ data: history, series: [{ name: "cpu", color: "purple.500", label: "CPU" }] });
+  const memChart = useChart({ data: history, series: [{ name: "mem", color: "cyan.500", label: "RAM" }] });
+  const diskChart = useChart({ data: diskData, series: [{ name: "value", color: "orange.500" }] });
+
   const cardBg = mode === "light" ? "white" : "gray.800";
-  const chartColor = mode === "light" ? "#8b5cf6" : "#a78bfa";
-  const chartColorMem = mode === "light" ? "#0ea5e9" : "#38bdf8";
 
   return (
     <Box mb="10">
@@ -81,23 +87,23 @@ const ServerStatsSection: React.FC = () => {
               <Text fontSize="2xl" fontWeight="bold" color="purple.500">{latest?.cpu_pct ?? "—"}%</Text>
             </HStack>
           </HStack>
-          <GaugeBar pct={latest?.cpu_pct ?? 0} color="#8b5cf6" />
-          <Box mt="3" h="80px">
+          <GaugeBar pct={latest?.cpu_pct ?? 0} color={cpuChart.color("purple.500")} />
+          <Chart.Root chart={cpuChart} h="80px" aspectRatio="unset" mt="3">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={history} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+              <AreaChart data={cpuChart.data} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
                 <defs>
-                  <linearGradient id="cpuGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={chartColor} stopOpacity={0.3} />
-                    <stop offset="95%" stopColor={chartColor} stopOpacity={0} />
-                  </linearGradient>
+                  <Chart.Gradient id="cpuGrad" stops={[
+                    { offset: "5%", color: "purple.500", opacity: 0.3 },
+                    { offset: "95%", color: "purple.500", opacity: 0 },
+                  ]} />
                 </defs>
                 <XAxis dataKey="t" hide />
                 <YAxis domain={[0, 100]} hide />
-                <Tooltip contentStyle={{ fontSize: 11, padding: "4px 8px" }} formatter={(v) => [`${v as number}%`, "CPU"]} labelFormatter={() => ""} />
-                <Area type="monotone" dataKey="cpu" stroke={chartColor} strokeWidth={2} fill="url(#cpuGrad)" dot={false} isAnimationActive={false} />
+                <Tooltip content={<Chart.Tooltip hideLabel formatter={(v) => [`${v}%`, "CPU"]} />} />
+                <Area type="monotone" dataKey="cpu" stroke={cpuChart.color("purple.500")} strokeWidth={2} fill="url(#cpuGrad)" dot={false} isAnimationActive={false} />
               </AreaChart>
             </ResponsiveContainer>
-          </Box>
+          </Chart.Root>
         </Box>
 
         {/* RAM */}
@@ -112,23 +118,23 @@ const ServerStatsSection: React.FC = () => {
               <Text fontSize="2xl" fontWeight="bold" color="cyan.500">{latest?.memory_used_pct ?? "—"}%</Text>
             </HStack>
           </HStack>
-          <GaugeBar pct={latest?.memory_used_pct ?? 0} color="#0ea5e9" />
-          <Box mt="3" h="80px">
+          <GaugeBar pct={latest?.memory_used_pct ?? 0} color={memChart.color("cyan.500")} />
+          <Chart.Root chart={memChart} h="80px" aspectRatio="unset" mt="3">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={history} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+              <AreaChart data={memChart.data} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
                 <defs>
-                  <linearGradient id="memGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={chartColorMem} stopOpacity={0.3} />
-                    <stop offset="95%" stopColor={chartColorMem} stopOpacity={0} />
-                  </linearGradient>
+                  <Chart.Gradient id="memGrad" stops={[
+                    { offset: "5%", color: "cyan.500", opacity: 0.3 },
+                    { offset: "95%", color: "cyan.500", opacity: 0 },
+                  ]} />
                 </defs>
                 <XAxis dataKey="t" hide />
                 <YAxis domain={[0, 100]} hide />
-                <Tooltip contentStyle={{ fontSize: 11, padding: "4px 8px" }} formatter={(v) => [`${v as number}%`, "RAM"]} labelFormatter={() => ""} />
-                <Area type="monotone" dataKey="mem" stroke={chartColorMem} strokeWidth={2} fill="url(#memGrad)" dot={false} isAnimationActive={false} />
+                <Tooltip content={<Chart.Tooltip hideLabel formatter={(v) => [`${v}%`, "RAM"]} />} />
+                <Area type="monotone" dataKey="mem" stroke={memChart.color("cyan.500")} strokeWidth={2} fill="url(#memGrad)" dot={false} isAnimationActive={false} />
               </AreaChart>
             </ResponsiveContainer>
-          </Box>
+          </Chart.Root>
         </Box>
 
         {/* Disc */}
@@ -143,31 +149,24 @@ const ServerStatsSection: React.FC = () => {
               <Text fontSize="2xl" fontWeight="bold" color="orange.500">{latest?.disk_used_pct ?? "—"}%</Text>
             </HStack>
           </HStack>
-          <GaugeBar pct={latest?.disk_used_pct ?? 0} color="#f97316" />
-          <Box mt="3" h="80px">
+          <GaugeBar pct={latest?.disk_used_pct ?? 0} color={diskChart.color("orange.500")} />
+          <Chart.Root chart={diskChart} h="80px" aspectRatio="unset" mt="3">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={[{ value: latest?.disk_used_pct ?? 0 }, { value: 100 - (latest?.disk_used_pct ?? 0) }]}
+                  data={diskChart.data}
                   cx="50%" cy="50%"
                   innerRadius={24} outerRadius={36}
                   startAngle={90} endAngle={-270}
                   dataKey="value" strokeWidth={0} isAnimationActive={false}
                 >
-                  <Cell fill="#f97316" />
-                  <Cell fill={mode === "light" ? "#e5e7eb" : "#374151"} />
+                  <Cell fill={diskChart.color("orange.500")} />
+                  <Cell fill={diskChart.color(mode === "light" ? "gray.200" : "gray.700")} />
                 </Pie>
-                <Tooltip
-                  formatter={(v, _name, props) =>
-                    (props as { dataIndex?: number }).dataIndex === 0
-                      ? [`${v as number}%`, "Usat"]
-                      : [`${v as number}%`, "Lliure"]
-                  }
-                  contentStyle={{ fontSize: 11, padding: "4px 8px" }}
-                />
+                <Tooltip content={<Chart.Tooltip hideLabel fitContent formatter={(v, name) => [`${v}%`, name ?? ""] } />} />
               </PieChart>
             </ResponsiveContainer>
-          </Box>
+          </Chart.Root>
         </Box>
       </SimpleGrid>
 

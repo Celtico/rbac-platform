@@ -71,7 +71,27 @@ export class TenantGuard implements CanActivate {
       }
     }
 
-    // Fall back to env-var defaults (useful for admin / dev)
+    // Fall back to the "Default" tenant in the DB
+    const defaultTenant = await this.tenants
+      .createQueryBuilder('t')
+      .addSelect('t.odooPassword')
+      .where('LOWER(t.name) = :name', { name: 'default' })
+      .getOne();
+
+    if (defaultTenant) {
+      req.odooConfig = {
+        url: defaultTenant.odooUrl,
+        db: defaultTenant.odooDb,
+        user: defaultTenant.odooUser,
+        password: defaultTenant.odooPassword,
+        tenantId: defaultTenant.id,
+        tenantName: defaultTenant.name,
+      };
+      this.logger.debug(`No tenant for user ${username} — using Default tenant from DB (${defaultTenant.odooUrl})`);
+      return true;
+    }
+
+    // Last resort: env-var defaults
     const fallbackUrl = process.env.ODOO_URL;
     if (!fallbackUrl) {
       throw new ForbiddenException(
@@ -79,7 +99,7 @@ export class TenantGuard implements CanActivate {
       );
     }
 
-    this.logger.debug(`No tenant for user ${username} — using env-var defaults`);
+    this.logger.debug(`No tenant for user ${username} — using env-var defaults (${fallbackUrl})`);
     req.odooConfig = {
       url: fallbackUrl,
       db: process.env.ODOO_DB ?? 'odoo_demo',

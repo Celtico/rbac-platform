@@ -23,42 +23,45 @@ const Dashboard: React.FC = () => {
 
   return (
     <Box>
-      <Heading size="2xl" mb="8">Dashboard</Heading>
+      <Heading size="2xl" mb="8">
+        Dashboard
+      </Heading>
+      <Box mb="10">
+        {visibleCards.length === 0 ? (
+          <Text color="fg.muted">
+            No hi ha elements actius. Configura el sidebar a{" "}
+            <Link
+              to="/admin/settings/sidebar"
+              style={{ color: "inherit", textDecoration: "underline" }}
+            >
+              Settings → Sidebar
+            </Link>
+            .
+          </Text>
+        ) : (
+          <>
+            <Text
+              fontSize="xs"
+              fontWeight="bold"
+              color="fg.muted"
+              textTransform="uppercase"
+              letterSpacing="wide"
+              mb="4"
+            >
+              Accés ràpid
+            </Text>
+            <SimpleGrid columns={[2, 3, 4, 6]} gap={[4, 5]}>
+              {visibleCards.map((item) => (
+                <NavCard key={item.id} item={item} />
+              ))}
+            </SimpleGrid>
+          </>
+        )}
+      </Box>
 
       {canUseAI && <OdooKpiSection onConnected={setOdooConnected} />}
       {canUseAI && odooConnected && <OdooLiveSection />}
       <ServerStatsSection />
-
-      {visibleCards.length === 0 ? (
-        <Text color="fg.muted">
-          No hi ha elements actius. Configura el sidebar a{" "}
-          <Link
-            to="/admin/settings/sidebar"
-            style={{ color: "inherit", textDecoration: "underline" }}
-          >
-            Settings → Sidebar
-          </Link>
-          .
-        </Text>
-      ) : (
-        <>
-          <Text
-            fontSize="xs"
-            fontWeight="bold"
-            color="fg.muted"
-            textTransform="uppercase"
-            letterSpacing="wide"
-            mb="4"
-          >
-            Accés ràpid
-          </Text>
-          <SimpleGrid columns={[2, 3, 4, 6]} gap={[4, 5]}>
-            {visibleCards.map((item) => (
-              <NavCard key={item.id} item={item} />
-            ))}
-          </SimpleGrid>
-        </>
-      )}
     </Box>
   );
 };

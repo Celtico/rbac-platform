@@ -27,17 +27,31 @@ interface DeployRecord {
   status: 'success' | 'pending' | 'rollback';
 }
 
+// Ordered by preference: persistent app dir first, then writable fallbacks
 const HISTORY_PATHS = [
-  join(process.cwd(), 'deploy-history.json'),
-  join(process.cwd(), '..', 'deploy-history.json'),
   '/app/deploy-history.json',
+  '/app/album-manager/deploy-history.json',
+  join(process.cwd(), '..', 'deploy-history.json'),
+  join(process.cwd(), 'deploy-history.json'),
+  '/tmp/deploy-history.json',
 ];
 
+const historyLogger = new Logger('DeployHistory');
+
 function findHistoryPath(): string {
+  // Prefer an existing file
   for (const p of HISTORY_PATHS) {
     if (existsSync(p)) return p;
   }
-  return HISTORY_PATHS[0]; // default: write to cwd
+  // Otherwise pick the first writable directory
+  const { mkdirSync } = require('fs') as typeof import('fs');
+  for (const p of HISTORY_PATHS) {
+    try {
+      mkdirSync(join(p, '..'), { recursive: true });
+      return p;
+    } catch { /* try next */ }
+  }
+  return HISTORY_PATHS[HISTORY_PATHS.length - 1]; // /tmp always writable
 }
 
 function loadHistory(): DeployRecord[] {
@@ -45,15 +59,20 @@ function loadHistory(): DeployRecord[] {
     const p = findHistoryPath();
     if (!existsSync(p)) return [];
     return JSON.parse(readFileSync(p, 'utf8')) as DeployRecord[];
-  } catch {
+  } catch (e) {
+    historyLogger.warn(`Could not load history: ${e}`);
     return [];
   }
 }
 
 function saveHistory(records: DeployRecord[]): void {
   try {
-    writeFileSync(findHistoryPath(), JSON.stringify(records.slice(0, 50), null, 2));
-  } catch { /* ignore write errors */ }
+    const p = findHistoryPath();
+    writeFileSync(p, JSON.stringify(records.slice(0, 50), null, 2));
+    historyLogger.debug(`History saved to ${p}`);
+  } catch (e) {
+    historyLogger.error(`Could not save history: ${e}`);
+  }
 }
 
 function getCurrentCommit(cwd: string): string {
