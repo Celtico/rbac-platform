@@ -2,7 +2,7 @@ import React from "react";
 import { Link, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.ts";
 import { useTheme } from "../context/ThemeContext.ts";
-import { Box, Flex, Heading, Separator } from "@chakra-ui/react";
+import { Box, Flex, Heading } from "@chakra-ui/react";
 import SidebarNav from "./layout/SidebarNav.tsx";
 import TopBar from "./layout/TopBar.tsx";
 import BottomNav from "./layout/BottomNav.tsx";
@@ -29,10 +29,11 @@ const Layout: React.FC = () => {
       >
         <Box p="6">
           <Heading size="md">
-            <Link to="/" style={{ textDecoration: "none" }}>RBAC App</Link>
+            <Link to="/" style={{ textDecoration: "none" }}>
+              RBAC
+            </Link>
           </Heading>
         </Box>
-        <Separator />
         <SidebarNav />
       </Box>
 

@@ -26,9 +26,6 @@ const PublicHeader: React.FC = () => {
           <Portal>
             <Menu.Positioner>
               <Menu.Content>
-                <Menu.Item value="index" asChild>
-                  <Link to="/">Photos</Link>
-                </Menu.Item>
                 <Menu.Item
                   color="fg.error"
                   _hover={{ bg: "bg.error", color: "fg.error" }}

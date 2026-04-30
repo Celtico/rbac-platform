@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.ts";
 import { useNavConfig } from "../context/NavConfigContext.ts";
-import { Box, Heading, SimpleGrid, Text } from "@chakra-ui/react";
+import { Box, Heading, HStack, SimpleGrid, Text } from "@chakra-ui/react";
+import { GitBranch, BookOpen } from "lucide-react";
 import NavCard from "../components/dashboard/NavCard.tsx";
 import OdooKpiSection from "../components/dashboard/OdooKpiSection.tsx";
 import OdooLiveSection from "../components/dashboard/OdooLiveSection.tsx";
@@ -62,6 +63,39 @@ const Dashboard: React.FC = () => {
       {canUseAI && <OdooKpiSection onConnected={setOdooConnected} />}
       {canUseAI && odooConnected && <OdooLiveSection />}
       <ServerStatsSection />
+
+      {/* Footer */}
+      <Box mt="12" pt="6" borderTopWidth="1px">
+        <HStack justify="space-between" align="center" flexWrap="wrap" gap="3">
+          <Text fontSize="xs" color="fg.muted">
+            © {new Date().getFullYear()} Cel Ticó Petit. Tots els drets reservats.
+          </Text>
+          <HStack gap="4">
+            <a
+              href="https://gitwins.serverscel.com/cel/album-manager"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "6px", opacity: 0.5 }}
+              onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.5")}
+            >
+              <GitBranch size={14} color="currentColor" />
+              <Text fontSize="xs" color="fg.muted">Codi font</Text>
+            </a>
+            <a
+              href="/api/docs"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "6px", opacity: 0.5 }}
+              onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.5")}
+            >
+              <BookOpen size={14} color="currentColor" />
+              <Text fontSize="xs" color="fg.muted">API Swagger</Text>
+            </a>
+          </HStack>
+        </HStack>
+      </Box>
     </Box>
   );
 };
