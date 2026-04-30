@@ -158,7 +158,7 @@ export class OdooOrchestratorService {
       this.logger.warn(
         `Odoo module unavailable for domain "${domain}" (tenant "${cfg.tenantName}"): ${msg}`,
       );
-      return { error: `El mòdul "${domain}" no està disponible en aquest Odoo.` };
+      return { error: msg };
     }
   }
 
