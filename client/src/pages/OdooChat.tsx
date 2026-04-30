@@ -108,6 +108,20 @@ const OdooChat: React.FC = () => {
             <Text color="fg.muted" textAlign="center" maxW="sm">
               Pregunta qualsevol cosa sobre el teu Odoo en llengua natural.
             </Text>
+            <Flex flexWrap="wrap" gap="2" justify="center" maxW="md">
+              {EXAMPLES.map((ex) => (
+                <Button
+                  key={ex}
+                  size="sm"
+                  variant="outline"
+                  colorPalette="purple"
+                  borderRadius="full"
+                  onClick={() => send(ex)}
+                >
+                  {ex}
+                </Button>
+              ))}
+            </Flex>
           </VStack>
         ) : (
           <VStack align="stretch" gap="4">
