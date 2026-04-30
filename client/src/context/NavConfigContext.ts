@@ -8,7 +8,6 @@ export interface NavItemDef {
   icon: LucideIcon;
   color: string;      // Chakra color token for dashboard card border
   permission?: string;
-  role?: string;
 }
 
 export type NavSection = "sidebar" | "dashboard" | "mobile";

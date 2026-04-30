@@ -57,3 +57,48 @@ export const odooRawData = (domain: string, limit = 10) =>
   api.get<{ domain: string; data: unknown }>(`/odoo/data/${domain}`, {
     params: { limit },
   });
+
+// Deploy
+export const deployHistory = () =>
+  api.get<{
+    history: {
+      id: string;
+      timestamp: string;
+      commit: string;
+      version: string;
+      deployedBy: string;
+      status: "success" | "pending" | "rollback";
+    }[];
+  }>("/deploy/history");
+
+export const deployRollback = (commitHash: string) =>
+  api.post<{ message: string }>(`/deploy/rollback/${commitHash}`);
+
+export const systemStats = () =>
+  api.get<{
+    timestamp: number;
+    cpu_pct: number;
+    memory_used_pct: number;
+    memory_used_mb: number;
+    memory_total_mb: number;
+    disk_used_gb: number;
+    disk_total_gb: number;
+    disk_used_pct: number;
+    uptime_s: number;
+    process_memory_mb: number;
+    load_avg_1m: number;
+    cpu_count: number;
+  }>("/system/stats");
+
+export const odooKpis = () =>
+  api.get<{
+    domain: string;
+    data: {
+      sales: number | null;
+      customers: number | null;
+      products: number | null;
+      open_opportunities: number | null;
+      unpaid_invoices: number | null;
+      employees: number | null;
+    };
+  }>("/odoo/data/kpis");

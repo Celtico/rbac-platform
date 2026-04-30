@@ -28,6 +28,7 @@ export class SeedService implements OnApplicationBootstrap {
       'use:ai',
       'read:tenants',
       'manage:tenants',
+      'manage:deploy',
     ];
 
     const permissionEntities: Record<string, Permission> = {};

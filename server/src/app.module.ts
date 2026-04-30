@@ -13,6 +13,7 @@ import { AlbumsModule } from './albums/albums.module';
 import { OpenAiModule } from './openai/openai.module';
 import { OdooModule } from './odoo/odoo.module';
 import { TenantsModule } from './tenants/tenants.module';
+import { SystemModule } from './system/system.module';
 import { AuthModule } from './auth/auth.module';
 import { User } from './users/entities/user.entity';
 import { Role } from './roles/entities/role.entity';
@@ -48,6 +49,7 @@ import { SeedService } from './common/seed.service';
     OpenAiModule,
     OdooModule,
     TenantsModule,
+    SystemModule,
     AuthModule,
   ],
   controllers: [AppController, DeployController],

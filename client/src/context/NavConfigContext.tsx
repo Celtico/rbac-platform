@@ -80,7 +80,7 @@ export const NAV_ITEMS: NavItemDef[] = [
     path: "/admin/settings/deploy",
     icon: Rocket,
     color: "red.500",
-    role: "admin",
+    permission: "manage:deploy",
   },
 ];
 

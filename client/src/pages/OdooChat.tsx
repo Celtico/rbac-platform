@@ -103,25 +103,11 @@ const OdooChat: React.FC = () => {
         boxShadow="sm"
       >
         {messages.length === 0 ? (
-          <VStack gap="6" pt="8" align="center">
+          <VStack gap="4" pt="8" align="center">
             <Bot size={48} color="#863bff" opacity={0.4} />
             <Text color="fg.muted" textAlign="center" maxW="sm">
               Pregunta qualsevol cosa sobre el teu Odoo en llengua natural.
             </Text>
-            <Flex flexWrap="wrap" gap="2" justify="center" maxW="lg">
-              {EXAMPLES.map((ex) => (
-                <Button
-                  key={ex}
-                  size="sm"
-                  variant="outline"
-                  colorPalette="purple"
-                  onClick={() => send(ex)}
-                  borderRadius="full"
-                >
-                  {ex}
-                </Button>
-              ))}
-            </Flex>
           </VStack>
         ) : (
           <VStack align="stretch" gap="4">
@@ -145,19 +131,13 @@ const OdooChat: React.FC = () => {
                 )}
                 <Box maxW="75%">
                   <Box
-                    bg={
-                      msg.role === "user" ? bubbleBgUser : bubbleBgBot
-                    }
+                    bg={msg.role === "user" ? bubbleBgUser : bubbleBgBot}
                     color={msg.role === "user" ? "white" : undefined}
                     px="4"
                     py="3"
                     borderRadius="2xl"
-                    borderTopRightRadius={
-                      msg.role === "user" ? "sm" : "2xl"
-                    }
-                    borderTopLeftRadius={
-                      msg.role === "assistant" ? "sm" : "2xl"
-                    }
+                    borderTopRightRadius={msg.role === "user" ? "sm" : "2xl"}
+                    borderTopLeftRadius={msg.role === "assistant" ? "sm" : "2xl"}
                     whiteSpace="pre-wrap"
                     fontSize="sm"
                     lineHeight="tall"
@@ -167,11 +147,7 @@ const OdooChat: React.FC = () => {
                   {msg.intent && msg.role === "assistant" && (
                     <HStack gap="1.5" mt="1" px="1">
                       <Zap size={11} color="#863bff" />
-                      <Badge
-                        size="xs"
-                        colorPalette="purple"
-                        variant="subtle"
-                      >
+                      <Badge size="xs" colorPalette="purple" variant="subtle">
                         {msg.intent}
                       </Badge>
                       <Text fontSize="xs" color="fg.muted">
@@ -195,12 +171,7 @@ const OdooChat: React.FC = () => {
             ))}
             {loading && (
               <Flex align="center" gap="2">
-                <Box
-                  bg="purple.100"
-                  borderRadius="full"
-                  p="1.5"
-                  flexShrink={0}
-                >
+                <Box bg="purple.100" borderRadius="full" p="1.5" flexShrink={0}>
                   <Bot size={16} color="#863bff" />
                 </Box>
                 <Box

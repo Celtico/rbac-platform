@@ -34,12 +34,10 @@ const SECTIONS: { key: NavSection; label: string; description: string }[] = [
 
 const SettingsSidebar: React.FC = () => {
   const { items, isEnabled, toggle, reset } = useNavConfig();
-  const { hasPermission, hasRole } = useAuth();
+  const { hasPermission } = useAuth();
 
   const visible = items.filter(
-    (item) =>
-      (!item.permission || hasPermission(item.permission)) &&
-      (!item.role || hasRole(item.role))
+    (item) => !item.permission || hasPermission(item.permission)
   );
 
   return (

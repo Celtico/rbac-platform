@@ -24,7 +24,7 @@ import { toaster } from "../components/ui/toaster";
 
 const Settings: React.FC = () => {
   const { theme, setTheme, radius, setRadius } = useTheme();
-  const { hasRole } = useAuth();
+  const { hasPermission } = useAuth();
   const [isDeploying, setIsDeploying] = useState(false);
   const [deployResult, setDeployResult] = useState<{
     success: boolean;
@@ -56,7 +56,7 @@ const Settings: React.FC = () => {
   };
 
   useEffect(() => {
-    if (hasRole("admin")) {
+    if (hasPermission("manage:deploy")) {
       fetchVersion();
     }
   }, []);
@@ -131,7 +131,7 @@ const Settings: React.FC = () => {
               <span>Estils i Temes</span>
             </HStack>
           </Tabs.Trigger>
-          {hasRole("admin") && (
+          {hasPermission("manage:deploy") && (
             <Tabs.Trigger value="deploy">
               <HStack gap="2">
                 <Rocket size={16} />
@@ -221,7 +221,7 @@ const Settings: React.FC = () => {
         </Tabs.Content>
 
         {/* ── Desplegament ── */}
-        {hasRole("admin") && (
+        {hasPermission("manage:deploy") && (
           <Tabs.Content value="deploy">
             <Box bg="bg.panel" p="8" rounded="md" shadow="md">
               <Text mb="6" color="fg.muted">

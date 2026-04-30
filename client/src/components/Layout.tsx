@@ -42,7 +42,7 @@ import {
 } from "@chakra-ui/react";
 
 const Layout: React.FC = () => {
-  const { user, logout, hasPermission, hasRole } = useAuth();
+  const { user, logout, hasPermission } = useAuth();
   const { mode, toggleMode } = useTheme();
   const { isEnabled } = useNavConfig();
   const navigate = useNavigate();
@@ -175,22 +175,23 @@ const Layout: React.FC = () => {
             </Collapsible.Trigger>
             <Collapsible.Content>
               <VStack align="stretch" spaceY="1" pl="4" mt="1">
-                {isEnabled("sidebar", "photos") && hasPermission("read:photos") && (
-                  <Link to="/admin/photos" style={{ textDecoration: "none" }}>
-                    <Button
-                      variant={isActive("/admin/photos") ? "subtle" : "ghost"}
-                      colorPalette={
-                        isActive("/admin/photos") ? "purple" : undefined
-                      }
-                      justifyContent="flex-start"
-                      width="full"
-                      size="sm"
-                    >
-                      <ImageIcon size={18} style={{ marginRight: "8px" }} />
-                      Photos
-                    </Button>
-                  </Link>
-                )}
+                {isEnabled("sidebar", "photos") &&
+                  hasPermission("read:photos") && (
+                    <Link to="/admin/photos" style={{ textDecoration: "none" }}>
+                      <Button
+                        variant={isActive("/admin/photos") ? "subtle" : "ghost"}
+                        colorPalette={
+                          isActive("/admin/photos") ? "purple" : undefined
+                        }
+                        justifyContent="flex-start"
+                        width="full"
+                        size="sm"
+                      >
+                        <ImageIcon size={18} style={{ marginRight: "8px" }} />
+                        Photos
+                      </Button>
+                    </Link>
+                  )}
                 {isEnabled("sidebar", "odoo") && hasPermission("use:ai") && (
                   <Link to="/admin/odoo" style={{ textDecoration: "none" }}>
                     <Button
@@ -213,7 +214,8 @@ const Layout: React.FC = () => {
         )}
         {((isEnabled("sidebar", "users") && hasPermission("read:users")) ||
           (isEnabled("sidebar", "roles") && hasPermission("read:roles")) ||
-          (isEnabled("sidebar", "permissions") && hasPermission("read:roles")) ||
+          (isEnabled("sidebar", "permissions") &&
+            hasPermission("read:roles")) ||
           (isEnabled("sidebar", "tenants") &&
             (hasPermission("read:tenants") ||
               hasPermission("manage:tenants")))) && (
@@ -251,60 +253,63 @@ const Layout: React.FC = () => {
             </Collapsible.Trigger>
             <Collapsible.Content>
               <VStack align="stretch" spaceY="1" pl="4" mt="1">
-                {isEnabled("sidebar", "users") && hasPermission("read:users") && (
-                  <Link to="/admin/users" style={{ textDecoration: "none" }}>
-                    <Button
-                      variant={isActive("/admin/users") ? "subtle" : "ghost"}
-                      colorPalette={
-                        isActive("/admin/users") ? "purple" : undefined
-                      }
-                      justifyContent="flex-start"
-                      width="full"
-                      size="sm"
-                    >
-                      <Users size={18} style={{ marginRight: "8px" }} />
-                      Users
-                    </Button>
-                  </Link>
-                )}
+                {isEnabled("sidebar", "users") &&
+                  hasPermission("read:users") && (
+                    <Link to="/admin/users" style={{ textDecoration: "none" }}>
+                      <Button
+                        variant={isActive("/admin/users") ? "subtle" : "ghost"}
+                        colorPalette={
+                          isActive("/admin/users") ? "purple" : undefined
+                        }
+                        justifyContent="flex-start"
+                        width="full"
+                        size="sm"
+                      >
+                        <Users size={18} style={{ marginRight: "8px" }} />
+                        Users
+                      </Button>
+                    </Link>
+                  )}
 
-                {isEnabled("sidebar", "roles") && hasPermission("read:roles") && (
-                  <Link to="/admin/roles" style={{ textDecoration: "none" }}>
-                    <Button
-                      variant={isActive("/admin/roles") ? "subtle" : "ghost"}
-                      colorPalette={
-                        isActive("/admin/roles") ? "purple" : undefined
-                      }
-                      justifyContent="flex-start"
-                      width="full"
-                      size="sm"
+                {isEnabled("sidebar", "roles") &&
+                  hasPermission("read:roles") && (
+                    <Link to="/admin/roles" style={{ textDecoration: "none" }}>
+                      <Button
+                        variant={isActive("/admin/roles") ? "subtle" : "ghost"}
+                        colorPalette={
+                          isActive("/admin/roles") ? "purple" : undefined
+                        }
+                        justifyContent="flex-start"
+                        width="full"
+                        size="sm"
+                      >
+                        <ShieldCheck size={18} style={{ marginRight: "8px" }} />
+                        Roles
+                      </Button>
+                    </Link>
+                  )}
+                {isEnabled("sidebar", "permissions") &&
+                  hasPermission("read:roles") && (
+                    <Link
+                      to="/admin/permissions"
+                      style={{ textDecoration: "none" }}
                     >
-                      <ShieldCheck size={18} style={{ marginRight: "8px" }} />
-                      Roles
-                    </Button>
-                  </Link>
-                )}
-                {isEnabled("sidebar", "permissions") && hasPermission("read:roles") && (
-                  <Link
-                    to="/admin/permissions"
-                    style={{ textDecoration: "none" }}
-                  >
-                    <Button
-                      variant={
-                        isActive("/admin/permissions") ? "subtle" : "ghost"
-                      }
-                      colorPalette={
-                        isActive("/admin/permissions") ? "purple" : undefined
-                      }
-                      justifyContent="flex-start"
-                      width="full"
-                      size="sm"
-                    >
-                      <Lock size={18} style={{ marginRight: "8px" }} />
-                      Permissions
-                    </Button>
-                  </Link>
-                )}
+                      <Button
+                        variant={
+                          isActive("/admin/permissions") ? "subtle" : "ghost"
+                        }
+                        colorPalette={
+                          isActive("/admin/permissions") ? "purple" : undefined
+                        }
+                        justifyContent="flex-start"
+                        width="full"
+                        size="sm"
+                      >
+                        <Lock size={18} style={{ marginRight: "8px" }} />
+                        Permissions
+                      </Button>
+                    </Link>
+                  )}
                 {isEnabled("sidebar", "tenants") &&
                   (hasPermission("read:tenants") ||
                     hasPermission("manage:tenants")) && (
@@ -383,27 +388,30 @@ const Layout: React.FC = () => {
                   </Button>
                 </Link>
               )}
-              {isEnabled("sidebar", "settings-deploy") && hasRole("admin") && (
-                <Link
-                  to="/admin/settings/deploy"
-                  style={{ textDecoration: "none" }}
-                >
-                  <Button
-                    variant={
-                      isActive("/admin/settings/deploy") ? "subtle" : "ghost"
-                    }
-                    colorPalette={
-                      isActive("/admin/settings/deploy") ? "purple" : undefined
-                    }
-                    justifyContent="flex-start"
-                    width="full"
-                    size="sm"
+              {isEnabled("sidebar", "settings-deploy") &&
+                hasPermission("manage:deploy") && (
+                  <Link
+                    to="/admin/settings/deploy"
+                    style={{ textDecoration: "none" }}
                   >
-                    <Rocket size={18} style={{ marginRight: "8px" }} />
-                    Desplegament
-                  </Button>
-                </Link>
-              )}
+                    <Button
+                      variant={
+                        isActive("/admin/settings/deploy") ? "subtle" : "ghost"
+                      }
+                      colorPalette={
+                        isActive("/admin/settings/deploy")
+                          ? "purple"
+                          : undefined
+                      }
+                      justifyContent="flex-start"
+                      width="full"
+                      size="sm"
+                    >
+                      <Rocket size={18} style={{ marginRight: "8px" }} />
+                      Desplegament
+                    </Button>
+                  </Link>
+                )}
               <Link
                 to="/admin/settings/sidebar"
                 style={{ textDecoration: "none" }}
@@ -431,7 +439,7 @@ const Layout: React.FC = () => {
     [
       isActive,
       hasPermission,
-      hasRole,
+
       isEnabled,
       isModuleOpen,
       setIsModuleOpen,
