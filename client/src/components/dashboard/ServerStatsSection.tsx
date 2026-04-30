@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
-  Box, HStack, SimpleGrid, Spinner, Text,
+  Box, HStack, SimpleGrid, Text,
 } from "@chakra-ui/react";
 import { Server, Cpu, MemoryStick, Clock, HardDrive } from "lucide-react";
 import {
@@ -93,7 +93,7 @@ const ServerStatsSection: React.FC = () => {
                 </defs>
                 <XAxis dataKey="t" hide />
                 <YAxis domain={[0, 100]} hide />
-                <Tooltip contentStyle={{ fontSize: 11, padding: "4px 8px" }} formatter={(v: number) => [`${v}%`, "CPU"]} labelFormatter={() => ""} />
+                <Tooltip contentStyle={{ fontSize: 11, padding: "4px 8px" }} formatter={(v) => [`${v as number}%`, "CPU"]} labelFormatter={() => ""} />
                 <Area type="monotone" dataKey="cpu" stroke={chartColor} strokeWidth={2} fill="url(#cpuGrad)" dot={false} isAnimationActive={false} />
               </AreaChart>
             </ResponsiveContainer>
@@ -124,7 +124,7 @@ const ServerStatsSection: React.FC = () => {
                 </defs>
                 <XAxis dataKey="t" hide />
                 <YAxis domain={[0, 100]} hide />
-                <Tooltip contentStyle={{ fontSize: 11, padding: "4px 8px" }} formatter={(v: number) => [`${v}%`, "RAM"]} labelFormatter={() => ""} />
+                <Tooltip contentStyle={{ fontSize: 11, padding: "4px 8px" }} formatter={(v) => [`${v as number}%`, "RAM"]} labelFormatter={() => ""} />
                 <Area type="monotone" dataKey="mem" stroke={chartColorMem} strokeWidth={2} fill="url(#memGrad)" dot={false} isAnimationActive={false} />
               </AreaChart>
             </ResponsiveContainer>
@@ -158,8 +158,10 @@ const ServerStatsSection: React.FC = () => {
                   <Cell fill={mode === "light" ? "#e5e7eb" : "#374151"} />
                 </Pie>
                 <Tooltip
-                  formatter={(v: number, _: string, props: { dataIndex?: number }) =>
-                    props.dataIndex === 0 ? [`${v}%`, "Usat"] : [`${v}%`, "Lliure"]
+                  formatter={(v, _name, props) =>
+                    (props as { dataIndex?: number }).dataIndex === 0
+                      ? [`${v as number}%`, "Usat"]
+                      : [`${v as number}%`, "Lliure"]
                   }
                   contentStyle={{ fontSize: 11, padding: "4px 8px" }}
                 />
