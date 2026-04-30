@@ -109,7 +109,7 @@ const OdooKpiSection: React.FC<Props> = ({ onConnected }) => {
 
   useEffect(() => {
     Promise.all([
-      odooKpis().then(({ data }) => setKpis(data.data)),
+      odooKpis().then(({ data }) => setKpis(data)),
       odooHealth().then(({ data }) => {
         setConnected(data.odoo_connected);
         onConnected(data.odoo_connected);
@@ -127,7 +127,7 @@ const OdooKpiSection: React.FC<Props> = ({ onConnected }) => {
     setDetailLoading(true);
     odooRawData(domain, 25)
       .then(({ data }) => {
-        const raw = data.data;
+        const raw = Array.isArray(data) ? data : (data as { data?: unknown }).data;
         if (Array.isArray(raw)) {
           setDetailRows(raw as OdooRecord[]);
         } else {

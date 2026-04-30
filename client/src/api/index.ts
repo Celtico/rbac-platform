@@ -92,13 +92,10 @@ export const systemStats = () =>
 
 export const odooKpis = () =>
   api.get<{
-    domain: string;
-    data: {
-      sales: number | null;
-      customers: number | null;
-      products: number | null;
-      open_opportunities: number | null;
-      unpaid_invoices: number | null;
-      employees: number | null;
-    };
+    sales: number | null;
+    customers: number | null;
+    products: number | null;
+    open_opportunities: number | null;
+    unpaid_invoices: number | null;
+    employees: number | null;
   }>("/odoo/data/kpis");

@@ -9,24 +9,20 @@ import {
   Rocket,
   Building2,
 } from "lucide-react";
-import { NavConfigContext, type NavItemDef, type NavSection } from "./NavConfigContext";
+import {
+  NavConfigContext,
+  type NavItemDef,
+  type NavSection,
+} from "./NavConfigContext";
 
 const KEYS: Record<NavSection, string> = {
-  sidebar:   "app-nav-sidebar",
+  sidebar: "app-nav-sidebar",
   dashboard: "app-nav-dashboard",
-  mobile:    "app-nav-mobile",
+  mobile: "app-nav-mobile",
 };
 
 /** Master list — defines every configurable nav item once. */
 export const NAV_ITEMS: NavItemDef[] = [
-  {
-    id: "photos",
-    label: "Fotos",
-    path: "/admin/photos",
-    icon: ImageIcon,
-    color: "blue.500",
-    permission: "read:photos",
-  },
   {
     id: "odoo",
     label: "Odoo AI",
@@ -34,6 +30,14 @@ export const NAV_ITEMS: NavItemDef[] = [
     icon: Bot,
     color: "purple.500",
     permission: "use:ai",
+  },
+  {
+    id: "photos",
+    label: "Fotos",
+    path: "/admin/photos",
+    icon: ImageIcon,
+    color: "blue.500",
+    permission: "read:photos",
   },
   {
     id: "users",
@@ -109,23 +113,26 @@ export const NavConfigProvider: React.FC<{ children: React.ReactNode }> = ({
   const [enabledSidebar, setEnabledSidebar] = useState<Record<string, boolean>>(
     () => load(KEYS.sidebar)
   );
-  const [enabledDashboard, setEnabledDashboard] = useState<Record<string, boolean>>(
-    () => load(KEYS.dashboard)
-  );
+  const [enabledDashboard, setEnabledDashboard] = useState<
+    Record<string, boolean>
+  >(() => load(KEYS.dashboard));
   const [enabledMobile, setEnabledMobile] = useState<Record<string, boolean>>(
     () => load(KEYS.mobile)
   );
 
-  const setters: Record<NavSection, React.Dispatch<React.SetStateAction<Record<string, boolean>>>> = {
-    sidebar:   setEnabledSidebar,
+  const setters: Record<
+    NavSection,
+    React.Dispatch<React.SetStateAction<Record<string, boolean>>>
+  > = {
+    sidebar: setEnabledSidebar,
     dashboard: setEnabledDashboard,
-    mobile:    setEnabledMobile,
+    mobile: setEnabledMobile,
   };
 
   const maps: Record<NavSection, Record<string, boolean>> = {
-    sidebar:   enabledSidebar,
+    sidebar: enabledSidebar,
     dashboard: enabledDashboard,
-    mobile:    enabledMobile,
+    mobile: enabledMobile,
   };
 
   const toggle = (section: NavSection, id: string) => {
