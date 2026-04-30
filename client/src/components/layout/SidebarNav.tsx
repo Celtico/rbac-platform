@@ -8,7 +8,7 @@ import {
   Rocket, SlidersHorizontal, Building2, Boxes,
 } from "lucide-react";
 import {
-  Box, Button, Collapsible, HStack, VStack,
+  Button, Collapsible, HStack, VStack,
 } from "@chakra-ui/react";
 
 const SidebarNav: React.FC<{ isMobile?: boolean }> = ({ isMobile = false }) => {
