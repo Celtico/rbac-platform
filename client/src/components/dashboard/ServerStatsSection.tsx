@@ -1,16 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { Box, HStack, SimpleGrid, Text } from "@chakra-ui/react";
+import { Box, Grid, HStack, SimpleGrid, Text } from "@chakra-ui/react";
 import { Server, Cpu, MemoryStick, Clock, HardDrive } from "lucide-react";
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell,
 } from "recharts";
 import { Chart, useChart } from "@chakra-ui/charts";
 import { systemStats } from "../../api";
 import { useTheme } from "../../context/ThemeContext.ts";
 
 interface StatPoint { t: string; cpu: number; mem: number }
-
 const MAX_POINTS = 30;
 
 const formatUptime = (s: number) => {
@@ -22,7 +20,7 @@ const formatUptime = (s: number) => {
 const GaugeBar: React.FC<{ pct: number; color: string }> = ({ pct, color }) => {
   const { mode } = useTheme();
   return (
-    <Box w="full" h="2" bg={mode === "light" ? "gray.100" : "gray.700"} rounded="full" overflow="hidden">
+    <Box w="full" h="1.5" bg={mode === "light" ? "gray.100" : "gray.700"} rounded="full" overflow="hidden">
       <Box h="full" w={`${pct}%`} style={{ background: color }} rounded="full" transition="width 0.5s" />
     </Box>
   );
@@ -58,133 +56,109 @@ const ServerStatsSection: React.FC = () => {
     return () => clearInterval(id);
   }, []);
 
-  const diskData = [
-    { value: latest?.disk_used_pct ?? 0 },
-    { value: 100 - (latest?.disk_used_pct ?? 0) },
-  ];
-
   const cpuChart = useChart({ data: history, series: [{ name: "cpu", color: "purple.500", label: "CPU" }] });
   const memChart = useChart({ data: history, series: [{ name: "mem", color: "cyan.500", label: "RAM" }] });
-  const diskChart = useChart({ data: diskData, series: [{ name: "value", color: "orange.500" }] });
 
   const cardBg = mode === "light" ? "white" : "gray.800";
 
+  const metrics = [
+    {
+      icon: Cpu, color: "purple.500", hexColor: cpuChart.color("purple.500"),
+      label: "CPU",
+      sub: latest ? `${latest.cpu_count} cores · load ${latest.load_avg_1m}` : "—",
+      pct: latest?.cpu_pct ?? 0,
+      val: latest ? `${latest.cpu_pct}%` : "—",
+    },
+    {
+      icon: MemoryStick, color: "cyan.500", hexColor: memChart.color("cyan.500"),
+      label: "RAM",
+      sub: latest ? `${latest.memory_used_mb} / ${latest.memory_total_mb} MB` : "—",
+      pct: latest?.memory_used_pct ?? 0,
+      val: latest ? `${latest.memory_used_pct}%` : "—",
+    },
+    {
+      icon: HardDrive, color: "orange.500", hexColor: "#f97316",
+      label: "Disc",
+      sub: latest ? `${latest.disk_used_gb} / ${latest.disk_total_gb} GB` : "—",
+      pct: latest?.disk_used_pct ?? 0,
+      val: latest ? `${latest.disk_used_pct}%` : "—",
+    },
+  ];
+
+  const infoStats = [
+    { icon: Clock,     color: "orange.500", label: "Uptime",    value: latest ? formatUptime(latest.uptime_s) : "—" },
+    { icon: Server,    color: "green.500",  label: "Node mem",  value: latest ? `${latest.process_memory_mb} MB` : "—" },
+    { icon: Cpu,       color: "purple.500", label: "Load 1m",   value: latest ? String(latest.load_avg_1m) : "—" },
+    { icon: HardDrive, color: "orange.500", label: "Disc lliure", value: latest ? `${Math.round((latest.disk_total_gb - latest.disk_used_gb) * 10) / 10} GB` : "—" },
+  ];
+
   return (
-    <Box mb="10">
-      <Text fontSize="xs" fontWeight="bold" color="fg.muted" textTransform="uppercase" letterSpacing="wide" mb="4">
+    <Box mb="8">
+      <Text fontSize="xs" fontWeight="bold" color="fg.muted" textTransform="uppercase" letterSpacing="wide" mb="3">
         Servidor · Consum en temps real
       </Text>
-      <SimpleGrid columns={[1, 1, 3]} gap={[4, 5]} mb="4">
-        {/* CPU */}
-        <Box bg={cardBg} rounded="lg" shadow="sm" p="5">
-          <HStack mb="3" justify="space-between">
-            <HStack gap="2">
-              <Box color="purple.500"><Cpu size={16} /></Box>
-              <Text fontWeight="semibold" fontSize="sm">CPU</Text>
-            </HStack>
-            <HStack gap="3" align="center">
-              <Text fontSize="xs" color="fg.muted">{latest?.cpu_count ?? "—"} cores · load {latest?.load_avg_1m ?? "—"}</Text>
-              <Text fontSize="2xl" fontWeight="bold" color="purple.500">{latest?.cpu_pct ?? "—"}%</Text>
-            </HStack>
-          </HStack>
-          <GaugeBar pct={latest?.cpu_pct ?? 0} color={cpuChart.color("purple.500")} />
-          <Chart.Root chart={cpuChart} h="80px" aspectRatio="unset" mt="3">
+
+      <Grid templateColumns={["1fr", "1fr", "1fr auto"]} gap="3">
+        {/* Metrics card */}
+        <Box bg={cardBg} rounded="lg" shadow="sm" px="5" py="4">
+          <Box spaceY="3">
+            {metrics.map(({ icon: Icon, color, hexColor, label, sub, pct, val }) => (
+              <HStack key={label} gap="3" align="center">
+                <Box color={color} flexShrink={0}><Icon size={14} /></Box>
+                <Text fontSize="xs" fontWeight="semibold" w="8" flexShrink={0}>{label}</Text>
+                <Text fontSize="xs" color="fg.muted" w="32" flexShrink={0} truncate>{sub}</Text>
+                <Box flex="1"><GaugeBar pct={pct} color={hexColor} /></Box>
+                <Text fontSize="sm" fontWeight="bold" color={color} w="10" textAlign="right" flexShrink={0}>{val}</Text>
+              </HStack>
+            ))}
+          </Box>
+        </Box>
+
+        {/* Sparklines card */}
+        <Box bg={cardBg} rounded="lg" shadow="sm" px="4" py="4" minW={["full", "full", "220px"]}>
+          <Chart.Root chart={cpuChart} h="40px" aspectRatio="unset" mb="2">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={cpuChart.data} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
                 <defs>
-                  <Chart.Gradient id="cpuGrad" stops={[
+                  <Chart.Gradient id="cpuGrad2" stops={[
                     { offset: "5%", color: "purple.500", opacity: 0.3 },
                     { offset: "95%", color: "purple.500", opacity: 0 },
                   ]} />
                 </defs>
-                <XAxis dataKey="t" hide />
-                <YAxis domain={[0, 100]} hide />
+                <XAxis dataKey="t" hide /><YAxis domain={[0, 100]} hide />
                 <Tooltip content={<Chart.Tooltip hideLabel formatter={(v) => [`${v}%`, "CPU"]} />} />
-                <Area type="monotone" dataKey="cpu" stroke={cpuChart.color("purple.500")} strokeWidth={2} fill="url(#cpuGrad)" dot={false} isAnimationActive={false} />
+                <Area type="monotone" dataKey="cpu" stroke={cpuChart.color("purple.500")} strokeWidth={1.5} fill="url(#cpuGrad2)" dot={false} isAnimationActive={false} />
               </AreaChart>
             </ResponsiveContainer>
           </Chart.Root>
-        </Box>
-
-        {/* RAM */}
-        <Box bg={cardBg} rounded="lg" shadow="sm" p="5">
-          <HStack mb="3" justify="space-between">
-            <HStack gap="2">
-              <Box color="cyan.500"><MemoryStick size={16} /></Box>
-              <Text fontWeight="semibold" fontSize="sm">Memòria RAM</Text>
-            </HStack>
-            <HStack gap="3" align="center">
-              <Text fontSize="xs" color="fg.muted">{latest ? `${latest.memory_used_mb} / ${latest.memory_total_mb} MB` : "—"}</Text>
-              <Text fontSize="2xl" fontWeight="bold" color="cyan.500">{latest?.memory_used_pct ?? "—"}%</Text>
-            </HStack>
-          </HStack>
-          <GaugeBar pct={latest?.memory_used_pct ?? 0} color={memChart.color("cyan.500")} />
-          <Chart.Root chart={memChart} h="80px" aspectRatio="unset" mt="3">
+          <Chart.Root chart={memChart} h="40px" aspectRatio="unset">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={memChart.data} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
                 <defs>
-                  <Chart.Gradient id="memGrad" stops={[
+                  <Chart.Gradient id="memGrad2" stops={[
                     { offset: "5%", color: "cyan.500", opacity: 0.3 },
                     { offset: "95%", color: "cyan.500", opacity: 0 },
                   ]} />
                 </defs>
-                <XAxis dataKey="t" hide />
-                <YAxis domain={[0, 100]} hide />
+                <XAxis dataKey="t" hide /><YAxis domain={[0, 100]} hide />
                 <Tooltip content={<Chart.Tooltip hideLabel formatter={(v) => [`${v}%`, "RAM"]} />} />
-                <Area type="monotone" dataKey="mem" stroke={memChart.color("cyan.500")} strokeWidth={2} fill="url(#memGrad)" dot={false} isAnimationActive={false} />
+                <Area type="monotone" dataKey="mem" stroke={memChart.color("cyan.500")} strokeWidth={1.5} fill="url(#memGrad2)" dot={false} isAnimationActive={false} />
               </AreaChart>
             </ResponsiveContainer>
           </Chart.Root>
         </Box>
+      </Grid>
 
-        {/* Disc */}
-        <Box bg={cardBg} rounded="lg" shadow="sm" p="5">
-          <HStack mb="3" justify="space-between">
-            <HStack gap="2">
-              <Box color="orange.500"><HardDrive size={16} /></Box>
-              <Text fontWeight="semibold" fontSize="sm">Disc</Text>
-            </HStack>
-            <HStack gap="3" align="center">
-              <Text fontSize="xs" color="fg.muted">{latest ? `${latest.disk_used_gb} / ${latest.disk_total_gb} GB` : "—"}</Text>
-              <Text fontSize="2xl" fontWeight="bold" color="orange.500">{latest?.disk_used_pct ?? "—"}%</Text>
-            </HStack>
-          </HStack>
-          <GaugeBar pct={latest?.disk_used_pct ?? 0} color={diskChart.color("orange.500")} />
-          <Chart.Root chart={diskChart} h="80px" aspectRatio="unset" mt="3">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={diskChart.data}
-                  cx="50%" cy="50%"
-                  innerRadius={24} outerRadius={36}
-                  startAngle={90} endAngle={-270}
-                  dataKey="value" strokeWidth={0} isAnimationActive={false}
-                >
-                  <Cell fill={diskChart.color("orange.500")} />
-                  <Cell fill={diskChart.color(mode === "light" ? "gray.200" : "gray.700")} />
-                </Pie>
-                <Tooltip content={<Chart.Tooltip hideLabel fitContent formatter={(v, name) => [`${v}%`, name ?? ""] } />} />
-              </PieChart>
-            </ResponsiveContainer>
-          </Chart.Root>
-        </Box>
-      </SimpleGrid>
-
-      {/* Info row */}
-      <SimpleGrid columns={[2, 4]} gap={[3, 4]}>
-        {[
-          { icon: Clock,     color: "orange.500", label: "Uptime servidor",  value: latest ? formatUptime(latest.uptime_s) : "—" },
-          { icon: Server,    color: "green.500",  label: "Mem. procés Node", value: latest ? `${latest.process_memory_mb} MB` : "—" },
-          { icon: Cpu,       color: "purple.500", label: "Load avg 1m",      value: latest ? String(latest.load_avg_1m) : "—" },
-          { icon: HardDrive, color: "orange.500", label: "Disc lliure",      value: latest ? `${Math.round((latest.disk_total_gb - latest.disk_used_gb) * 10) / 10} GB` : "—" },
-        ].map(({ icon: Icon, color, label, value }) => (
-          <Box key={label} bg={cardBg} rounded="lg" shadow="sm" px="4" py="3">
-            <HStack gap="2" mb="1">
-              <Box color={color}><Icon size={14} /></Box>
+      {/* Info stats */}
+      <SimpleGrid columns={[2, 4]} gap="3" mt="3">
+        {infoStats.map(({ icon: Icon, color, label, value }) => (
+          <HStack key={label} bg={cardBg} rounded="lg" shadow="sm" px="4" py="2.5" gap="2.5">
+            <Box color={color} flexShrink={0}><Icon size={13} /></Box>
+            <Box>
               <Text fontSize="2xs" color="fg.muted" fontWeight="bold" textTransform="uppercase" letterSpacing="wide">{label}</Text>
-            </HStack>
-            <Text fontWeight="bold" fontSize="lg">{value}</Text>
-          </Box>
+              <Text fontWeight="bold" fontSize="sm" lineHeight="1.2">{value}</Text>
+            </Box>
+          </HStack>
         ))}
       </SimpleGrid>
     </Box>
