@@ -614,7 +614,7 @@ const Layout: React.FC = () => {
           active={isActive("/admin")}
         />
 
-        {isEnabled("sidebar", "photos") && hasPermission("read:photos") && (
+        {isEnabled("mobile", "photos") && hasPermission("read:photos") && (
           <BottomNavItem
             to="/admin/photos"
             icon={<ImageIcon size={22} />}
@@ -623,7 +623,7 @@ const Layout: React.FC = () => {
           />
         )}
 
-        {isEnabled("sidebar", "odoo") && hasPermission("use:ai") && (
+        {isEnabled("mobile", "odoo") && hasPermission("use:ai") && (
           <BottomNavItem
             to="/admin/odoo"
             icon={<Bot size={22} />}
@@ -639,10 +639,10 @@ const Layout: React.FC = () => {
           active={isActive("/admin/settings")}
         />
 
-        {((isEnabled("sidebar", "users") && hasPermission("read:users")) ||
-          (isEnabled("sidebar", "roles") && hasPermission("read:roles")) ||
-          (isEnabled("sidebar", "permissions") && hasPermission("read:roles")) ||
-          (isEnabled("sidebar", "tenants") &&
+        {((isEnabled("mobile", "users") && hasPermission("read:users")) ||
+          (isEnabled("mobile", "roles") && hasPermission("read:roles")) ||
+          (isEnabled("mobile", "permissions") && hasPermission("read:roles")) ||
+          (isEnabled("mobile", "tenants") &&
             (hasPermission("read:tenants") ||
               hasPermission("manage:tenants")))) && (
           <BottomNavItem
