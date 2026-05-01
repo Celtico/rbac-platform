@@ -1,14 +1,68 @@
 /* ─── Border radius ─────────────────────────────────────────────────────── */
 :root {
-  --chakra-radii-md: 0.375rem;
+  --chakra-radii-sm:   0.125rem;
+  --chakra-radii-md:   0.375rem;
+  --chakra-radii-lg:   0.5rem;
+  --chakra-radii-xl:   0.75rem;
+  --chakra-radii-2xl:  1rem;
+  --chakra-radii-3xl:  1.5rem;
+  --chakra-radii-full: 9999px;
 }
 
-[data-radius="none"]  { --chakra-radii-md: 0; }
-[data-radius="sm"]    { --chakra-radii-md: 0.125rem; }
-[data-radius="md"]    { --chakra-radii-md: 0.375rem; }
-[data-radius="lg"]    { --chakra-radii-md: 0.5rem; }
-[data-radius="xl"]    { --chakra-radii-md: 0.75rem; }
-[data-radius="full"]  { --chakra-radii-md: 1rem; }
+[data-radius="none"] {
+  --chakra-radii-sm:   0;
+  --chakra-radii-md:   0;
+  --chakra-radii-lg:   0;
+  --chakra-radii-xl:   0;
+  --chakra-radii-2xl:  0;
+  --chakra-radii-3xl:  0;
+  --chakra-radii-full: 0;
+}
+[data-radius="sm"] {
+  --chakra-radii-sm:   0.0625rem;
+  --chakra-radii-md:   0.125rem;
+  --chakra-radii-lg:   0.1875rem;
+  --chakra-radii-xl:   0.25rem;
+  --chakra-radii-2xl:  0.375rem;
+  --chakra-radii-3xl:  0.5rem;
+  --chakra-radii-full: 9999px;
+}
+[data-radius="md"] {
+  --chakra-radii-sm:   0.125rem;
+  --chakra-radii-md:   0.375rem;
+  --chakra-radii-lg:   0.5rem;
+  --chakra-radii-xl:   0.75rem;
+  --chakra-radii-2xl:  1rem;
+  --chakra-radii-3xl:  1.5rem;
+  --chakra-radii-full: 9999px;
+}
+[data-radius="lg"] {
+  --chakra-radii-sm:   0.25rem;
+  --chakra-radii-md:   0.5rem;
+  --chakra-radii-lg:   0.75rem;
+  --chakra-radii-xl:   1rem;
+  --chakra-radii-2xl:  1.25rem;
+  --chakra-radii-3xl:  1.75rem;
+  --chakra-radii-full: 9999px;
+}
+[data-radius="xl"] {
+  --chakra-radii-sm:   0.375rem;
+  --chakra-radii-md:   0.75rem;
+  --chakra-radii-lg:   1rem;
+  --chakra-radii-xl:   1.25rem;
+  --chakra-radii-2xl:  1.5rem;
+  --chakra-radii-3xl:  2rem;
+  --chakra-radii-full: 9999px;
+}
+[data-radius="full"] {
+  --chakra-radii-sm:   0.5rem;
+  --chakra-radii-md:   1rem;
+  --chakra-radii-lg:   1.5rem;
+  --chakra-radii-xl:   2rem;
+  --chakra-radii-2xl:  2.5rem;
+  --chakra-radii-3xl:  3rem;
+  --chakra-radii-full: 9999px;
+}
 
 /* ─── Theme colours ─────────────────────────────────────────────────────── */
 /* Each theme overrides the Chakra purple scale (sidebar / active states)   */
@@ -60,7 +114,7 @@
   --chakra-colors-purple-950: #082f49;
   --chakra-colors-blue-500:   #0ea5e9;
   --chakra-colors-blue-600:   #0284c7;
-  /* subtle blue-tinted neutrals (slate-like) */
+  /* subtle blue-tinted neutrals (slate-like)
   --chakra-colors-gray-50:  #f8fafc;
   --chakra-colors-gray-100: #f1f5f9;
   --chakra-colors-gray-200: #e2e8f0;
@@ -70,7 +124,7 @@
   --chakra-colors-gray-600: #475569;
   --chakra-colors-gray-700: #334155;
   --chakra-colors-gray-800: #1e293b;
-  --chakra-colors-gray-900: #0f172a;
+  --chakra-colors-gray-900: #0f172a;*/
 }
 
 /* 3. OCEAN — Cyan / Teal ─────────────────────────────────────────────────── */
@@ -89,7 +143,7 @@
   --chakra-colors-purple-950: #083344;
   --chakra-colors-blue-500:   #0891b2;
   --chakra-colors-blue-600:   #0e7490;
-  /* subtle cyan-tinted neutrals */
+  /* subtle cyan-tinted neutrals
   --chakra-colors-gray-50:  #f7fafb;
   --chakra-colors-gray-100: #eef5f6;
   --chakra-colors-gray-200: #ddeaed;
@@ -99,7 +153,7 @@
   --chakra-colors-gray-600: #455459;
   --chakra-colors-gray-700: #313e43;
   --chakra-colors-gray-800: #1b2529;
-  --chakra-colors-gray-900: #0d1417;
+  --chakra-colors-gray-900: #0d1417;*/
 }
 
 /* 4. FOREST — Emerald Green ──────────────────────────────────────────────── */
@@ -147,7 +201,7 @@
   --chakra-colors-purple-950: #4c0519;
   --chakra-colors-blue-500:   #f43f5e;
   --chakra-colors-blue-600:   #e11d48;
-  /* subtle rose-tinted neutrals */
+  /* subtle rose-tinted neutrals
   --chakra-colors-gray-50:  #faf8f9;
   --chakra-colors-gray-100: #f5f1f3;
   --chakra-colors-gray-200: #eae3e6;
@@ -157,7 +211,7 @@
   --chakra-colors-gray-600: #534b4f;
   --chakra-colors-gray-700: #3e383b;
   --chakra-colors-gray-800: #241f21;
-  --chakra-colors-gray-900: #141112;
+  --chakra-colors-gray-900: #141112;*/
 }
 
 /* 6. VIOLET — Deep Violet ────────────────────────────────────────────────── */
@@ -176,7 +230,7 @@
   --chakra-colors-purple-950: #2e1065;
   --chakra-colors-blue-500:   #8b5cf6;
   --chakra-colors-blue-600:   #7c3aed;
-  /* subtle violet-tinted neutrals (stronger than default) */
+  /* subtle violet-tinted neutrals (stronger than default)
   --chakra-colors-gray-50:  #f9f8ff;
   --chakra-colors-gray-100: #f2f0fe;
   --chakra-colors-gray-200: #e5e2fb;
@@ -186,7 +240,7 @@
   --chakra-colors-gray-600: #4e4b6a;
   --chakra-colors-gray-700: #38364f;
   --chakra-colors-gray-800: #201e30;
-  --chakra-colors-gray-900: #11101c;
+  --chakra-colors-gray-900: #11101c;*/
 }
 
 /* 7. AMBER — Warm Amber ──────────────────────────────────────────────────── */
@@ -205,7 +259,7 @@
   --chakra-colors-purple-950: #451a03;
   --chakra-colors-blue-500:   #f59e0b;
   --chakra-colors-blue-600:   #d97706;
-  /* subtle warm amber-tinted neutrals */
+  /* subtle warm amber-tinted neutrals
   --chakra-colors-gray-50:  #faf9f5;
   --chakra-colors-gray-100: #f5f3ec;
   --chakra-colors-gray-200: #ece6d8;
@@ -215,7 +269,7 @@
   --chakra-colors-gray-600: #544e43;
   --chakra-colors-gray-700: #3e3930;
   --chakra-colors-gray-800: #23201a;
-  --chakra-colors-gray-900: #14120d;
+  --chakra-colors-gray-900: #14120d;*/
 }
 
 /* 8. CORAL — Orange / Coral ──────────────────────────────────────────────── */
@@ -234,7 +288,7 @@
   --chakra-colors-purple-950: #431407;
   --chakra-colors-blue-500:   #f97316;
   --chakra-colors-blue-600:   #ea580c;
-  /* subtle orange-tinted neutrals */
+  /* subtle orange-tinted neutrals
   --chakra-colors-gray-50:  #faf8f6;
   --chakra-colors-gray-100: #f5f0eb;
   --chakra-colors-gray-200: #ece3d9;
@@ -244,7 +298,7 @@
   --chakra-colors-gray-600: #544c43;
   --chakra-colors-gray-700: #3e3831;
   --chakra-colors-gray-800: #23201a;
-  --chakra-colors-gray-900: #14120d;
+  --chakra-colors-gray-900: #14120d;*/
 }
 
 /* 9. CRIMSON — Deep Red ──────────────────────────────────────────────────── */
@@ -263,7 +317,7 @@
   --chakra-colors-purple-950: #450a0a;
   --chakra-colors-blue-500:   #ef4444;
   --chakra-colors-blue-600:   #dc2626;
-  /* subtle red-tinted neutrals */
+  /* subtle red-tinted neutrals
   --chakra-colors-gray-50:  #faf8f8;
   --chakra-colors-gray-100: #f5f0f0;
   --chakra-colors-gray-200: #ece2e2;
@@ -273,7 +327,7 @@
   --chakra-colors-gray-600: #544b4b;
   --chakra-colors-gray-700: #3e3737;
   --chakra-colors-gray-800: #231e1e;
-  --chakra-colors-gray-900: #141010;
+  --chakra-colors-gray-900: #141010;*/
 }
 
 /* 10. MIDNIGHT — Navy Blue ───────────────────────────────────────────────── */
@@ -292,7 +346,7 @@
   --chakra-colors-purple-950: #172554;
   --chakra-colors-blue-500:   #3b82f6;
   --chakra-colors-blue-600:   #2563eb;
-  /* subtle navy-tinted neutrals */
+  /* subtle navy-tinted neutrals
   --chakra-colors-gray-50:  #f7f9fb;
   --chakra-colors-gray-100: #f0f3f7;
   --chakra-colors-gray-200: #e1e6ef;
@@ -302,7 +356,7 @@
   --chakra-colors-gray-600: #475163;
   --chakra-colors-gray-700: #343c4c;
   --chakra-colors-gray-800: #1c2233;
-  --chakra-colors-gray-900: #0e121e;
+  --chakra-colors-gray-900: #0e121e; */
 }
 
 /* ─── Font families ──────────────────────────────────────────────────────── */

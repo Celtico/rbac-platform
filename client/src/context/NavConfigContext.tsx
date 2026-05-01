@@ -1,13 +1,17 @@
 import React, { useState } from "react";
 import {
   ImageIcon,
-  Bot,
   Users,
   ShieldCheck,
   Lock,
   Palette,
   Rocket,
   Building2,
+  MessageSquare,
+  ScrollText,
+  Monitor,
+  BarChart2,
+  Database,
 } from "lucide-react";
 import {
   NavConfigContext,
@@ -24,11 +28,19 @@ const KEYS: Record<NavSection, string> = {
 /** Master list — defines every configurable nav item once. */
 export const NAV_ITEMS: NavItemDef[] = [
   {
+    id: "chat",
+    label: "Chat Global",
+    path: "/admin/chat",
+    icon: MessageSquare,
+    color: "green.500",
+    permission: "use:chat",
+  },
+  {
     id: "odoo",
-    label: "Odoo AI",
+    label: "Gestor Odoo",
     path: "/admin/odoo",
-    icon: Bot,
-    color: "purple.500",
+    icon: Database,
+    color: "orange.500",
     permission: "use:ai",
   },
   {
@@ -85,6 +97,29 @@ export const NAV_ITEMS: NavItemDef[] = [
     icon: Rocket,
     color: "red.500",
     permission: "manage:deploy",
+  },
+  {
+    id: "logs",
+    label: "Registre del Sistema",
+    path: "/admin/logs",
+    icon: ScrollText,
+    color: "orange.500",
+    permission: "read:logsystem",
+  },
+  {
+    id: "server-stats",
+    label: "Consum del Servidor",
+    path: "/admin/system/stats",
+    icon: BarChart2,
+    color: "purple.500",
+    permission: "read:logsystem",
+  },
+  {
+    id: "devices",
+    label: "Dispositius",
+    path: "/admin/settings/devices",
+    icon: Monitor,
+    color: "gray.500",
   },
 ];
 

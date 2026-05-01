@@ -29,6 +29,8 @@ export class SeedService implements OnApplicationBootstrap {
       'read:tenants',
       'manage:tenants',
       'manage:deploy',
+      'use:chat',
+      'read:logsystem',
     ];
 
     const permissionEntities: Record<string, Permission> = {};
@@ -61,8 +63,22 @@ export class SeedService implements OnApplicationBootstrap {
     if (!userRole) {
       userRole = await this.rolesService.create({
         name: 'user',
-        permissionIds: [permissionEntities['read:photos'].id],
+        permissionIds: [
+          permissionEntities['read:photos'].id,
+          permissionEntities['use:chat'].id,
+        ],
       });
+    } else {
+      // Ensure use:chat is assigned to user role on update
+      const userPerms = await this.rolesService.findOne(userRole.id);
+      const hasChat = userPerms?.permissions?.some((p) => p.name === 'use:chat');
+      if (!hasChat) {
+        const currentIds = (userPerms?.permissions ?? []).map((p) => p.id);
+        await this.rolesService.update(userRole.id, {
+          name: 'user',
+          permissionIds: [...currentIds, permissionEntities['use:chat'].id],
+        });
+      }
     }
 
     let invitatRole = allRoles.find((r) => r.name === 'invitat');

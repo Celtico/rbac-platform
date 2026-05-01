@@ -21,6 +21,7 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import { toaster } from "../components/ui/toaster";
+import { useTheme } from "../context/ThemeContext";
 
 interface User {
   id: number;
@@ -33,10 +34,33 @@ interface Role {
   name: string;
 }
 
+function UserAvatar({ username }: { username: string }) {
+  const initials = username.slice(0, 2).toUpperCase();
+  const colors = ["purple", "blue", "teal", "green", "orange", "pink"];
+  const color = colors[username.charCodeAt(0) % colors.length];
+  return (
+    <Flex
+      w="7"
+      h="7"
+      rounded="full"
+      bg={`${color}.100`}
+      color={`${color}.700`}
+      align="center"
+      justify="center"
+      fontSize="xs"
+      fontWeight="bold"
+      flexShrink={0}
+    >
+      {initials}
+    </Flex>
+  );
+}
+
 const UsersPage: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const { hasPermission } = useAuth();
+  const { mode } = useTheme();
   const [editing, setEditing] = useState<any | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
   const [saving, setSaving] = useState(false);
@@ -51,7 +75,7 @@ const UsersPage: React.FC = () => {
       setRoles(rRes.data);
     } catch (err) {
       console.error(err);
-      toaster.create({ type: "error", title: "Failed to load users" });
+      toaster.create({ type: "error", title: "Error carregant usuaris" });
     }
   };
 
@@ -63,10 +87,10 @@ const UsersPage: React.FC = () => {
     if (!deleteTarget) return;
     try {
       await api.delete(`/users/${deleteTarget.id}`);
-      toaster.create({ type: "success", title: `"${deleteTarget.username}" deleted` });
+      toaster.create({ type: "success", title: `"${deleteTarget.username}" eliminat` });
       fetchData();
     } catch {
-      toaster.create({ type: "error", title: "Failed to delete user" });
+      toaster.create({ type: "error", title: "Error eliminant l'usuari" });
     } finally {
       setDeleteTarget(null);
     }
@@ -84,35 +108,41 @@ const UsersPage: React.FC = () => {
     try {
       if (editing.id) {
         await api.patch(`/users/${editing.id}`, payload);
-        toaster.create({ type: "success", title: "User updated" });
+        toaster.create({ type: "success", title: "Usuari actualitzat" });
       } else {
         await api.post("/users", payload);
-        toaster.create({ type: "success", title: "User created" });
+        toaster.create({ type: "success", title: "Usuari creat" });
       }
       setEditing(null);
       fetchData();
     } catch {
-      toaster.create({ type: "error", title: "Failed to save user" });
+      toaster.create({ type: "error", title: "Error desant l'usuari" });
     } finally {
       setSaving(false);
     }
   };
 
+  const headerBg = mode === "light" ? "gray.50" : "gray.800";
+  const borderColor = mode === "light" ? "gray.200" : "gray.700";
+
   return (
     <Box>
-      <Flex justify="space-between" align="center" mb="6" wrap="wrap" gap="4">
-        <Heading size="lg">Users Management</Heading>
+      <Flex justify="space-between" align="center" mb="8" wrap="wrap" gap="4">
+        <HStack gap="3">
+          <Heading size="xl">Gestió d'Usuaris</Heading>
+          <Badge colorPalette="purple" variant="subtle" borderRadius="full" px="2">
+            {users.length}
+          </Badge>
+        </HStack>
         {hasPermission("manage:users") && (
           <Button
-            colorPalette="green"
-            onClick={() =>
-              setEditing({ username: "", password: "", roleIds: [] })
-            }
+            colorPalette="purple"
+            onClick={() => setEditing({ username: "", password: "", roleIds: [] })}
             size="sm"
           >
             <Plus size={16} />
             <Box as="span" display={{ base: "none", sm: "inline" }} ml="2">
-              Add User
+              Nou Usuari
             </Box>
           </Button>
         )}
@@ -120,57 +150,111 @@ const UsersPage: React.FC = () => {
 
       <Box
         bg="bg.panel"
-        rounded="md"
+        rounded="xl"
         shadow="sm"
         overflowX="auto"
         borderWidth="1px"
+        borderColor={borderColor}
       >
-        <Table.Root>
-          <Table.Header bg="bg.muted">
-            <Table.Row>
-              <Table.ColumnHeader>Username</Table.ColumnHeader>
-              <Table.ColumnHeader>Roles</Table.ColumnHeader>
-              <Table.ColumnHeader textAlign="right">Actions</Table.ColumnHeader>
+        <Table.Root size="sm">
+          <Table.Header>
+            <Table.Row bg={headerBg}>
+              <Table.ColumnHeader
+                fontSize="xs"
+                textTransform="uppercase"
+                letterSpacing="wide"
+                color="fg.muted"
+                fontWeight="semibold"
+                py="3"
+                w="12"
+                pl="4"
+              >
+                #
+              </Table.ColumnHeader>
+              <Table.ColumnHeader
+                fontSize="xs"
+                textTransform="uppercase"
+                letterSpacing="wide"
+                color="fg.muted"
+                fontWeight="semibold"
+                py="3"
+              >
+                Usuari
+              </Table.ColumnHeader>
+              <Table.ColumnHeader
+                fontSize="xs"
+                textTransform="uppercase"
+                letterSpacing="wide"
+                color="fg.muted"
+                fontWeight="semibold"
+                py="3"
+              >
+                Rols
+              </Table.ColumnHeader>
+              <Table.ColumnHeader
+                fontSize="xs"
+                textTransform="uppercase"
+                letterSpacing="wide"
+                color="fg.muted"
+                fontWeight="semibold"
+                py="3"
+                textAlign="right"
+                pr="4"
+              >
+                Accions
+              </Table.ColumnHeader>
             </Table.Row>
           </Table.Header>
           <Table.Body>
             {users.map((u) => (
-              <Table.Row key={u.id} _hover={{ bg: "bg.muted/50" }}>
-                <Table.Cell fontWeight="medium">{u.username}</Table.Cell>
-                <Table.Cell>
-                  <Flex gap="1" flexWrap="wrap">
+              <Table.Row
+                key={u.id}
+                _hover={{ bg: mode === "light" ? "gray.50" : "gray.700/40" }}
+                transition="background 0.15s"
+              >
+                <Table.Cell pl="4" color="fg.muted" fontSize="xs" w="12">
+                  {u.id}
+                </Table.Cell>
+                <Table.Cell py="3">
+                  <HStack gap="2.5">
+                    <UserAvatar username={u.username} />
+                    <Text fontWeight="medium" fontSize="sm">{u.username}</Text>
+                  </HStack>
+                </Table.Cell>
+                <Table.Cell py="3">
+                  <Flex gap="1.5" flexWrap="wrap">
                     {u.roles.map((r) => (
-                      <Badge key={r.id} colorPalette="blue" variant="subtle">
+                      <Badge key={r.id} colorPalette="purple" variant="subtle" size="sm">
                         {r.name}
                       </Badge>
                     ))}
+                    {u.roles.length === 0 && (
+                      <Text fontSize="xs" color="fg.muted">Sense rols</Text>
+                    )}
                   </Flex>
                 </Table.Cell>
-                <Table.Cell textAlign="right">
+                <Table.Cell textAlign="right" pr="4" py="3">
                   {hasPermission("manage:users") && (
-                    <HStack gap="2" justify="flex-end">
+                    <HStack gap="1" justify="flex-end">
                       <IconButton
-                        aria-label="Edit user"
+                        aria-label="Editar usuari"
                         variant="ghost"
                         colorPalette="blue"
-                        size="sm"
+                        size="xs"
                         onClick={() =>
-                          setEditing({
-                            ...u,
-                            roleIds: u.roles.map((r: any) => r.id),
-                          })
+                          setEditing({ ...u, roleIds: u.roles.map((r: any) => r.id) })
                         }
                       >
-                        <Edit2 size={14} />
+                        <Edit2 size={13} />
                       </IconButton>
                       <IconButton
-                        aria-label="Delete user"
+                        aria-label="Eliminar usuari"
                         variant="ghost"
                         colorPalette="red"
-                        size="sm"
+                        size="xs"
                         onClick={() => setDeleteTarget(u)}
                       >
-                        <Trash2 size={14} />
+                        <Trash2 size={13} />
                       </IconButton>
                     </HStack>
                   )}
@@ -185,9 +269,9 @@ const UsersPage: React.FC = () => {
               <EmptyState.Indicator>
                 <UsersIcon size={32} />
               </EmptyState.Indicator>
-              <EmptyState.Title>No users yet</EmptyState.Title>
+              <EmptyState.Title>Cap usuari</EmptyState.Title>
               <EmptyState.Description>
-                Add your first user to get started.
+                Afegeix el primer usuari per començar.
               </EmptyState.Description>
             </EmptyState.Content>
           </EmptyState.Root>
@@ -203,16 +287,16 @@ const UsersPage: React.FC = () => {
         <Dialog.Positioner>
           <Dialog.Content>
             <Dialog.Header>
-              <Dialog.Title>{editing?.id ? "Edit" : "Add"} User</Dialog.Title>
+              <Dialog.Title>{editing?.id ? "Editar" : "Nou"} Usuari</Dialog.Title>
               <Dialog.CloseTrigger />
             </Dialog.Header>
             <Dialog.Body>
               <form id="user-form" onSubmit={handleSubmit}>
                 <VStack gap="4" align="stretch">
                   <Field.Root>
-                    <Field.Label>Username</Field.Label>
+                    <Field.Label>Nom d'usuari</Field.Label>
                     <Input
-                      placeholder="Username"
+                      placeholder="Nom d'usuari"
                       value={editing?.username || ""}
                       onChange={(e) =>
                         setEditing({ ...editing, username: e.target.value })
@@ -223,12 +307,12 @@ const UsersPage: React.FC = () => {
 
                   <Field.Root>
                     <Field.Label>
-                      {editing?.id ? "New Password (optional)" : "Password"}
+                      {editing?.id ? "Nova contrasenya (opcional)" : "Contrasenya"}
                     </Field.Label>
                     <Input
                       type="password"
                       placeholder={
-                        editing?.id ? "Leave blank to keep current" : "Password"
+                        editing?.id ? "Deixa buit per mantenir l'actual" : "Contrasenya"
                       }
                       value={editing?.password || ""}
                       onChange={(e) =>
@@ -240,7 +324,7 @@ const UsersPage: React.FC = () => {
 
                   <Box>
                     <Text fontWeight="medium" mb="2" fontSize="sm">
-                      Roles
+                      Rols
                     </Text>
                     <Stack
                       gap="2"
@@ -280,15 +364,15 @@ const UsersPage: React.FC = () => {
             </Dialog.Body>
             <Dialog.Footer>
               <Button variant="ghost" onClick={() => setEditing(null)}>
-                Cancel
+                Cancel·lar
               </Button>
               <Button
                 type="submit"
                 form="user-form"
-                colorPalette="blue"
+                colorPalette="purple"
                 loading={saving}
               >
-                Save
+                Desar
               </Button>
             </Dialog.Footer>
           </Dialog.Content>
@@ -305,18 +389,18 @@ const UsersPage: React.FC = () => {
         <Dialog.Positioner>
           <Dialog.Content>
             <Dialog.Header>
-              <Dialog.Title>Delete User</Dialog.Title>
+              <Dialog.Title>Eliminar Usuari</Dialog.Title>
             </Dialog.Header>
             <Dialog.Body>
-              Are you sure you want to delete user{" "}
-              <strong>{deleteTarget?.username}</strong>? This action cannot be undone.
+              Segur que vols eliminar l'usuari{" "}
+              <strong>{deleteTarget?.username}</strong>? Aquesta acció no es pot desfer.
             </Dialog.Body>
             <Dialog.Footer>
               <Button variant="outline" onClick={() => setDeleteTarget(null)}>
-                Cancel
+                Cancel·lar
               </Button>
               <Button colorPalette="red" onClick={handleDelete} ml="2">
-                Delete
+                Eliminar
               </Button>
             </Dialog.Footer>
           </Dialog.Content>

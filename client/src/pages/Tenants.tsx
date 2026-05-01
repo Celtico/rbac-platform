@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import api from "../api";
 import { useAuth } from "../context/AuthContext.ts";
-import { Plus, Edit2, Trash2, Building2 } from "lucide-react";
+import { Plus, Edit2, Trash2, Building2, Database, User as UserIcon, Globe } from "lucide-react";
 import {
   Box,
   Button,
@@ -19,6 +19,7 @@ import {
   Badge,
 } from "@chakra-ui/react";
 import { toaster } from "../components/ui/toaster";
+import { useTheme } from "../context/ThemeContext";
 
 interface Tenant {
   id: number;
@@ -49,6 +50,7 @@ const emptyForm = (): TenantForm => ({
 const TenantsPage: React.FC = () => {
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const { hasPermission } = useAuth();
+  const { mode } = useTheme();
   const [editing, setEditing] = useState<TenantForm | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Tenant | null>(null);
   const [saving, setSaving] = useState(false);
@@ -109,13 +111,21 @@ const TenantsPage: React.FC = () => {
   };
 
   const canManage = hasPermission("manage:tenants");
+  const headerBg = mode === "light" ? "gray.50" : "gray.800";
+  const borderColor = mode === "light" ? "gray.200" : "gray.700";
+  const urlColor = mode === "light" ? "blue.600" : "blue.300";
 
   return (
     <Box>
-      <Flex justify="space-between" align="center" mb="6" wrap="wrap" gap="4">
-        <Heading size="lg">Tenants</Heading>
+      <Flex justify="space-between" align="center" mb="8" wrap="wrap" gap="4">
+        <HStack gap="3">
+          <Heading size="xl">Tenants Odoo</Heading>
+          <Badge colorPalette="purple" variant="subtle" borderRadius="full" px="2">
+            {tenants.length}
+          </Badge>
+        </HStack>
         {canManage && (
-          <Button colorPalette="green" onClick={() => setEditing(emptyForm())} size="sm">
+          <Button colorPalette="purple" onClick={() => setEditing(emptyForm())} size="sm">
             <Plus size={16} />
             <Box as="span" display={{ base: "none", sm: "inline" }} ml="2">
               Nou Tenant
@@ -124,41 +134,148 @@ const TenantsPage: React.FC = () => {
         )}
       </Flex>
 
-      <Box bg="bg.panel" rounded="md" shadow="sm" overflowX="auto" borderWidth="1px">
-        <Table.Root>
-          <Table.Header bg="bg.muted">
-            <Table.Row>
-              <Table.ColumnHeader>Nom</Table.ColumnHeader>
-              <Table.ColumnHeader>URL Odoo</Table.ColumnHeader>
-              <Table.ColumnHeader>Base de dades</Table.ColumnHeader>
-              <Table.ColumnHeader>Usuari</Table.ColumnHeader>
-              <Table.ColumnHeader textAlign="right">Accions</Table.ColumnHeader>
+      <Box
+        bg="bg.panel"
+        rounded="xl"
+        shadow="sm"
+        overflowX="auto"
+        borderWidth="1px"
+        borderColor={borderColor}
+      >
+        <Table.Root size="sm">
+          <Table.Header>
+            <Table.Row bg={headerBg}>
+              <Table.ColumnHeader
+                fontSize="xs"
+                textTransform="uppercase"
+                letterSpacing="wide"
+                color="fg.muted"
+                fontWeight="semibold"
+                py="3"
+                w="12"
+                pl="4"
+              >
+                #
+              </Table.ColumnHeader>
+              <Table.ColumnHeader
+                fontSize="xs"
+                textTransform="uppercase"
+                letterSpacing="wide"
+                color="fg.muted"
+                fontWeight="semibold"
+                py="3"
+              >
+                Nom
+              </Table.ColumnHeader>
+              <Table.ColumnHeader
+                fontSize="xs"
+                textTransform="uppercase"
+                letterSpacing="wide"
+                color="fg.muted"
+                fontWeight="semibold"
+                py="3"
+              >
+                URL Odoo
+              </Table.ColumnHeader>
+              <Table.ColumnHeader
+                fontSize="xs"
+                textTransform="uppercase"
+                letterSpacing="wide"
+                color="fg.muted"
+                fontWeight="semibold"
+                py="3"
+                display={{ base: "none", md: "table-cell" }}
+              >
+                Base de dades
+              </Table.ColumnHeader>
+              <Table.ColumnHeader
+                fontSize="xs"
+                textTransform="uppercase"
+                letterSpacing="wide"
+                color="fg.muted"
+                fontWeight="semibold"
+                py="3"
+                display={{ base: "none", lg: "table-cell" }}
+              >
+                Usuari
+              </Table.ColumnHeader>
+              <Table.ColumnHeader
+                fontSize="xs"
+                textTransform="uppercase"
+                letterSpacing="wide"
+                color="fg.muted"
+                fontWeight="semibold"
+                py="3"
+                textAlign="right"
+                pr="4"
+              >
+                Accions
+              </Table.ColumnHeader>
             </Table.Row>
           </Table.Header>
           <Table.Body>
             {tenants.map((t) => (
-              <Table.Row key={t.id} _hover={{ bg: "bg.muted/50" }}>
-                <Table.Cell fontWeight="medium">
+              <Table.Row
+                key={t.id}
+                _hover={{ bg: mode === "light" ? "gray.50" : "gray.700/40" }}
+                transition="background 0.15s"
+              >
+                <Table.Cell pl="4" color="fg.muted" fontSize="xs" w="12">
+                  {t.id}
+                </Table.Cell>
+                <Table.Cell py="3">
                   <HStack gap="2">
-                    <Building2 size={16} />
-                    <Text>{t.name}</Text>
+                    <Box
+                      w="7"
+                      h="7"
+                      rounded="md"
+                      bg="blue.100"
+                      color="blue.700"
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="center"
+                      flexShrink={0}
+                    >
+                      <Building2 size={14} />
+                    </Box>
+                    <Text fontWeight="semibold" fontSize="sm">{t.name}</Text>
                   </HStack>
                 </Table.Cell>
-                <Table.Cell>
-                  <Badge variant="subtle" colorPalette="blue" fontSize="xs">
-                    {t.odooUrl}
-                  </Badge>
+                <Table.Cell py="3" maxW="220px">
+                  <HStack gap="1.5">
+                    <Globe size={12} color={urlColor} style={{ flexShrink: 0 }} />
+                    <Text
+                      fontSize="xs"
+                      fontFamily="mono"
+                      color={urlColor}
+                      overflow="hidden"
+                      textOverflow="ellipsis"
+                      whiteSpace="nowrap"
+                    >
+                      {t.odooUrl}
+                    </Text>
+                  </HStack>
                 </Table.Cell>
-                <Table.Cell>{t.odooDb}</Table.Cell>
-                <Table.Cell>{t.odooUser}</Table.Cell>
-                <Table.Cell textAlign="right">
+                <Table.Cell py="3" display={{ base: "none", md: "table-cell" }}>
+                  <HStack gap="1.5">
+                    <Database size={12} color="#9333ea" style={{ flexShrink: 0 }} />
+                    <Text fontSize="sm" fontFamily="mono">{t.odooDb}</Text>
+                  </HStack>
+                </Table.Cell>
+                <Table.Cell py="3" display={{ base: "none", lg: "table-cell" }}>
+                  <HStack gap="1.5">
+                    <UserIcon size={12} color="#64748b" style={{ flexShrink: 0 }} />
+                    <Text fontSize="sm">{t.odooUser}</Text>
+                  </HStack>
+                </Table.Cell>
+                <Table.Cell textAlign="right" pr="4" py="3">
                   {canManage && (
-                    <HStack gap="2" justify="flex-end">
+                    <HStack gap="1" justify="flex-end">
                       <IconButton
                         aria-label="Editar tenant"
                         variant="ghost"
                         colorPalette="blue"
-                        size="sm"
+                        size="xs"
                         onClick={() =>
                           setEditing({
                             id: t.id,
@@ -170,16 +287,16 @@ const TenantsPage: React.FC = () => {
                           })
                         }
                       >
-                        <Edit2 size={14} />
+                        <Edit2 size={13} />
                       </IconButton>
                       <IconButton
                         aria-label="Eliminar tenant"
                         variant="ghost"
                         colorPalette="red"
-                        size="sm"
+                        size="xs"
                         onClick={() => setDeleteTarget(t)}
                       >
-                        <Trash2 size={14} />
+                        <Trash2 size={13} />
                       </IconButton>
                     </HStack>
                   )}
@@ -270,7 +387,7 @@ const TenantsPage: React.FC = () => {
               <Button variant="ghost" onClick={() => setEditing(null)}>
                 Cancel·lar
               </Button>
-              <Button type="submit" form="tenant-form" colorPalette="blue" loading={saving}>
+              <Button type="submit" form="tenant-form" colorPalette="purple" loading={saving}>
                 Desar
               </Button>
             </Dialog.Footer>
