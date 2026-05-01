@@ -20,6 +20,8 @@ import {
 import {
   Bot,
   Building2,
+  Check,
+  FileText,
   ImageIcon,
   Lock,
   Monitor,
@@ -29,6 +31,7 @@ import {
   ShoppingCart,
   Sun,
   TriangleAlert,
+  User,
   Users,
   Zap,
 } from "lucide-react";
@@ -384,6 +387,138 @@ const PublicAlbums: React.FC = () => {
               </Box>
             ))}
           </SimpleGrid>
+        </Container>
+      </Box>
+
+      {/* ── Invoice Chat Spotlight ──────────────────────────────────── */}
+      <Box py={{ base: "16", md: "24" }} bg={isDark ? "gray.950" : "gray.50"}>
+        <Container maxW="7xl">
+          <Grid templateColumns={{ base: "1fr", lg: "1fr 1fr" }} gap={{ base: "10", lg: "16" }} alignItems="center">
+
+            {/* Left: description */}
+            <VStack align="start" gap="6">
+              <Box
+                display="inline-flex"
+                px="3" py="1"
+                rounded="full"
+                bg={isDark ? "green.900" : "green.50"}
+                borderWidth="1px"
+                borderColor={isDark ? "green.700" : "green.200"}
+              >
+                <Text fontSize="xs" fontWeight="semibold" color="green.500" letterSpacing="wide" textTransform="uppercase">
+                  Nova funcionalitat
+                </Text>
+              </Box>
+              <Heading fontSize={{ base: "2xl", md: "3xl" }} fontWeight="bold" lineHeight="1.2">
+                Crea factures a Odoo{" "}
+                <Box as="span" bgGradient="to-r" gradientFrom="purple.500" gradientTo="blue.500" bgClip="text">
+                  parlant amb el chat
+                </Box>
+              </Heading>
+              <Text color="fg.muted" fontSize={{ base: "sm", md: "md" }} lineHeight="relaxed">
+                L'assistent IA t'acompanya pas a pas: et demana el client, els articles i els imports, i crea la factura directament a Odoo sense que hagis de sortir de la plataforma.
+              </Text>
+              <VStack align="start" gap="3">
+                {[
+                  "Detecta automàticament el client per nom o NIF",
+                  "Afegeix múltiples línies de productes i quantitats",
+                  "Aplica descomptes i calcula l'IVA",
+                  "Crea la factura a Odoo amb un sol missatge de confirmació",
+                ].map((item) => (
+                  <HStack key={item} gap="3">
+                    <Box
+                      w="5" h="5" rounded="full" bg="green.500" flexShrink={0}
+                      display="flex" alignItems="center" justifyContent="center"
+                    >
+                      <Check size={11} color="white" />
+                    </Box>
+                    <Text fontSize="sm" color="fg.muted">{item}</Text>
+                  </HStack>
+                ))}
+              </VStack>
+              <Button colorPalette="purple" rounded="full" px="6" asChild>
+                <Link to="/admin">Provar ara</Link>
+              </Button>
+            </VStack>
+
+            {/* Right: mock chat */}
+            <Box
+              bg={isDark ? "gray.800" : "white"}
+              rounded="2xl"
+              shadow="xl"
+              overflow="hidden"
+              borderWidth="1px"
+              borderColor={isDark ? "whiteAlpha.100" : "blackAlpha.100"}
+            >
+              {/* Chat header */}
+              <HStack px="4" py="3" borderBottomWidth="1px" borderColor={isDark ? "whiteAlpha.100" : "blackAlpha.100"} bg={isDark ? "gray.900" : "gray.50"} gap="2">
+                <Box w="6" h="6" rounded="full" bg="purple.500" display="flex" alignItems="center" justifyContent="center" flexShrink={0}>
+                  <Bot size={13} color="white" />
+                </Box>
+                <Text fontSize="sm" fontWeight="semibold">Chat Global</Text>
+                <Box w="2" h="2" rounded="full" bg="green.400" ml="auto" />
+              </HStack>
+
+              {/* Messages */}
+              <VStack align="stretch" gap="4" p="4">
+                {[
+                  { role: "user",      text: "Necessito fer una factura per a Acme Corp" },
+                  { role: "assistant", text: "D'acord! He trobat el client Acme Corp (NIF: B-12345678). Quins articles vols afegir a la factura?" },
+                  { role: "user",      text: "2 llicències de software a 450€ i 1 hora de consultoria a 120€" },
+                  { role: "assistant", text: "Perfecte. Resum de la factura:\n• 2× Llicència software → 900,00 €\n• 1× Consultoria (1h) → 120,00 €\n• IVA 21% → 214,20 €\n\nTotal: 1.234,20 €\n\nConfirmes que vols crear la factura a Odoo?" },
+                  { role: "user",      text: "Sí, crea-la" },
+                  { role: "assistant", text: "✅ Factura creada a Odoo! Referència: INV/2026/00142 — Acme Corp — 1.234,20 €", isSuccess: true },
+                ].map((msg, i) => (
+                  <Flex key={i} justify={msg.role === "user" ? "flex-end" : "flex-start"} gap="2" align="flex-start">
+                    {msg.role === "assistant" && (
+                      <Box w="6" h="6" rounded="full" bg="purple.500" display="flex" alignItems="center" justifyContent="center" flexShrink={0} mt="0.5">
+                        <Bot size={12} color="white" />
+                      </Box>
+                    )}
+                    <Box
+                      maxW="80%"
+                      px="3" py="2"
+                      rounded="xl"
+                      borderTopRightRadius={msg.role === "user" ? "sm" : "xl"}
+                      borderTopLeftRadius={msg.role === "assistant" ? "sm" : "xl"}
+                      bg={
+                        msg.role === "user"
+                          ? "purple.500"
+                          : (msg as { isSuccess?: boolean }).isSuccess
+                          ? (isDark ? "green.900" : "green.50")
+                          : (isDark ? "gray.700" : "gray.100")
+                      }
+                      borderWidth={(msg as { isSuccess?: boolean }).isSuccess ? "1px" : "0"}
+                      borderColor="green.300"
+                    >
+                      <Text
+                        fontSize="xs"
+                        color={msg.role === "user" ? "white" : (msg as { isSuccess?: boolean }).isSuccess ? "green.600" : undefined}
+                        whiteSpace="pre-wrap"
+                        lineHeight="relaxed"
+                      >
+                        {msg.text}
+                      </Text>
+                    </Box>
+                    {msg.role === "user" && (
+                      <Box w="6" h="6" rounded="full" bg="gray.200" display="flex" alignItems="center" justifyContent="center" flexShrink={0} mt="0.5">
+                        <User size={12} color="#6b7280" />
+                      </Box>
+                    )}
+                  </Flex>
+                ))}
+
+                {/* Invoice badge */}
+                <Flex justify="center">
+                  <HStack gap="2" px="3" py="2" rounded="full" bg={isDark ? "green.900" : "green.50"} borderWidth="1px" borderColor="green.300">
+                    <FileText size={13} color="#16a34a" />
+                    <Text fontSize="xs" fontWeight="semibold" color="green.600">INV/2026/00142 creada a Odoo</Text>
+                  </HStack>
+                </Flex>
+              </VStack>
+            </Box>
+
+          </Grid>
         </Container>
       </Box>
 
