@@ -9,7 +9,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
   const { colorMode, toggleColorMode } = useColorMode();
 
   const [theme, setThemeState] = useState<ColorTheme>(
-    (localStorage.getItem("app-theme") as ColorTheme) || "default"
+    (localStorage.getItem("app-theme") as ColorTheme) || "sky"
   );
   const [radius, setRadiusState] = useState<RadiusSize>(
     (localStorage.getItem("app-radius") as RadiusSize) || "full"

@@ -84,6 +84,7 @@ const DataPanel: React.FC<DataPanelProps> = ({
           </Text>
         </Box>
       ) : (
+        <Box overflowX="auto">
         <Table.Root size="sm">
           <Table.Header>
             <Table.Row>
@@ -118,6 +119,7 @@ const DataPanel: React.FC<DataPanelProps> = ({
             ))}
           </Table.Body>
         </Table.Root>
+        </Box>
       )}
     </Box>
   );
