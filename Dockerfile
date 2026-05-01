@@ -5,7 +5,7 @@ WORKDIR /app/client
 COPY client/package*.json ./
 RUN npm install
 COPY client/ ./
-COPY server/package.json ../server/package.json
+COPY server/package.json /app/server/package.json
 RUN npm run build
 
 # 2. Build Backend
