@@ -57,10 +57,15 @@ const ConcurrentSessionModal: React.FC<Props> = ({ onClose }) => {
           </HStack>
 
           <Text fontSize="sm" color="fg.muted">
-            El teu compte ja té una sessió activa en un altre dispositiu o navegador. Per seguretat, pots tancar les sessions anteriors.
+            El teu compte ja té una sessió activa en un altre dispositiu o
+            navegador. Per seguretat, pots tancar les sessions anteriors.
           </Text>
 
-          <HStack gap="3" justify="flex-end">
+          <Flex
+            gap="3"
+            direction={{ base: "column", sm: "column" }}
+            justify="flex-end"
+          >
             <Button
               colorPalette="gray"
               variant="outline"
@@ -79,7 +84,7 @@ const ConcurrentSessionModal: React.FC<Props> = ({ onClose }) => {
               <LogOut size={14} style={{ marginRight: "6px" }} />
               Tancar les altres sessions
             </Button>
-          </HStack>
+          </Flex>
         </VStack>
       </Box>
     </Flex>

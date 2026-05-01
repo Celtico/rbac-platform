@@ -12,7 +12,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
     (localStorage.getItem("app-theme") as ColorTheme) || "default"
   );
   const [radius, setRadiusState] = useState<RadiusSize>(
-    (localStorage.getItem("app-radius") as RadiusSize) || "md"
+    (localStorage.getItem("app-radius") as RadiusSize) || "full"
   );
   const [font, setFontState] = useState<FontFamily>(
     (localStorage.getItem("app-font") as FontFamily) || "system"

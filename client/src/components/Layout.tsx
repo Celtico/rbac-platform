@@ -51,9 +51,14 @@ const Layout: React.FC = () => {
               >
                 <Zap size={14} color="white" />
               </Box>
-              <Text fontWeight="semibold" fontSize="sm" letterSpacing="tight" color={mode === "light" ? "gray.800" : "white"}>
-                RBAC Platform
-              </Text>
+              <Box>
+                <Text fontWeight="semibold" fontSize="sm" letterSpacing="tight" color={mode === "light" ? "gray.800" : "white"}>
+                  RBAC Platform
+                </Text>
+                <Text fontSize="2xs" color="fg.muted" letterSpacing="wide">
+                  v{__APP_VERSION__}
+                </Text>
+              </Box>
             </HStack>
           </Link>
         </Box>

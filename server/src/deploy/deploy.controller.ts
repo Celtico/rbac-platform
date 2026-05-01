@@ -27,12 +27,14 @@ interface DeployRecord {
   status: 'success' | 'pending' | 'rollback';
 }
 
-// Ordered by preference: __dirname-based first (stable across restarts), then fallbacks
+// Ordered by preference: data volume first (Docker, always a directory mount → reliable),
+// then legacy paths, then local-dev fallback
 const HISTORY_PATHS = [
-  join(__dirname, '..', '..', 'deploy-history.json'), // dist/ or src/ sibling — always consistent
-  '/app/deploy-history.json',
-  '/app/album-manager/deploy-history.json',
-  join(process.cwd(), 'deploy-history.json'),
+  '/app/data/deploy-history.json',           // Docker: ./data volume (persistent directory mount)
+  '/app/deploy-history.json',                // Docker: legacy file-level mount
+  '/app/album-manager/deploy-history.json',  // legacy
+  join(__dirname, '..', '..', 'deploy-history.json'), // local dev (server/dist/ or server/src/)
+  join(process.cwd(), 'deploy-history.json'), // last-resort fallback
   '/tmp/deploy-history.json',
 ];
 

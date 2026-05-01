@@ -12,5 +12,4 @@ services:
       - ./uploads:/app/uploads
       - /var/run/docker.sock:/var/run/docker.sock
       - /home/cel/album-manager:/app/album-manager
-      - ./deploy-history.json:/app/deploy-history.json
     restart: always
