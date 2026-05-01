@@ -60,11 +60,14 @@ const NewDeviceWarningModal: React.FC<Props> = ({ deviceInfo, onClose }) => {
             <Box color="orange.500">
               <AlertTriangle size={28} />
             </Box>
-            <Heading size="md">Primera connexió des d'aquest dispositiu</Heading>
+            <Heading size="md">
+              Primera connexió des d'aquest dispositiu
+            </Heading>
           </HStack>
 
           <Text fontSize="sm" color="fg.muted">
-            Hem detectat que t'has connectat des d'un dispositiu o navegador que no reconeixem.
+            Hem detectat que t'has connectat des d'un dispositiu o navegador que
+            no reconeixem.
           </Text>
 
           {deviceInfo && (
@@ -74,7 +77,9 @@ const NewDeviceWarningModal: React.FC<Props> = ({ deviceInfo, onClose }) => {
                   <Monitor size={16} />
                   <Text fontSize="sm">
                     <strong>Dispositiu:</strong>{" "}
-                    {[deviceInfo.browser, deviceInfo.os].filter(Boolean).join(" · ") || "Desconegut"}
+                    {[deviceInfo.browser, deviceInfo.os]
+                      .filter(Boolean)
+                      .join(" · ") || "Desconegut"}
                   </Text>
                 </HStack>
                 {deviceInfo.ip && (
@@ -90,21 +95,31 @@ const NewDeviceWarningModal: React.FC<Props> = ({ deviceInfo, onClose }) => {
             Si no has estat tu, revoca la sessió i contacta amb l'administrador.
           </Text>
 
-          <HStack gap="3" justify="flex-end">
+          <Flex
+            gap="3"
+            direction={{ base: "column", sm: "row" }}
+            justify="flex-end"
+          >
             <Button
               colorPalette="red"
               variant="outline"
               size="sm"
               onClick={handleNotMe}
+              width={{ base: "full", sm: "auto" }}
             >
               <XCircle size={14} style={{ marginRight: "6px" }} />
               No soc jo — Tancar sessió
             </Button>
-            <Button colorPalette="green" size="sm" onClick={onClose}>
+            <Button
+              colorPalette="green"
+              size="sm"
+              onClick={onClose}
+              width={{ base: "full", sm: "auto" }}
+            >
               <CheckCircle size={14} style={{ marginRight: "6px" }} />
               Soc jo — Continuar
             </Button>
-          </HStack>
+          </Flex>
         </VStack>
       </Box>
     </Flex>
