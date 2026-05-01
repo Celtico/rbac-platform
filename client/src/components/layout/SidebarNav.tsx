@@ -309,7 +309,7 @@ const SidebarNav: React.FC<{ isMobile?: boolean }> = ({ isMobile = false }) => {
           <Link to="/" style={{ textDecoration: "none" }}>
             <Button variant="ghost" justifyContent="flex-start" width="full" size="sm">
               <ImageIcon size={16} style={{ marginRight: "8px" }} />
-              Galeria Pública
+              Web Pública
             </Button>
           </Link>
           <a href="/api/docs" style={{ textDecoration: "none" }}>
