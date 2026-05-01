@@ -27,11 +27,11 @@ interface DeployRecord {
   status: 'success' | 'pending' | 'rollback';
 }
 
-// Ordered by preference: persistent app dir first, then writable fallbacks
+// Ordered by preference: __dirname-based first (stable across restarts), then fallbacks
 const HISTORY_PATHS = [
+  join(__dirname, '..', '..', 'deploy-history.json'), // dist/ or src/ sibling — always consistent
   '/app/deploy-history.json',
   '/app/album-manager/deploy-history.json',
-  join(process.cwd(), '..', 'deploy-history.json'),
   join(process.cwd(), 'deploy-history.json'),
   '/tmp/deploy-history.json',
 ];

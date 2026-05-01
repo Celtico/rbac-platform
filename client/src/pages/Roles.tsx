@@ -21,6 +21,7 @@ import {
   Text,
 } from "@chakra-ui/react";
 import { toaster } from "../components/ui/toaster";
+import { useTheme } from "../context/ThemeContext";
 
 interface Role {
   id: number;
@@ -37,6 +38,7 @@ const RolesPage: React.FC = () => {
   const [roles, setRoles] = useState<Role[]>([]);
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const { hasPermission } = useAuth();
+  const { mode } = useTheme();
   const [editing, setEditing] = useState<any | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Role | null>(null);
   const [saving, setSaving] = useState(false);
@@ -51,7 +53,7 @@ const RolesPage: React.FC = () => {
       setPermissions(pRes.data);
     } catch (err) {
       console.error("Error fetching roles/permissions:", err);
-      toaster.create({ type: "error", title: "Failed to load roles" });
+      toaster.create({ type: "error", title: "Error carregant rols" });
     }
   };
 
@@ -63,10 +65,10 @@ const RolesPage: React.FC = () => {
     if (!deleteTarget) return;
     try {
       await api.delete(`/roles/${deleteTarget.id}`);
-      toaster.create({ type: "success", title: `"${deleteTarget.name}" deleted` });
+      toaster.create({ type: "success", title: `"${deleteTarget.name}" eliminat` });
       fetchData();
     } catch {
-      toaster.create({ type: "error", title: "Failed to delete role" });
+      toaster.create({ type: "error", title: "Error eliminant el rol" });
     } finally {
       setDeleteTarget(null);
     }
@@ -83,33 +85,41 @@ const RolesPage: React.FC = () => {
     try {
       if (editing.id) {
         await api.patch(`/roles/${editing.id}`, payload);
-        toaster.create({ type: "success", title: "Role updated" });
+        toaster.create({ type: "success", title: "Rol actualitzat" });
       } else {
         await api.post("/roles", payload);
-        toaster.create({ type: "success", title: "Role created" });
+        toaster.create({ type: "success", title: "Rol creat" });
       }
       setEditing(null);
       fetchData();
     } catch {
-      toaster.create({ type: "error", title: "Failed to save role" });
+      toaster.create({ type: "error", title: "Error desant el rol" });
     } finally {
       setSaving(false);
     }
   };
 
+  const headerBg = mode === "light" ? "gray.50" : "gray.800";
+  const borderColor = mode === "light" ? "gray.200" : "gray.700";
+
   return (
     <Box>
-      <Flex justify="space-between" align="center" mb="6" wrap="wrap" gap="4">
-        <Heading size="lg">Roles Management</Heading>
+      <Flex justify="space-between" align="center" mb="8" wrap="wrap" gap="4">
+        <HStack gap="3">
+          <Heading size="xl">Gestió de Rols</Heading>
+          <Badge colorPalette="purple" variant="subtle" borderRadius="full" px="2">
+            {roles.length}
+          </Badge>
+        </HStack>
         {hasPermission("manage:roles") && (
           <Button
-            colorPalette="green"
+            colorPalette="purple"
             onClick={() => setEditing({ name: "", permissionIds: [] })}
             size="sm"
           >
             <Plus size={16} />
             <Box as="span" display={{ base: "none", sm: "inline" }} ml="2">
-              Add Role
+              Nou Rol
             </Box>
           </Button>
         )}
@@ -117,40 +127,104 @@ const RolesPage: React.FC = () => {
 
       <Box
         bg="bg.panel"
-        rounded="md"
+        rounded="xl"
         shadow="sm"
         overflowX="auto"
         borderWidth="1px"
+        borderColor={borderColor}
       >
-        <Table.Root>
-          <Table.Header bg="bg.muted">
-            <Table.Row>
-              <Table.ColumnHeader>Role Name</Table.ColumnHeader>
-              <Table.ColumnHeader>Permissions</Table.ColumnHeader>
-              <Table.ColumnHeader textAlign="right">Actions</Table.ColumnHeader>
+        <Table.Root size="sm">
+          <Table.Header>
+            <Table.Row bg={headerBg}>
+              <Table.ColumnHeader
+                fontSize="xs"
+                textTransform="uppercase"
+                letterSpacing="wide"
+                color="fg.muted"
+                fontWeight="semibold"
+                py="3"
+                w="12"
+                pl="4"
+              >
+                #
+              </Table.ColumnHeader>
+              <Table.ColumnHeader
+                fontSize="xs"
+                textTransform="uppercase"
+                letterSpacing="wide"
+                color="fg.muted"
+                fontWeight="semibold"
+                py="3"
+              >
+                Nom del Rol
+              </Table.ColumnHeader>
+              <Table.ColumnHeader
+                fontSize="xs"
+                textTransform="uppercase"
+                letterSpacing="wide"
+                color="fg.muted"
+                fontWeight="semibold"
+                py="3"
+              >
+                Permisos
+              </Table.ColumnHeader>
+              <Table.ColumnHeader
+                fontSize="xs"
+                textTransform="uppercase"
+                letterSpacing="wide"
+                color="fg.muted"
+                fontWeight="semibold"
+                py="3"
+                textAlign="right"
+                pr="4"
+              >
+                Accions
+              </Table.ColumnHeader>
             </Table.Row>
           </Table.Header>
           <Table.Body>
             {roles.map((role) => (
-              <Table.Row key={role.id} _hover={{ bg: "bg.muted/50" }}>
-                <Table.Cell fontWeight="medium">{role.name}</Table.Cell>
-                <Table.Cell>
-                  <Flex gap="1" flexWrap="wrap">
+              <Table.Row
+                key={role.id}
+                _hover={{ bg: mode === "light" ? "gray.50" : "gray.700/40" }}
+                transition="background 0.15s"
+              >
+                <Table.Cell pl="4" color="fg.muted" fontSize="xs" w="12">
+                  {role.id}
+                </Table.Cell>
+                <Table.Cell py="3">
+                  <HStack gap="2">
+                    <Shield size={14} color="#9333ea" />
+                    <Text fontWeight="semibold" fontSize="sm">{role.name}</Text>
+                  </HStack>
+                </Table.Cell>
+                <Table.Cell py="3">
+                  <Flex gap="1.5" flexWrap="wrap">
                     {role.permissions.map((p) => (
-                      <Badge key={p.id} colorPalette="purple" variant="subtle">
+                      <Badge
+                        key={p.id}
+                        colorPalette="purple"
+                        variant="outline"
+                        size="sm"
+                        fontFamily="mono"
+                        fontSize="xs"
+                      >
                         {p.name}
                       </Badge>
                     ))}
+                    {role.permissions.length === 0 && (
+                      <Text fontSize="xs" color="fg.muted">Sense permisos</Text>
+                    )}
                   </Flex>
                 </Table.Cell>
-                <Table.Cell textAlign="right">
+                <Table.Cell textAlign="right" pr="4" py="3">
                   {hasPermission("manage:roles") && (
-                    <HStack gap="2" justify="flex-end">
+                    <HStack gap="1" justify="flex-end">
                       <IconButton
-                        aria-label="Edit role"
+                        aria-label="Editar rol"
                         variant="ghost"
                         colorPalette="blue"
-                        size="sm"
+                        size="xs"
                         onClick={() =>
                           setEditing({
                             ...role,
@@ -158,16 +232,16 @@ const RolesPage: React.FC = () => {
                           })
                         }
                       >
-                        <Edit2 size={14} />
+                        <Edit2 size={13} />
                       </IconButton>
                       <IconButton
-                        aria-label="Delete role"
+                        aria-label="Eliminar rol"
                         variant="ghost"
                         colorPalette="red"
-                        size="sm"
+                        size="xs"
                         onClick={() => setDeleteTarget(role)}
                       >
-                        <Trash2 size={14} />
+                        <Trash2 size={13} />
                       </IconButton>
                     </HStack>
                   )}
@@ -182,9 +256,9 @@ const RolesPage: React.FC = () => {
               <EmptyState.Indicator>
                 <Shield size={32} />
               </EmptyState.Indicator>
-              <EmptyState.Title>No roles yet</EmptyState.Title>
+              <EmptyState.Title>Cap rol</EmptyState.Title>
               <EmptyState.Description>
-                Create your first role to manage permissions.
+                Crea el primer rol per gestionar els permisos.
               </EmptyState.Description>
             </EmptyState.Content>
           </EmptyState.Root>
@@ -200,16 +274,16 @@ const RolesPage: React.FC = () => {
         <Dialog.Positioner>
           <Dialog.Content>
             <Dialog.Header>
-              <Dialog.Title>{editing?.id ? "Edit" : "Add"} Role</Dialog.Title>
+              <Dialog.Title>{editing?.id ? "Editar" : "Nou"} Rol</Dialog.Title>
               <Dialog.CloseTrigger />
             </Dialog.Header>
             <Dialog.Body>
               <form id="role-form" onSubmit={handleSubmit}>
                 <VStack gap="4" align="stretch">
                   <Field.Root>
-                    <Field.Label>Role Name</Field.Label>
+                    <Field.Label>Nom del Rol</Field.Label>
                     <Input
-                      placeholder="Role Name"
+                      placeholder="Nom del rol"
                       value={editing?.name || ""}
                       onChange={(e) =>
                         setEditing({ ...editing, name: e.target.value })
@@ -220,7 +294,7 @@ const RolesPage: React.FC = () => {
 
                   <Box>
                     <Text fontWeight="medium" mb="2" fontSize="sm">
-                      Permissions
+                      Permisos
                     </Text>
                     <Stack
                       gap="2"
@@ -250,7 +324,7 @@ const RolesPage: React.FC = () => {
                           <Checkbox.Control>
                             <Checkbox.Indicator />
                           </Checkbox.Control>
-                          <Checkbox.Label fontSize="sm">{perm.name}</Checkbox.Label>
+                          <Checkbox.Label fontSize="sm" fontFamily="mono">{perm.name}</Checkbox.Label>
                         </Checkbox.Root>
                       ))}
                     </Stack>
@@ -260,15 +334,15 @@ const RolesPage: React.FC = () => {
             </Dialog.Body>
             <Dialog.Footer>
               <Button variant="ghost" onClick={() => setEditing(null)}>
-                Cancel
+                Cancel·lar
               </Button>
               <Button
                 type="submit"
                 form="role-form"
-                colorPalette="blue"
+                colorPalette="purple"
                 loading={saving}
               >
-                Save
+                Desar
               </Button>
             </Dialog.Footer>
           </Dialog.Content>
@@ -285,18 +359,18 @@ const RolesPage: React.FC = () => {
         <Dialog.Positioner>
           <Dialog.Content>
             <Dialog.Header>
-              <Dialog.Title>Delete Role</Dialog.Title>
+              <Dialog.Title>Eliminar Rol</Dialog.Title>
             </Dialog.Header>
             <Dialog.Body>
-              Are you sure you want to delete role{" "}
-              <strong>{deleteTarget?.name}</strong>? This action cannot be undone.
+              Segur que vols eliminar el rol{" "}
+              <strong>{deleteTarget?.name}</strong>? Aquesta acció no es pot desfer.
             </Dialog.Body>
             <Dialog.Footer>
               <Button variant="outline" onClick={() => setDeleteTarget(null)}>
-                Cancel
+                Cancel·lar
               </Button>
               <Button colorPalette="red" onClick={handleDelete} ml="2">
-                Delete
+                Eliminar
               </Button>
             </Dialog.Footer>
           </Dialog.Content>

@@ -17,10 +17,13 @@ import SettingsSidebar from "./pages/SettingsSidebar";
 import Tenants from "./pages/Tenants";
 import AuthCallback from "./pages/AuthCallback";
 import PublicAlbums from "./pages/PublicAlbums";
-import OdooChat from "./pages/OdooChat";
+import GlobalChat from "./pages/GlobalChat";
+import SystemLogs from "./pages/SystemLogs";
+import DeviceManager from "./pages/DeviceManager";
+import ServerStats from "./pages/ServerStats";
+import OdooManager from "./pages/OdooManager";
 
 function App() {
-  console.log("App Rendering");
   return (
     <ThemeProvider>
       <NavConfigProvider>
@@ -102,10 +105,26 @@ function App() {
                 }
               />
               <Route
-                path="odoo"
+                path="chat"
                 element={
-                  <ProtectedRoute permission="use:ai">
-                    <OdooChat />
+                  <ProtectedRoute permission="use:chat">
+                    <GlobalChat />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="logs"
+                element={
+                  <ProtectedRoute permission="read:logsystem">
+                    <SystemLogs />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="settings/devices"
+                element={
+                  <ProtectedRoute>
+                    <DeviceManager />
                   </ProtectedRoute>
                 }
               />
@@ -114,6 +133,22 @@ function App() {
                 element={
                   <ProtectedRoute permission="read:tenants">
                     <Tenants />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="system/stats"
+                element={
+                  <ProtectedRoute permission="read:logsystem">
+                    <ServerStats />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="odoo"
+                element={
+                  <ProtectedRoute permission="use:ai">
+                    <OdooManager />
                   </ProtectedRoute>
                 }
               />

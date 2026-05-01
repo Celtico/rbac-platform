@@ -1,7 +1,9 @@
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
+import { IoAdapter } from '@nestjs/platform-socket.io';
 import { AppModule } from './app.module';
+import { AppLoggerService } from './logger/app-logger.service';
 import * as fs from 'fs';
 import { join } from 'path';
 
@@ -27,7 +29,11 @@ async function bootstrap() {
     fs.mkdirSync(dataDir, { recursive: true });
   }*/
 
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  app.useWebSocketAdapter(new IoAdapter(app));
+
+  const appLogger = app.get(AppLoggerService);
+  app.useLogger(appLogger);
 
   app.enableCors({
     origin: true,

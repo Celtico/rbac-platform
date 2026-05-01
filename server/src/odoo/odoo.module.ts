@@ -17,5 +17,6 @@ import { Tenant } from '../tenants/entities/tenant.entity';
     OdooOrchestratorService,
     TenantGuard,
   ],
+  exports: [OdooOrchestratorService, OdooClientService],
 })
 export class OdooModule {}

@@ -15,17 +15,29 @@ import {
   Field,
   VStack,
   HStack,
+  Badge,
+  Text,
 } from "@chakra-ui/react";
 import { toaster } from "../components/ui/toaster";
+import { useTheme } from "../context/ThemeContext";
 
 interface Permission {
   id: number;
   name: string;
 }
 
+function permissionCategory(name: string): { label: string; color: string } {
+  if (name.startsWith("manage:")) return { label: "manage", color: "red" };
+  if (name.startsWith("read:")) return { label: "read", color: "blue" };
+  if (name.startsWith("write:")) return { label: "write", color: "orange" };
+  if (name.startsWith("use:")) return { label: "use", color: "green" };
+  return { label: "other", color: "gray" };
+}
+
 const PermissionsPage: React.FC = () => {
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const { hasPermission } = useAuth();
+  const { mode } = useTheme();
   const [editing, setEditing] = useState<Partial<Permission> | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Permission | null>(null);
   const [saving, setSaving] = useState(false);
@@ -36,7 +48,7 @@ const PermissionsPage: React.FC = () => {
       setPermissions(res.data);
     } catch (err) {
       console.error(err);
-      toaster.create({ type: "error", title: "Failed to load permissions" });
+      toaster.create({ type: "error", title: "Error carregant permisos" });
     }
   };
 
@@ -48,10 +60,10 @@ const PermissionsPage: React.FC = () => {
     if (!deleteTarget) return;
     try {
       await api.delete(`/permissions/${deleteTarget.id}`);
-      toaster.create({ type: "success", title: `"${deleteTarget.name}" deleted` });
+      toaster.create({ type: "success", title: `"${deleteTarget.name}" eliminat` });
       fetchPermissions();
     } catch {
-      toaster.create({ type: "error", title: "Failed to delete permission" });
+      toaster.create({ type: "error", title: "Error eliminant el permís" });
     } finally {
       setDeleteTarget(null);
     }
@@ -63,33 +75,41 @@ const PermissionsPage: React.FC = () => {
     try {
       if (editing?.id) {
         await api.patch(`/permissions/${editing.id}`, editing);
-        toaster.create({ type: "success", title: "Permission updated" });
+        toaster.create({ type: "success", title: "Permís actualitzat" });
       } else {
         await api.post("/permissions", editing);
-        toaster.create({ type: "success", title: "Permission created" });
+        toaster.create({ type: "success", title: "Permís creat" });
       }
       setEditing(null);
       fetchPermissions();
     } catch {
-      toaster.create({ type: "error", title: "Failed to save permission" });
+      toaster.create({ type: "error", title: "Error desant el permís" });
     } finally {
       setSaving(false);
     }
   };
 
+  const headerBg = mode === "light" ? "gray.50" : "gray.800";
+  const borderColor = mode === "light" ? "gray.200" : "gray.700";
+
   return (
     <Box>
-      <Flex justify="space-between" align="center" mb="6" wrap="wrap" gap="4">
-        <Heading size="lg">Permissions Management</Heading>
+      <Flex justify="space-between" align="center" mb="8" wrap="wrap" gap="4">
+        <HStack gap="3">
+          <Heading size="xl">Gestió de Permisos</Heading>
+          <Badge colorPalette="purple" variant="subtle" borderRadius="full" px="2">
+            {permissions.length}
+          </Badge>
+        </HStack>
         {hasPermission("manage:roles") && (
           <Button
-            colorPalette="green"
+            colorPalette="purple"
             onClick={() => setEditing({ name: "" })}
             size="sm"
           >
             <Plus size={16} />
             <Box as="span" display={{ base: "none", sm: "inline" }} ml="2">
-              Add Permission
+              Nou Permís
             </Box>
           </Button>
         )}
@@ -97,48 +117,113 @@ const PermissionsPage: React.FC = () => {
 
       <Box
         bg="bg.panel"
-        rounded="md"
+        rounded="xl"
         shadow="sm"
         overflowX="auto"
         borderWidth="1px"
+        borderColor={borderColor}
       >
-        <Table.Root>
-          <Table.Header bg="bg.muted">
-            <Table.Row>
-              <Table.ColumnHeader>Permission Name</Table.ColumnHeader>
-              <Table.ColumnHeader textAlign="right">Actions</Table.ColumnHeader>
+        <Table.Root size="sm">
+          <Table.Header>
+            <Table.Row bg={headerBg}>
+              <Table.ColumnHeader
+                fontSize="xs"
+                textTransform="uppercase"
+                letterSpacing="wide"
+                color="fg.muted"
+                fontWeight="semibold"
+                py="3"
+                w="12"
+                pl="4"
+              >
+                #
+              </Table.ColumnHeader>
+              <Table.ColumnHeader
+                fontSize="xs"
+                textTransform="uppercase"
+                letterSpacing="wide"
+                color="fg.muted"
+                fontWeight="semibold"
+                py="3"
+              >
+                Identificador
+              </Table.ColumnHeader>
+              <Table.ColumnHeader
+                fontSize="xs"
+                textTransform="uppercase"
+                letterSpacing="wide"
+                color="fg.muted"
+                fontWeight="semibold"
+                py="3"
+              >
+                Tipus
+              </Table.ColumnHeader>
+              <Table.ColumnHeader
+                fontSize="xs"
+                textTransform="uppercase"
+                letterSpacing="wide"
+                color="fg.muted"
+                fontWeight="semibold"
+                py="3"
+                textAlign="right"
+                pr="4"
+              >
+                Accions
+              </Table.ColumnHeader>
             </Table.Row>
           </Table.Header>
           <Table.Body>
-            {permissions.map((perm) => (
-              <Table.Row key={perm.id} _hover={{ bg: "bg.muted/50" }}>
-                <Table.Cell fontWeight="medium">{perm.name}</Table.Cell>
-                <Table.Cell textAlign="right">
-                  {hasPermission("manage:roles") && (
-                    <HStack gap="2" justify="flex-end">
-                      <IconButton
-                        aria-label="Edit permission"
-                        variant="ghost"
-                        colorPalette="blue"
-                        size="sm"
-                        onClick={() => setEditing(perm)}
-                      >
-                        <Edit2 size={14} />
-                      </IconButton>
-                      <IconButton
-                        aria-label="Delete permission"
-                        variant="ghost"
-                        colorPalette="red"
-                        size="sm"
-                        onClick={() => setDeleteTarget(perm)}
-                      >
-                        <Trash2 size={14} />
-                      </IconButton>
+            {permissions.map((perm) => {
+              const cat = permissionCategory(perm.name);
+              return (
+                <Table.Row
+                  key={perm.id}
+                  _hover={{ bg: mode === "light" ? "gray.50" : "gray.700/40" }}
+                  transition="background 0.15s"
+                >
+                  <Table.Cell pl="4" color="fg.muted" fontSize="xs" w="12">
+                    {perm.id}
+                  </Table.Cell>
+                  <Table.Cell py="3">
+                    <HStack gap="2">
+                      <Key size={13} color="#9333ea" />
+                      <Text fontFamily="mono" fontSize="sm" fontWeight="medium">
+                        {perm.name}
+                      </Text>
                     </HStack>
-                  )}
-                </Table.Cell>
-              </Table.Row>
-            ))}
+                  </Table.Cell>
+                  <Table.Cell py="3">
+                    <Badge colorPalette={cat.color} variant="subtle" size="sm">
+                      {cat.label}
+                    </Badge>
+                  </Table.Cell>
+                  <Table.Cell textAlign="right" pr="4" py="3">
+                    {hasPermission("manage:roles") && (
+                      <HStack gap="1" justify="flex-end">
+                        <IconButton
+                          aria-label="Editar permís"
+                          variant="ghost"
+                          colorPalette="blue"
+                          size="xs"
+                          onClick={() => setEditing(perm)}
+                        >
+                          <Edit2 size={13} />
+                        </IconButton>
+                        <IconButton
+                          aria-label="Eliminar permís"
+                          variant="ghost"
+                          colorPalette="red"
+                          size="xs"
+                          onClick={() => setDeleteTarget(perm)}
+                        >
+                          <Trash2 size={13} />
+                        </IconButton>
+                      </HStack>
+                    )}
+                  </Table.Cell>
+                </Table.Row>
+              );
+            })}
           </Table.Body>
         </Table.Root>
         {permissions.length === 0 && (
@@ -147,9 +232,9 @@ const PermissionsPage: React.FC = () => {
               <EmptyState.Indicator>
                 <Key size={32} />
               </EmptyState.Indicator>
-              <EmptyState.Title>No permissions yet</EmptyState.Title>
+              <EmptyState.Title>Cap permís</EmptyState.Title>
               <EmptyState.Description>
-                Add your first permission to start controlling access.
+                Afegeix el primer permís per controlar l'accés.
               </EmptyState.Description>
             </EmptyState.Content>
           </EmptyState.Root>
@@ -166,7 +251,7 @@ const PermissionsPage: React.FC = () => {
           <Dialog.Content>
             <Dialog.Header>
               <Dialog.Title>
-                {editing?.id ? "Edit" : "Add"} Permission
+                {editing?.id ? "Editar" : "Nou"} Permís
               </Dialog.Title>
               <Dialog.CloseTrigger />
             </Dialog.Header>
@@ -174,9 +259,10 @@ const PermissionsPage: React.FC = () => {
               <form id="permission-form" onSubmit={handleSubmit}>
                 <VStack gap="4" align="stretch">
                   <Field.Root>
-                    <Field.Label>Permission Name</Field.Label>
+                    <Field.Label>Identificador del Permís</Field.Label>
                     <Input
-                      placeholder="Permission Name (e.g. read:albums)"
+                      placeholder="p.ex. read:photos"
+                      fontFamily="mono"
                       value={editing?.name || ""}
                       onChange={(e) =>
                         setEditing({ ...editing, name: e.target.value })
@@ -189,15 +275,15 @@ const PermissionsPage: React.FC = () => {
             </Dialog.Body>
             <Dialog.Footer>
               <Button variant="ghost" onClick={() => setEditing(null)}>
-                Cancel
+                Cancel·lar
               </Button>
               <Button
                 type="submit"
                 form="permission-form"
-                colorPalette="blue"
+                colorPalette="purple"
                 loading={saving}
               >
-                Save
+                Desar
               </Button>
             </Dialog.Footer>
           </Dialog.Content>
@@ -214,19 +300,18 @@ const PermissionsPage: React.FC = () => {
         <Dialog.Positioner>
           <Dialog.Content>
             <Dialog.Header>
-              <Dialog.Title>Delete Permission</Dialog.Title>
+              <Dialog.Title>Eliminar Permís</Dialog.Title>
             </Dialog.Header>
             <Dialog.Body>
-              Are you sure you want to delete{" "}
-              <strong>{deleteTarget?.name}</strong>? Roles using this permission
-              will lose access.
+              Segur que vols eliminar{" "}
+              <strong>{deleteTarget?.name}</strong>? Els rols que l'usen perdran l'accés.
             </Dialog.Body>
             <Dialog.Footer>
               <Button variant="outline" onClick={() => setDeleteTarget(null)}>
-                Cancel
+                Cancel·lar
               </Button>
               <Button colorPalette="red" onClick={handleDelete} ml="2">
-                Delete
+                Eliminar
               </Button>
             </Dialog.Footer>
           </Dialog.Content>

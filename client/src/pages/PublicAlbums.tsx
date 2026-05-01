@@ -1,19 +1,38 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import api from "../api";
-import PublicHeader from "../components/PublicHeader";
 import {
   Box,
   Button,
+  Container,
   EmptyState,
+  Flex,
   Grid,
   Heading,
-  Text,
-  Flex,
-  Spinner,
-  Container,
+  HStack,
+  IconButton,
   Image,
+  SimpleGrid,
+  Spinner,
+  Text,
+  VStack,
 } from "@chakra-ui/react";
-import { ImageIcon, TriangleAlert } from "lucide-react";
+import {
+  Bot,
+  Building2,
+  ImageIcon,
+  Lock,
+  Monitor,
+  Moon,
+  ScrollText,
+  Shield,
+  ShoppingCart,
+  Sun,
+  TriangleAlert,
+  Users,
+  Zap,
+} from "lucide-react";
+import { useTheme } from "../context/ThemeContext";
 
 interface Photo {
   id: number;
@@ -22,156 +41,445 @@ interface Photo {
   coverUrl: string;
 }
 
+const FEATURES = [
+  {
+    icon: Bot,
+    color: "purple.500",
+    bg: "purple.50",
+    darkBg: "purple.950",
+    title: "IA Conversacional",
+    desc: "Xat integrat amb LangChain que respon preguntes sobre el negoci, estadístiques i dades d'Odoo en temps real.",
+  },
+  {
+    icon: ShoppingCart,
+    color: "blue.500",
+    bg: "blue.50",
+    darkBg: "blue.950",
+    title: "Integració Odoo",
+    desc: "KPIs en viu: vendes, clients, productes, factures pendents, oportunitats CRM i empleats.",
+  },
+  {
+    icon: Shield,
+    color: "orange.500",
+    bg: "orange.50",
+    darkBg: "orange.950",
+    title: "Control d'Accés RBAC",
+    desc: "Rols i permisos granulars. Cada usuari veu exactament allò que li pertoca, res més.",
+  },
+  {
+    icon: Users,
+    color: "teal.500",
+    bg: "teal.50",
+    darkBg: "teal.950",
+    title: "Gestió d'Usuaris",
+    desc: "Alta, edició i desactivació d'usuaris. Assignació de rols i auditoria d'accions.",
+  },
+  {
+    icon: Building2,
+    color: "cyan.500",
+    bg: "cyan.50",
+    darkBg: "cyan.950",
+    title: "Multi-tenant",
+    desc: "Suport per múltiples organitzacions sota la mateixa plataforma, cadascuna amb la seva configuració.",
+  },
+  {
+    icon: Monitor,
+    color: "gray.500",
+    bg: "gray.50",
+    darkBg: "gray.800",
+    title: "Gestió de Dispositius",
+    desc: "Control de sessions actives per dispositiu. Revoca l'accés remotament en qualsevol moment.",
+  },
+  {
+    icon: ScrollText,
+    color: "yellow.600",
+    bg: "yellow.50",
+    darkBg: "yellow.950",
+    title: "Logs del Sistema",
+    desc: "Registre d'esdeveniments en temps real via SSE. Diagnosi ràpida sense eines externes.",
+  },
+  {
+    icon: Lock,
+    color: "red.500",
+    bg: "red.50",
+    darkBg: "red.950",
+    title: "Seguretat Avançada",
+    desc: "Autenticació JWT, detecció de nous dispositius, alertes de sessions concurrents i tokens de refresc.",
+  },
+  {
+    icon: ImageIcon,
+    color: "pink.500",
+    bg: "pink.50",
+    darkBg: "pink.950",
+    title: "Galeria Pública",
+    desc: "Àlbums i fotos accessibles sense login. Gestió completa des del panell d'administració.",
+  },
+];
+
 const PublicAlbums: React.FC = () => {
+  const { mode, toggleMode } = useTheme();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+
+  const isDark = mode === "dark";
 
   const fetchPhotos = async () => {
     setLoading(true);
     setError(false);
     try {
-      const res = await api.get("/photos", {
-        params: {
-          page: 1,
-          limit: 100,
-          search: undefined,
-        },
-      });
+      const res = await api.get("/photos", { params: { page: 1, limit: 100 } });
       setPhotos(res.data.items);
-    } catch (err) {
-      console.error("Error fetching public photos:", err);
+    } catch {
       setError(true);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchPhotos();
-  }, []);
-
-  if (loading) {
-    return (
-      <Flex justify="center" align="center" minH="100vh" bg="bg.muted">
-        <Spinner size="xl" color="blue.500" />
-      </Flex>
-    );
-  }
+  useEffect(() => { fetchPhotos(); }, []);
 
   return (
-    <Box minH="100vh" bg="bg.muted" px={[0, 8]} py={[4, 8]} color="fg">
-      <PublicHeader />
-      <Container>
-        {error ? (
-          <EmptyState.Root
-            py="20"
-            bg="bg.panel"
-            rounded="md"
-            shadow="sm"
-            borderWidth="1px"
-          >
-            <EmptyState.Content>
-              <EmptyState.Indicator>
-                <TriangleAlert size={32} />
-              </EmptyState.Indicator>
-              <EmptyState.Title>Could not load photos</EmptyState.Title>
-              <EmptyState.Description>
-                Check that the server is running and try again.
-              </EmptyState.Description>
-              <Button size="sm" onClick={fetchPhotos} mt="2">
-                Retry
-              </Button>
-            </EmptyState.Content>
-          </EmptyState.Root>
-        ) : photos.length === 0 ? (
-          <EmptyState.Root
-            py="20"
-            bg="bg.panel"
-            rounded="md"
-            shadow="sm"
-            borderWidth="1px"
-          >
-            <EmptyState.Content>
-              <EmptyState.Indicator>
-                <ImageIcon size={32} />
-              </EmptyState.Indicator>
-              <EmptyState.Title>No photos yet</EmptyState.Title>
-              <EmptyState.Description>
-                The collection is empty. Check back later.
-              </EmptyState.Description>
-            </EmptyState.Content>
-          </EmptyState.Root>
-        ) : (
-          <Grid
-            id="public-photos-grid"
-            templateColumns={{
-              base: "1fr",
-              sm: "repeat(2, 1fr)",
-              md: "repeat(2, 1fr)",
-              lg: "repeat(3, 1fr)",
-              xl: "repeat(4, 1fr)",
-            }}
-            gap="8"
-          >
-            {photos.map((photo) => (
+    <Box minH="100vh" bg={isDark ? "gray.950" : "gray.50"} color="fg">
+
+      {/* ── Navbar ──────────────────────────────────────────────────── */}
+      <Box
+        as="nav"
+        position="sticky"
+        top="0"
+        zIndex="banner"
+        bg={isDark ? "rgba(10,10,20,0.85)" : "rgba(255,255,255,0.85)"}
+        backdropFilter="blur(12px)"
+        borderBottomWidth="1px"
+        borderColor={isDark ? "whiteAlpha.100" : "blackAlpha.100"}
+      >
+        <Container maxW="7xl" py="3">
+          <Flex justify="space-between" align="center">
+            <HStack gap="2">
               <Box
-                key={photo.id}
-                bg="bg.panel"
-                rounded="md"
-                overflow="hidden"
-                shadow="md"
-                transition="all 0.2s"
-                _hover={{ transform: "scale(1.05)" }}
+                w="8" h="8" rounded="lg"
+                bgGradient="to-br"
+                gradientFrom="purple.500"
+                gradientTo="blue.500"
+                display="flex" alignItems="center" justifyContent="center"
+                flexShrink={0}
+              >
+                <Zap size={16} color="white" />
+              </Box>
+              <Text
+                fontWeight="bold" fontSize="lg" letterSpacing="tight"
+                display={{ base: "none", sm: "block" }}
+              >
+                RBAC Platform
+              </Text>
+            </HStack>
+            <HStack gap="2">
+              <IconButton
+                aria-label="Canviar tema"
+                variant="ghost"
+                size="sm"
+                rounded="full"
+                onClick={toggleMode}
+              >
+                {isDark ? <Sun size={18} /> : <Moon size={18} />}
+              </IconButton>
+              <Button size="sm" colorPalette="purple" asChild>
+                <Link to="/login">Accedir</Link>
+              </Button>
+              <Button size="sm" variant="outline" colorPalette="purple" display={{ base: "none", md: "flex" }} asChild>
+                <Link to="/admin">Panell Admin</Link>
+              </Button>
+            </HStack>
+          </Flex>
+        </Container>
+      </Box>
+
+      {/* ── Hero ────────────────────────────────────────────────────── */}
+      <Box
+        position="relative"
+        overflow="hidden"
+        py={{ base: "20", md: "32" }}
+      >
+        {/* Background gradient blobs */}
+        <Box
+          position="absolute" top="-20%" left="-10%"
+          w="600px" h="600px" rounded="full"
+          bg={isDark ? "purple.900" : "purple.100"}
+          opacity={isDark ? 0.4 : 0.6}
+          filter="blur(80px)"
+          pointerEvents="none"
+        />
+        <Box
+          position="absolute" bottom="-20%" right="-5%"
+          w="500px" h="500px" rounded="full"
+          bg={isDark ? "blue.900" : "blue.100"}
+          opacity={isDark ? 0.3 : 0.5}
+          filter="blur(80px)"
+          pointerEvents="none"
+        />
+
+        <Container maxW="5xl" position="relative">
+          <VStack gap="6" textAlign="center">
+            <Box
+              display="inline-flex"
+              px="4" py="1.5"
+              rounded="full"
+              bg={isDark ? "purple.900" : "purple.50"}
+              borderWidth="1px"
+              borderColor={isDark ? "purple.700" : "purple.200"}
+            >
+              <Text fontSize="xs" fontWeight="semibold" color="purple.500" letterSpacing="wide" textTransform="uppercase">
+                Plataforma d'Administració Empresarial
+              </Text>
+            </Box>
+
+            <Heading
+              fontSize={{ base: "4xl", md: "6xl", lg: "7xl" }}
+              fontWeight="extrabold"
+              lineHeight="1.1"
+              letterSpacing="tight"
+            >
+              Tot el control,{" "}
+              <Box
+                as="span"
+                bgGradient="to-r"
+                gradientFrom="purple.500"
+                gradientTo="blue.400"
+                bgClip="text"
+              >
+                en un sol lloc
+              </Box>
+            </Heading>
+
+            <Text
+              fontSize={{ base: "lg", md: "xl" }}
+              color="fg.muted"
+              maxW="2xl"
+              lineHeight="relaxed"
+            >
+              Gestió d'usuaris, rols i permisos, integració Odoo, IA conversacional,
+              galeria multimèdia i logs del sistema. Una plataforma RBAC pensada per a equips reals.
+            </Text>
+
+            <HStack gap="4" flexWrap="wrap" justify="center" pt="2">
+              <Button size="xl" colorPalette="purple" rounded="full" px="8" asChild>
+                <Link to="/admin">
+                  Obrir el panell
+                </Link>
+              </Button>
+              <Button size="xl" variant="outline" rounded="full" px="8" asChild>
+                <a href="#galeria">Veure galeria</a>
+              </Button>
+            </HStack>
+
+            {/* Stats */}
+            <SimpleGrid columns={3} gap={{ base: "6", md: "12" }} pt="8">
+              {[
+                { value: "RBAC", label: "Control d'accés" },
+                { value: "LangChain", label: "IA integrada" },
+                { value: "Odoo", label: "ERP connectat" },
+              ].map(({ value, label }) => (
+                <VStack key={label} gap="1">
+                  <Text fontSize={{ base: "xl", md: "2xl" }} fontWeight="bold" color="purple.500">
+                    {value}
+                  </Text>
+                  <Text fontSize="xs" color="fg.muted" textTransform="uppercase" letterSpacing="wide">
+                    {label}
+                  </Text>
+                </VStack>
+              ))}
+            </SimpleGrid>
+          </VStack>
+        </Container>
+      </Box>
+
+      {/* ── Features ────────────────────────────────────────────────── */}
+      <Box py={{ base: "16", md: "24" }} bg={isDark ? "gray.900" : "white"}>
+        <Container maxW="7xl">
+          <VStack gap="4" textAlign="center" mb="12">
+            <Text fontSize="xs" fontWeight="bold" color="purple.500" textTransform="uppercase" letterSpacing="widest">
+              Funcionalitats
+            </Text>
+            <Heading fontSize={{ base: "2xl", md: "3xl" }} fontWeight="bold">
+              Tot el que necessites
+            </Heading>
+            <Text color="fg.muted" maxW="xl">
+              Cada mòdul està dissenyat per treballar de forma integrada amb la resta de la plataforma.
+            </Text>
+          </VStack>
+
+          <SimpleGrid columns={{ base: 1, sm: 2, lg: 3 }} gap="6">
+            {FEATURES.map(({ icon: Icon, color, bg, darkBg, title, desc }) => (
+              <Box
+                key={title}
+                p="6"
+                rounded="xl"
                 borderWidth="1px"
+                borderColor={isDark ? "whiteAlpha.100" : "blackAlpha.100"}
+                bg={isDark ? "gray.800" : "white"}
+                transition="all 0.2s"
+                _hover={{
+                  shadow: "lg",
+                  transform: "translateY(-3px)",
+                  borderColor: color,
+                }}
               >
                 <Box
-                  position="relative"
-                  pt="100%"
-                  overflow="hidden"
-                  bg="bg.subtle"
+                  w="10" h="10" rounded="lg" mb="4"
+                  bg={isDark ? darkBg : bg}
+                  display="flex" alignItems="center" justifyContent="center"
                 >
-                  {photo.coverUrl ? (
-                    <Image
-                      src={photo.coverUrl}
-                      alt={photo.title}
-                      position="absolute"
-                      top="0"
-                      left="0"
-                      w="full"
-                      h="full"
-                      objectFit="cover"
-                    />
-                  ) : (
-                    <Flex
-                      position="absolute"
-                      top="0"
-                      left="0"
-                      w="full"
-                      h="full"
-                      align="center"
-                      justify="center"
-                      color="fg.subtle"
-                    >
-                      No Image
-                    </Flex>
-                  )}
+                  <Icon size={20} color={`var(--chakra-colors-${color.replace(".", "-")})`} />
                 </Box>
-                <Box p="6">
-                  <Heading size="md" mb="1" truncate>
-                    {photo.title}
-                  </Heading>
-                  {photo.description && (
-                    <Text color="fg.muted" fontSize="sm">
-                      {photo.description}
-                    </Text>
-                  )}
-                </Box>
+                <Text fontWeight="semibold" mb="2">{title}</Text>
+                <Text fontSize="sm" color="fg.muted" lineHeight="relaxed">{desc}</Text>
               </Box>
             ))}
-          </Grid>
-        )}
-      </Container>
+          </SimpleGrid>
+        </Container>
+      </Box>
+
+      {/* ── CTA Banner ──────────────────────────────────────────────── */}
+      <Box
+        py={{ base: "16", md: "20" }}
+        bgGradient="to-r"
+        gradientFrom={isDark ? "purple.900" : "purple.500"}
+        gradientTo={isDark ? "blue.900" : "blue.500"}
+      >
+        <Container maxW="3xl" textAlign="center">
+          <VStack gap="6">
+            <Heading fontSize={{ base: "2xl", md: "3xl" }} color="white" fontWeight="bold">
+              Preparat per gestionar el teu negoci?
+            </Heading>
+            <Text color="whiteAlpha.800" fontSize="lg">
+              Accedeix al panell d'administració i descobreix totes les funcionalitats.
+            </Text>
+            <HStack gap="4" flexWrap="wrap" justify="center">
+              <Button size="lg" bg="white" color="purple.600" rounded="full" px="8" _hover={{ bg: "gray.100" }} asChild>
+                <Link to="/admin">Accedir ara</Link>
+              </Button>
+              <Button size="lg" variant="outline" color="white" borderColor="whiteAlpha.500" rounded="full" px="8" _hover={{ bg: "whiteAlpha.200" }} asChild>
+                <Link to="/login">Iniciar sessió</Link>
+              </Button>
+            </HStack>
+          </VStack>
+        </Container>
+      </Box>
+
+      {/* ── Photo Gallery ───────────────────────────────────────────── */}
+      <Box id="galeria" py={{ base: "16", md: "24" }} bg={isDark ? "gray.950" : "gray.50"}>
+        <Container maxW="7xl">
+          <VStack gap="4" textAlign="center" mb="12">
+            <Text fontSize="xs" fontWeight="bold" color="purple.500" textTransform="uppercase" letterSpacing="widest">
+              Galeria
+            </Text>
+            <Heading fontSize={{ base: "2xl", md: "3xl" }} fontWeight="bold">
+              Col·lecció pública
+            </Heading>
+          </VStack>
+
+          {loading ? (
+            <Flex justify="center" py="20">
+              <Spinner size="xl" color="purple.500" />
+            </Flex>
+          ) : error ? (
+            <EmptyState.Root py="20" bg={isDark ? "gray.800" : "white"} rounded="xl" shadow="sm" borderWidth="1px">
+              <EmptyState.Content>
+                <EmptyState.Indicator><TriangleAlert size={32} /></EmptyState.Indicator>
+                <EmptyState.Title>No s'han pogut carregar les fotos</EmptyState.Title>
+                <EmptyState.Description>Comprova que el servidor estigui actiu i torna-ho a intentar.</EmptyState.Description>
+                <Button size="sm" onClick={fetchPhotos} mt="2" colorPalette="purple">Reintentar</Button>
+              </EmptyState.Content>
+            </EmptyState.Root>
+          ) : photos.length === 0 ? (
+            <EmptyState.Root py="20" bg={isDark ? "gray.800" : "white"} rounded="xl" shadow="sm" borderWidth="1px">
+              <EmptyState.Content>
+                <EmptyState.Indicator><ImageIcon size={32} /></EmptyState.Indicator>
+                <EmptyState.Title>Col·lecció buida</EmptyState.Title>
+                <EmptyState.Description>Encara no hi ha fotos. Torna aviat.</EmptyState.Description>
+              </EmptyState.Content>
+            </EmptyState.Root>
+          ) : (
+            <Grid
+              templateColumns={{ base: "1fr", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)", xl: "repeat(4, 1fr)" }}
+              gap="6"
+            >
+              {photos.map((photo) => (
+                <Box
+                  key={photo.id}
+                  bg={isDark ? "gray.800" : "white"}
+                  rounded="xl"
+                  overflow="hidden"
+                  shadow="md"
+                  borderWidth="1px"
+                  borderColor={isDark ? "whiteAlpha.100" : "blackAlpha.100"}
+                  transition="all 0.2s"
+                  _hover={{ shadow: "xl", transform: "translateY(-4px)" }}
+                >
+                  <Box position="relative" pt="100%" overflow="hidden" bg={isDark ? "gray.700" : "gray.100"}>
+                    {photo.coverUrl ? (
+                      <Image
+                        src={photo.coverUrl}
+                        alt={photo.title}
+                        position="absolute" top="0" left="0"
+                        w="full" h="full" objectFit="cover"
+                        transition="transform 0.3s"
+                        _groupHover={{ transform: "scale(1.05)" }}
+                      />
+                    ) : (
+                      <Flex position="absolute" top="0" left="0" w="full" h="full"
+                        align="center" justify="center" color="fg.subtle">
+                        <ImageIcon size={32} />
+                      </Flex>
+                    )}
+                  </Box>
+                  <Box p="5">
+                    <Text fontWeight="semibold" truncate mb="1">{photo.title}</Text>
+                    {photo.description && (
+                      <Text color="fg.muted" fontSize="sm" lineClamp={2}>{photo.description}</Text>
+                    )}
+                  </Box>
+                </Box>
+              ))}
+            </Grid>
+          )}
+        </Container>
+      </Box>
+
+      {/* ── Footer ──────────────────────────────────────────────────── */}
+      <Box
+        as="footer"
+        py="8"
+        borderTopWidth="1px"
+        borderColor={isDark ? "whiteAlpha.100" : "blackAlpha.100"}
+        bg={isDark ? "gray.900" : "white"}
+      >
+        <Container maxW="7xl">
+          <Flex justify="space-between" align="center" flexWrap="wrap" gap="4">
+            <HStack gap="2">
+              <Box
+                w="6" h="6" rounded="md"
+                bgGradient="to-br" gradientFrom="purple.500" gradientTo="blue.500"
+                display="flex" alignItems="center" justifyContent="center"
+              >
+                <Zap size={12} color="white" />
+              </Box>
+              <Text fontSize="sm" color="fg.muted">
+                © {new Date().getFullYear()} Cel Ticó Petit
+              </Text>
+            </HStack>
+            <HStack gap="4">
+              <Button size="xs" variant="ghost" colorPalette="purple" asChild>
+                <Link to="/login">Login</Link>
+              </Button>
+              <Button size="xs" variant="ghost" colorPalette="purple" asChild>
+                <Link to="/admin">Admin</Link>
+              </Button>
+            </HStack>
+          </Flex>
+        </Container>
+      </Box>
+
     </Box>
   );
 };

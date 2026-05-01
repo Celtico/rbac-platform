@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { useAuth } from "../context/AuthContext.ts";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
+import NewDeviceWarningModal from "../components/NewDeviceWarningModal";
+import ConcurrentSessionModal from "../components/ConcurrentSessionModal";
 import {
   Box,
   Button,
@@ -20,6 +22,8 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [showNewDeviceModal, setShowNewDeviceModal] = useState(false);
+  const [showConcurrentModal, setShowConcurrentModal] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -28,13 +32,41 @@ const Login: React.FC = () => {
     try {
       const response = await api.post("/auth/login", { username, password });
       login(response.data.access_token, response.data.user);
-      navigate("/admin");
+
+      if (response.data.isNewDevice) {
+        setShowNewDeviceModal(true);
+      } else if (response.data.hasOtherActiveSessions) {
+        setShowConcurrentModal(true);
+      } else {
+        navigate("/admin");
+      }
     } catch (err: any) {
       setError(err.response?.data?.message || "Login failed");
     }
   };
 
+  const handleNewDeviceClose = () => {
+    setShowNewDeviceModal(false);
+    if (showConcurrentModal) {
+      // Will show concurrent modal next
+    } else {
+      navigate("/admin");
+    }
+  };
+
+  const handleConcurrentClose = () => {
+    setShowConcurrentModal(false);
+    navigate("/admin");
+  };
+
   return (
+    <>
+      {showNewDeviceModal && (
+        <NewDeviceWarningModal onClose={handleNewDeviceClose} />
+      )}
+      {!showNewDeviceModal && showConcurrentModal && (
+        <ConcurrentSessionModal onClose={handleConcurrentClose} />
+      )}
     <Box
       id="login-page"
       minH="100vh"
@@ -146,6 +178,7 @@ const Login: React.FC = () => {
         </Box>
       </Container>
     </Box>
+    </>
   );
 };
 

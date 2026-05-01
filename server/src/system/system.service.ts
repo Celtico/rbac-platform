@@ -14,6 +14,8 @@ export interface SystemSnapshot {
   uptime_s: number;
   process_memory_mb: number;
   load_avg_1m: number;
+  load_avg_5m: number;
+  load_avg_15m: number;
   cpu_count: number;
 }
 
@@ -91,6 +93,8 @@ export class SystemService {
       uptime_s: Math.round(os.uptime()),
       process_memory_mb: Math.round(process.memoryUsage().rss / 1024 / 1024),
       load_avg_1m: Math.round(loadAvg[0] * 100) / 100,
+      load_avg_5m: Math.round(loadAvg[1] * 100) / 100,
+      load_avg_15m: Math.round(loadAvg[2] * 100) / 100,
       cpu_count: os.cpus().length,
     };
   }

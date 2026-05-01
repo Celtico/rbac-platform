@@ -39,15 +39,82 @@ api.interceptors.response.use(
 
 export default api;
 
-// Odoo AI Assistant
-export const odooChat = (question: string, include_raw_data = false) =>
-  api.post<{
-    answer: string;
-    intent: string;
-    confidence: number;
-    raw_data?: unknown;
-  }>("/odoo/chat", { question, include_raw_data });
+// Chat Global
+export const getChatConversations = () =>
+  api.get<ChatConversation[]>("/chat/conversations");
 
+export const createChatConversation = () =>
+  api.post<ChatConversation>("/chat/conversations");
+
+export const getChatConversation = (id: number) =>
+  api.get<ChatConversation>(`/chat/conversations/${id}`);
+
+export const deleteChatConversation = (id: number) =>
+  api.delete<{ success: boolean }>(`/chat/conversations/${id}`);
+
+// Sessions / Dispositius
+export const getSessions = () => api.get<UserSessionDTO[]>("/sessions");
+export const revokeSession = (id: string) =>
+  api.delete<{ success: boolean }>(`/sessions/${id}`);
+export const revokeAllOtherSessions = () =>
+  api.delete<{ success: boolean }>("/sessions");
+
+// Logs
+export const getLogs = (params?: {
+  level?: string;
+  context?: string;
+  search?: string;
+  limit?: number;
+  offset?: number;
+}) =>
+  api.get<{ entries: LogEntryDTO[]; total: number; limit: number; offset: number }>(
+    "/logs",
+    { params }
+  );
+
+// Types
+export interface ChatConversation {
+  id: number;
+  userId: number;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+  messages?: ChatMessage[];
+}
+
+export interface ChatMessage {
+  id: number;
+  conversationId: number;
+  role: "user" | "assistant";
+  content: string;
+  intent?: string;
+  confidence?: number;
+  createdAt: string;
+}
+
+export interface UserSessionDTO {
+  id: string;
+  userId: number;
+  browser: string;
+  os: string;
+  ipAddress: string;
+  isRevoked: boolean;
+  isNewDevice: boolean;
+  firstSeen: string;
+  lastSeen: string;
+  isCurrent: boolean;
+}
+
+export interface LogEntryDTO {
+  id: number;
+  level: "log" | "error" | "warn" | "debug" | "verbose";
+  message: string;
+  context: string | null;
+  timestamp: string;
+  metadata: Record<string, unknown> | null;
+}
+
+// Odoo data (used by Dashboard KPI sections)
 export const odooHealth = () =>
   api.get<{ status: string; odoo_connected: boolean; odoo_url: string }>(
     "/odoo/health"
@@ -87,6 +154,8 @@ export const systemStats = () =>
     uptime_s: number;
     process_memory_mb: number;
     load_avg_1m: number;
+    load_avg_5m: number;
+    load_avg_15m: number;
     cpu_count: number;
   }>("/system/stats");
 

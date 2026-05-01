@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   Badge, Box, Dialog, HStack, Portal, SimpleGrid, Spinner, Table, Text,
 } from "@chakra-ui/react";
 import {
-  ShoppingCart, Users, Package, Target, FileText, UserCheck, Wifi, WifiOff, X,
+  ShoppingCart, Users, Package, Target, FileText, UserCheck, Wifi, WifiOff, X, ChevronRight,
 } from "lucide-react";
 import { odooKpis, odooHealth, odooRawData } from "../../api";
 import { useTheme } from "../../context/ThemeContext.ts";
@@ -145,7 +146,8 @@ const OdooKpiSection: React.FC<Props> = ({ onConnected }) => {
   return (
     <>
       <Box mb="8">
-        <HStack mb="4" gap="3" align="center">
+        <HStack mb="4" gap="3" align="center" justify="space-between">
+          <HStack gap="3">
           <Text fontSize="xs" fontWeight="bold" color="fg.muted" textTransform="uppercase" letterSpacing="wide">
             Odoo · Resum en temps real
           </Text>
@@ -160,6 +162,13 @@ const OdooKpiSection: React.FC<Props> = ({ onConnected }) => {
               <WifiOff size={10} /> Desconnectat
             </Badge>
           )}
+          </HStack>
+          <Link to="/admin/odoo" style={{ textDecoration: "none" }}>
+            <HStack gap="0.5" color="purple.500" _hover={{ color: "purple.600" }}>
+              <Text fontSize="xs" fontWeight="semibold">Veure tot</Text>
+              <ChevronRight size={14} />
+            </HStack>
+          </Link>
         </HStack>
 
         <SimpleGrid columns={[2, 3, 6]} gap={[3, 4]}>

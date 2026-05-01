@@ -249,6 +249,136 @@ export class OdooClientService {
     };
   }
 
+  async create(
+    cfg: OdooConfig,
+    model: string,
+    values: Record<string, unknown>,
+  ): Promise<number> {
+    const uid = await this.getUid(cfg);
+    return this.rpc<number>(cfg, {
+      service: 'object',
+      method: 'execute_kw',
+      args: [cfg.db, uid, cfg.password, model, 'create', [values]],
+    });
+  }
+
+  async write(
+    cfg: OdooConfig,
+    model: string,
+    ids: number[],
+    values: Record<string, unknown>,
+  ): Promise<boolean> {
+    const uid = await this.getUid(cfg);
+    return this.rpc<boolean>(cfg, {
+      service: 'object',
+      method: 'execute_kw',
+      args: [cfg.db, uid, cfg.password, model, 'write', [ids, values]],
+    });
+  }
+
+  async callMethod(
+    cfg: OdooConfig,
+    model: string,
+    method: string,
+    ids: number[],
+  ): Promise<unknown> {
+    const uid = await this.getUid(cfg);
+    return this.rpc<unknown>(cfg, {
+      service: 'object',
+      method: 'execute_kw',
+      args: [cfg.db, uid, cfg.password, model, method, [ids]],
+    });
+  }
+
+  async findPartnerByName(cfg: OdooConfig, name: string) {
+    const results = await this.searchRead<{ id: number; name: string }>(
+      cfg,
+      'res.partner',
+      [['name', 'ilike', name]],
+      ['id', 'name'],
+      5,
+    );
+    return results[0] ?? null;
+  }
+
+  async findProductByName(cfg: OdooConfig, name: string) {
+    const results = await this.searchRead<{ id: number; name: string; list_price: number }>(
+      cfg,
+      'product.product',
+      [['name', 'ilike', name], ['sale_ok', '=', true]],
+      ['id', 'name', 'list_price'],
+      5,
+    );
+    return results[0] ?? null;
+  }
+
+  async getMostSoldProduct(cfg: OdooConfig) {
+    const uid = await this.getUid(cfg);
+    // Get sale.order.line grouped by product to find the most sold
+    const lines = await this.searchRead<{ product_id: [number, string]; product_uom_qty: number }>(
+      cfg,
+      'sale.order.line',
+      [['order_id.state', 'in', ['sale', 'done']]],
+      ['product_id', 'product_uom_qty'],
+      200,
+    );
+
+    const totals: Record<number, { id: number; name: string; qty: number }> = {};
+    for (const line of lines) {
+      if (!line.product_id) continue;
+      const [pid, pname] = line.product_id;
+      if (!totals[pid]) totals[pid] = { id: pid, name: pname, qty: 0 };
+      totals[pid].qty += line.product_uom_qty ?? 0;
+    }
+
+    const sorted = Object.values(totals).sort((a, b) => b.qty - a.qty);
+    return sorted[0] ?? null;
+  }
+
+  async createInvoice(
+    cfg: OdooConfig,
+    partnerName: string,
+    lines: { description: string; quantity: number; price: number }[],
+  ): Promise<{ id: number; name: string }> {
+    // 1. Resolve partner
+    const partner = await this.findPartnerByName(cfg, partnerName);
+    if (!partner) {
+      throw new Error(`No s'ha trobat cap client amb el nom "${partnerName}"`);
+    }
+
+    // 2. Build invoice lines
+    const invoiceLines = lines.map((l) => [
+      0,
+      0,
+      {
+        name: l.description,
+        quantity: l.quantity,
+        price_unit: l.price,
+      },
+    ]);
+
+    // 3. Create invoice
+    const invoiceId = await this.create(cfg, 'account.move', {
+      move_type: 'out_invoice',
+      partner_id: partner.id,
+      invoice_line_ids: invoiceLines,
+    });
+
+    // 4. Confirm (post) the invoice
+    await this.callMethod(cfg, 'account.move', 'action_post', [invoiceId]);
+
+    // 5. Get the invoice number
+    const invoices = await this.searchRead<{ id: number; name: string }>(
+      cfg,
+      'account.move',
+      [['id', '=', invoiceId]],
+      ['id', 'name'],
+      1,
+    );
+
+    return invoices[0] ?? { id: invoiceId, name: `INV/${invoiceId}` };
+  }
+
   async isConnected(cfg: OdooConfig): Promise<boolean> {
     try {
       await this.getUid(cfg);

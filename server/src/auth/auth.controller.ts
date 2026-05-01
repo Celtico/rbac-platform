@@ -31,7 +31,7 @@ export class AuthController {
     },
   })
   async login(@Request() req) {
-    return this.authService.login(req.user);
+    return this.authService.login(req.user, req);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -52,7 +52,7 @@ export class AuthController {
   @UseGuards(GoogleAuthGuard)
   @ApiOperation({ summary: 'Google OAuth callback' })
   async googleCallback(@Request() req, @Res() res: Response) {
-    const result = await this.authService.login(req.user);
+    const result = await this.authService.login(req.user, req);
     const clientUrl = process.env.CLIENT_URL ?? 'http://localhost:5173';
     const token = encodeURIComponent(result.access_token);
     const user = encodeURIComponent(JSON.stringify(result.user));
