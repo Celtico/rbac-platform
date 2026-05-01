@@ -128,7 +128,7 @@ const PublicAlbums: React.FC = () => {
     setLoading(true);
     setError(false);
     try {
-      const res = await api.get("/photos", { params: { page: 1, limit: 100 } });
+      const res = await api.get("/photos", { params: { page: 1, limit: 8 } });
       setPhotos(res.data.items);
     } catch {
       setError(true);
@@ -137,11 +137,12 @@ const PublicAlbums: React.FC = () => {
     }
   };
 
-  useEffect(() => { fetchPhotos(); }, []);
+  useEffect(() => {
+    fetchPhotos();
+  }, []);
 
   return (
     <Box minH="100vh" bg={isDark ? "gray.950" : "gray.50"} color="fg">
-
       {/* ── Navbar ──────────────────────────────────────────────────── */}
       <Box
         as="nav"
@@ -157,17 +158,23 @@ const PublicAlbums: React.FC = () => {
           <Flex justify="space-between" align="center">
             <HStack gap="2">
               <Box
-                w="8" h="8" rounded="lg"
+                w="8"
+                h="8"
+                rounded="lg"
                 bgGradient="to-br"
                 gradientFrom="purple.500"
                 gradientTo="blue.500"
-                display="flex" alignItems="center" justifyContent="center"
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
                 flexShrink={0}
               >
                 <Zap size={16} color="white" />
               </Box>
               <Text
-                fontWeight="bold" fontSize="lg" letterSpacing="tight"
+                fontWeight="bold"
+                fontSize="lg"
+                letterSpacing="tight"
                 display={{ base: "none", sm: "block" }}
               >
                 RBAC Platform
@@ -184,9 +191,6 @@ const PublicAlbums: React.FC = () => {
                 {isDark ? <Sun size={18} /> : <Moon size={18} />}
               </IconButton>
               <Button size="sm" colorPalette="purple" asChild>
-                <Link to="/login">Accedir</Link>
-              </Button>
-              <Button size="sm" variant="outline" colorPalette="purple" display={{ base: "none", md: "flex" }} asChild>
                 <Link to="/admin">Panell Admin</Link>
               </Button>
             </HStack>
@@ -195,23 +199,27 @@ const PublicAlbums: React.FC = () => {
       </Box>
 
       {/* ── Hero ────────────────────────────────────────────────────── */}
-      <Box
-        position="relative"
-        overflow="hidden"
-        py={{ base: "20", md: "32" }}
-      >
+      <Box position="relative" overflow="hidden" py={{ base: "20", md: "32" }}>
         {/* Background gradient blobs */}
         <Box
-          position="absolute" top="-20%" left="-10%"
-          w="600px" h="600px" rounded="full"
+          position="absolute"
+          top="-20%"
+          left="-10%"
+          w="600px"
+          h="600px"
+          rounded="full"
           bg={isDark ? "purple.900" : "purple.100"}
           opacity={isDark ? 0.4 : 0.6}
           filter="blur(80px)"
           pointerEvents="none"
         />
         <Box
-          position="absolute" bottom="-20%" right="-5%"
-          w="500px" h="500px" rounded="full"
+          position="absolute"
+          bottom="-20%"
+          right="-5%"
+          w="500px"
+          h="500px"
+          rounded="full"
           bg={isDark ? "blue.900" : "blue.100"}
           opacity={isDark ? 0.3 : 0.5}
           filter="blur(80px)"
@@ -222,13 +230,20 @@ const PublicAlbums: React.FC = () => {
           <VStack gap="6" textAlign="center">
             <Box
               display="inline-flex"
-              px="4" py="1.5"
+              px="4"
+              py="1.5"
               rounded="full"
               bg={isDark ? "purple.900" : "purple.50"}
               borderWidth="1px"
               borderColor={isDark ? "purple.700" : "purple.200"}
             >
-              <Text fontSize="xs" fontWeight="semibold" color="purple.500" letterSpacing="wide" textTransform="uppercase">
+              <Text
+                fontSize="xs"
+                fontWeight="semibold"
+                color="purple.500"
+                letterSpacing="wide"
+                textTransform="uppercase"
+              >
                 Plataforma d'Administració Empresarial
               </Text>
             </Box>
@@ -257,15 +272,20 @@ const PublicAlbums: React.FC = () => {
               maxW="2xl"
               lineHeight="relaxed"
             >
-              Gestió d'usuaris, rols i permisos, integració Odoo, IA conversacional,
-              galeria multimèdia i logs del sistema. Una plataforma RBAC pensada per a equips reals.
+              Gestió d'usuaris, rols i permisos, integració Odoo, IA
+              conversacional, galeria multimèdia i logs del sistema. Una
+              plataforma RBAC pensada per a equips reals.
             </Text>
 
             <HStack gap="4" flexWrap="wrap" justify="center" pt="2">
-              <Button size="xl" colorPalette="purple" rounded="full" px="8" asChild>
-                <Link to="/admin">
-                  Obrir el panell
-                </Link>
+              <Button
+                size="xl"
+                colorPalette="purple"
+                rounded="full"
+                px="8"
+                asChild
+              >
+                <Link to="/admin">Obrir el panell</Link>
               </Button>
               <Button size="xl" variant="outline" rounded="full" px="8" asChild>
                 <a href="#galeria">Veure galeria</a>
@@ -280,10 +300,19 @@ const PublicAlbums: React.FC = () => {
                 { value: "Odoo", label: "ERP connectat" },
               ].map(({ value, label }) => (
                 <VStack key={label} gap="1">
-                  <Text fontSize={{ base: "xl", md: "2xl" }} fontWeight="bold" color="purple.500">
+                  <Text
+                    fontSize={{ base: "xl", md: "2xl" }}
+                    fontWeight="bold"
+                    color="purple.500"
+                  >
                     {value}
                   </Text>
-                  <Text fontSize="xs" color="fg.muted" textTransform="uppercase" letterSpacing="wide">
+                  <Text
+                    fontSize="xs"
+                    color="fg.muted"
+                    textTransform="uppercase"
+                    letterSpacing="wide"
+                  >
                     {label}
                   </Text>
                 </VStack>
@@ -297,14 +326,21 @@ const PublicAlbums: React.FC = () => {
       <Box py={{ base: "16", md: "24" }} bg={isDark ? "gray.900" : "white"}>
         <Container maxW="7xl">
           <VStack gap="4" textAlign="center" mb="12">
-            <Text fontSize="xs" fontWeight="bold" color="purple.500" textTransform="uppercase" letterSpacing="widest">
+            <Text
+              fontSize="xs"
+              fontWeight="bold"
+              color="purple.500"
+              textTransform="uppercase"
+              letterSpacing="widest"
+            >
               Funcionalitats
             </Text>
             <Heading fontSize={{ base: "2xl", md: "3xl" }} fontWeight="bold">
               Tot el que necessites
             </Heading>
             <Text color="fg.muted" maxW="xl">
-              Cada mòdul està dissenyat per treballar de forma integrada amb la resta de la plataforma.
+              Cada mòdul està dissenyat per treballar de forma integrada amb la
+              resta de la plataforma.
             </Text>
           </VStack>
 
@@ -325,14 +361,26 @@ const PublicAlbums: React.FC = () => {
                 }}
               >
                 <Box
-                  w="10" h="10" rounded="lg" mb="4"
+                  w="10"
+                  h="10"
+                  rounded="lg"
+                  mb="4"
                   bg={isDark ? darkBg : bg}
-                  display="flex" alignItems="center" justifyContent="center"
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
                 >
-                  <Icon size={20} color={`var(--chakra-colors-${color.replace(".", "-")})`} />
+                  <Icon
+                    size={20}
+                    color={`var(--chakra-colors-${color.replace(".", "-")})`}
+                  />
                 </Box>
-                <Text fontWeight="semibold" mb="2">{title}</Text>
-                <Text fontSize="sm" color="fg.muted" lineHeight="relaxed">{desc}</Text>
+                <Text fontWeight="semibold" mb="2">
+                  {title}
+                </Text>
+                <Text fontSize="sm" color="fg.muted" lineHeight="relaxed">
+                  {desc}
+                </Text>
               </Box>
             ))}
           </SimpleGrid>
@@ -348,18 +396,28 @@ const PublicAlbums: React.FC = () => {
       >
         <Container maxW="3xl" textAlign="center">
           <VStack gap="6">
-            <Heading fontSize={{ base: "2xl", md: "3xl" }} color="white" fontWeight="bold">
+            <Heading
+              fontSize={{ base: "2xl", md: "3xl" }}
+              color="white"
+              fontWeight="bold"
+            >
               Preparat per gestionar el teu negoci?
             </Heading>
             <Text color="whiteAlpha.800" fontSize="lg">
-              Accedeix al panell d'administració i descobreix totes les funcionalitats.
+              Accedeix al panell d'administració i descobreix totes les
+              funcionalitats.
             </Text>
             <HStack gap="4" flexWrap="wrap" justify="center">
-              <Button size="lg" bg="white" color="purple.600" rounded="full" px="8" _hover={{ bg: "gray.100" }} asChild>
+              <Button
+                size="lg"
+                bg="white"
+                color="purple.600"
+                rounded="full"
+                px="8"
+                _hover={{ bg: "gray.100" }}
+                asChild
+              >
                 <Link to="/admin">Accedir ara</Link>
-              </Button>
-              <Button size="lg" variant="outline" color="white" borderColor="whiteAlpha.500" rounded="full" px="8" _hover={{ bg: "whiteAlpha.200" }} asChild>
-                <Link to="/login">Iniciar sessió</Link>
               </Button>
             </HStack>
           </VStack>
@@ -367,10 +425,20 @@ const PublicAlbums: React.FC = () => {
       </Box>
 
       {/* ── Photo Gallery ───────────────────────────────────────────── */}
-      <Box id="galeria" py={{ base: "16", md: "24" }} bg={isDark ? "gray.950" : "gray.50"}>
+      <Box
+        id="galeria"
+        py={{ base: "16", md: "24" }}
+        bg={isDark ? "gray.950" : "gray.50"}
+      >
         <Container maxW="7xl">
           <VStack gap="4" textAlign="center" mb="12">
-            <Text fontSize="xs" fontWeight="bold" color="purple.500" textTransform="uppercase" letterSpacing="widest">
+            <Text
+              fontSize="xs"
+              fontWeight="bold"
+              color="purple.500"
+              textTransform="uppercase"
+              letterSpacing="widest"
+            >
               Galeria
             </Text>
             <Heading fontSize={{ base: "2xl", md: "3xl" }} fontWeight="bold">
@@ -383,25 +451,59 @@ const PublicAlbums: React.FC = () => {
               <Spinner size="xl" color="purple.500" />
             </Flex>
           ) : error ? (
-            <EmptyState.Root py="20" bg={isDark ? "gray.800" : "white"} rounded="xl" shadow="sm" borderWidth="1px">
+            <EmptyState.Root
+              py="20"
+              bg={isDark ? "gray.800" : "white"}
+              rounded="xl"
+              shadow="sm"
+              borderWidth="1px"
+            >
               <EmptyState.Content>
-                <EmptyState.Indicator><TriangleAlert size={32} /></EmptyState.Indicator>
-                <EmptyState.Title>No s'han pogut carregar les fotos</EmptyState.Title>
-                <EmptyState.Description>Comprova que el servidor estigui actiu i torna-ho a intentar.</EmptyState.Description>
-                <Button size="sm" onClick={fetchPhotos} mt="2" colorPalette="purple">Reintentar</Button>
+                <EmptyState.Indicator>
+                  <TriangleAlert size={32} />
+                </EmptyState.Indicator>
+                <EmptyState.Title>
+                  No s'han pogut carregar les fotos
+                </EmptyState.Title>
+                <EmptyState.Description>
+                  Comprova que el servidor estigui actiu i torna-ho a intentar.
+                </EmptyState.Description>
+                <Button
+                  size="sm"
+                  onClick={fetchPhotos}
+                  mt="2"
+                  colorPalette="purple"
+                >
+                  Reintentar
+                </Button>
               </EmptyState.Content>
             </EmptyState.Root>
           ) : photos.length === 0 ? (
-            <EmptyState.Root py="20" bg={isDark ? "gray.800" : "white"} rounded="xl" shadow="sm" borderWidth="1px">
+            <EmptyState.Root
+              py="20"
+              bg={isDark ? "gray.800" : "white"}
+              rounded="xl"
+              shadow="sm"
+              borderWidth="1px"
+            >
               <EmptyState.Content>
-                <EmptyState.Indicator><ImageIcon size={32} /></EmptyState.Indicator>
+                <EmptyState.Indicator>
+                  <ImageIcon size={32} />
+                </EmptyState.Indicator>
                 <EmptyState.Title>Col·lecció buida</EmptyState.Title>
-                <EmptyState.Description>Encara no hi ha fotos. Torna aviat.</EmptyState.Description>
+                <EmptyState.Description>
+                  Encara no hi ha fotos. Torna aviat.
+                </EmptyState.Description>
               </EmptyState.Content>
             </EmptyState.Root>
           ) : (
             <Grid
-              templateColumns={{ base: "1fr", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)", xl: "repeat(4, 1fr)" }}
+              templateColumns={{
+                base: "1fr",
+                sm: "repeat(2, 1fr)",
+                md: "repeat(3, 1fr)",
+                xl: "repeat(4, 1fr)",
+              }}
               gap="6"
             >
               {photos.map((photo) => (
@@ -416,27 +518,48 @@ const PublicAlbums: React.FC = () => {
                   transition="all 0.2s"
                   _hover={{ shadow: "xl", transform: "translateY(-4px)" }}
                 >
-                  <Box position="relative" pt="100%" overflow="hidden" bg={isDark ? "gray.700" : "gray.100"}>
+                  <Box
+                    position="relative"
+                    pt="100%"
+                    overflow="hidden"
+                    bg={isDark ? "gray.700" : "gray.100"}
+                  >
                     {photo.coverUrl ? (
                       <Image
                         src={photo.coverUrl}
                         alt={photo.title}
-                        position="absolute" top="0" left="0"
-                        w="full" h="full" objectFit="cover"
+                        position="absolute"
+                        top="0"
+                        left="0"
+                        w="full"
+                        h="full"
+                        objectFit="cover"
                         transition="transform 0.3s"
                         _groupHover={{ transform: "scale(1.05)" }}
                       />
                     ) : (
-                      <Flex position="absolute" top="0" left="0" w="full" h="full"
-                        align="center" justify="center" color="fg.subtle">
+                      <Flex
+                        position="absolute"
+                        top="0"
+                        left="0"
+                        w="full"
+                        h="full"
+                        align="center"
+                        justify="center"
+                        color="fg.subtle"
+                      >
                         <ImageIcon size={32} />
                       </Flex>
                     )}
                   </Box>
                   <Box p="5">
-                    <Text fontWeight="semibold" truncate mb="1">{photo.title}</Text>
+                    <Text fontWeight="semibold" truncate mb="1">
+                      {photo.title}
+                    </Text>
                     {photo.description && (
-                      <Text color="fg.muted" fontSize="sm" lineClamp={2}>{photo.description}</Text>
+                      <Text color="fg.muted" fontSize="sm" lineClamp={2}>
+                        {photo.description}
+                      </Text>
                     )}
                   </Box>
                 </Box>
@@ -458,9 +581,15 @@ const PublicAlbums: React.FC = () => {
           <Flex justify="space-between" align="center" flexWrap="wrap" gap="4">
             <HStack gap="2">
               <Box
-                w="6" h="6" rounded="md"
-                bgGradient="to-br" gradientFrom="purple.500" gradientTo="blue.500"
-                display="flex" alignItems="center" justifyContent="center"
+                w="6"
+                h="6"
+                rounded="md"
+                bgGradient="to-br"
+                gradientFrom="purple.500"
+                gradientTo="blue.500"
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
               >
                 <Zap size={12} color="white" />
               </Box>
@@ -479,7 +608,6 @@ const PublicAlbums: React.FC = () => {
           </Flex>
         </Container>
       </Box>
-
     </Box>
   );
 };

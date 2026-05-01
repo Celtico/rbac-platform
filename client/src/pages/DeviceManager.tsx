@@ -80,10 +80,10 @@ const DeviceManager: React.FC = () => {
   return (
     <Flex direction="column" gap="6">
       {/* Header */}
-      <HStack justify="space-between">
+      <Flex justify="space-between" align={{ base: "flex-start", sm: "center" }} direction={{ base: "column", sm: "row" }} gap="3">
         <HStack gap="3">
-          <Shield size={28} color="#863bff" />
-          <Heading size="lg">Dispositius Connectats</Heading>
+          <Shield size={24} color="#863bff" />
+          <Heading size={{ base: "md", md: "lg" }}>Dispositius Connectats</Heading>
         </HStack>
         {otherSessions.length > 0 && (
           <Button
@@ -92,12 +92,13 @@ const DeviceManager: React.FC = () => {
             variant="outline"
             loading={revoking === "all"}
             onClick={handleRevokeAll}
+            width={{ base: "full", sm: "auto" }}
           >
             <LogOut size={14} style={{ marginRight: "6px" }} />
             Tancar totes les altres sessions
           </Button>
         )}
-      </HStack>
+      </Flex>
 
       <Text color="fg.muted" fontSize="sm">
         Aquí pots veure tots els dispositius que han accedit al teu compte. Pots revocar qualsevol sessió no reconeguda per protegir el teu compte.
@@ -125,11 +126,11 @@ const DeviceManager: React.FC = () => {
                   </Box>
                 )}
                 <Box bg={session.isCurrent ? (mode === "light" ? "purple.50" : "purple.900") : cardBg} borderRadius="xl" p="4" boxShadow="sm" border="1px solid" borderColor={session.isCurrent ? "purple.200" : (mode === "light" ? "gray.200" : "gray.700")}>
-                  <Flex align="flex-start" justify="space-between" gap="4">
-                    <HStack gap="3" align="flex-start">
-                      <Box mt="0.5">{getDeviceIcon(session.os)}</Box>
-                      <VStack align="start" gap="0.5">
-                        <HStack gap="2">
+                  <Flex direction={{ base: "column", sm: "row" }} align={{ sm: "flex-start" }} justify="space-between" gap="3">
+                    <HStack gap="3" align="flex-start" flex="1" minW="0">
+                      <Box mt="0.5" flexShrink={0}>{getDeviceIcon(session.os)}</Box>
+                      <VStack align="start" gap="0.5" minW="0">
+                        <Flex gap="2" flexWrap="wrap" align="center">
                           <Text fontWeight="semibold" fontSize="sm">
                             {session.browser} · {session.os}
                           </Text>
@@ -139,16 +140,10 @@ const DeviceManager: React.FC = () => {
                           {session.isNewDevice && !session.isCurrent && (
                             <Badge colorPalette="orange" size="xs">Nou dispositiu</Badge>
                           )}
-                        </HStack>
-                        <Text fontSize="xs" color="fg.muted">
-                          IP: {session.ipAddress}
-                        </Text>
-                        <Text fontSize="xs" color="fg.muted">
-                          Primera connexió: {formatDate(session.firstSeen)}
-                        </Text>
-                        <Text fontSize="xs" color="fg.muted">
-                          Última activitat: {formatDate(session.lastSeen)}
-                        </Text>
+                        </Flex>
+                        <Text fontSize="xs" color="fg.muted">IP: {session.ipAddress}</Text>
+                        <Text fontSize="xs" color="fg.muted">Primera: {formatDate(session.firstSeen)}</Text>
+                        <Text fontSize="xs" color="fg.muted">Última: {formatDate(session.lastSeen)}</Text>
                       </VStack>
                     </HStack>
                     {!session.isCurrent && (
@@ -159,6 +154,7 @@ const DeviceManager: React.FC = () => {
                         loading={revoking === session.id}
                         onClick={() => handleRevoke(session.id)}
                         flexShrink={0}
+                        width={{ base: "full", sm: "auto" }}
                       >
                         <Trash2 size={14} style={{ marginRight: "4px" }} />
                         Revocar

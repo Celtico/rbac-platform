@@ -1,5 +1,5 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.ts";
 import { useTheme } from "../../context/ThemeContext.ts";
 import { LogOut, Sun, Moon, Menu as IconMenu, Zap } from "lucide-react";
@@ -12,6 +12,12 @@ const TopBar: React.FC = () => {
   const { user, logout } = useAuth();
   const { mode, toggleMode } = useTheme();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
   const initials = user?.username
     ? user.username.slice(0, 2).toUpperCase()
@@ -121,7 +127,7 @@ const TopBar: React.FC = () => {
 
         {/* Hamburger — mobile nav */}
         <Box display={{ base: "block", md: "none" }}>
-          <Menu.Root>
+          <Menu.Root open={mobileMenuOpen} onOpenChange={({ open }) => setMobileMenuOpen(open)}>
             <Menu.Trigger asChild>
               <IconButton aria-label="Navegació" variant="ghost" size="sm">
                 <IconMenu size={20} />
