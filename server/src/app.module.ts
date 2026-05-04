@@ -39,7 +39,17 @@ import { SessionValidationMiddleware } from './sessions/sessions.middleware';
     TypeOrmModule.forRoot({
       type: 'sqlite',
       database: join(__dirname, '..', '..', 'data', 'db.sqlite'),
-      entities: [User, Role, Permission, Photo, Tenant, LogEntry, UserSession, ChatConversation, ChatMessage],
+      entities: [
+        User,
+        Role,
+        Permission,
+        Photo,
+        Tenant,
+        LogEntry,
+        UserSession,
+        ChatConversation,
+        ChatMessage,
+      ],
       synchronize: true,
     }),
     ServeStaticModule.forRoot({
@@ -68,6 +78,6 @@ import { SessionValidationMiddleware } from './sessions/sessions.middleware';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(SessionValidationMiddleware).forRoutes('*');
+    consumer.apply(SessionValidationMiddleware).forRoutes('(.*)');
   }
 }

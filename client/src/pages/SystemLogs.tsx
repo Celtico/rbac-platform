@@ -100,7 +100,7 @@ const SystemLogs: React.FC = () => {
   };
 
   return (
-    <Flex direction="column" h="full" gap="4">
+    <Flex direction="column" h={{ base: "calc(100dvh - 56px)", md: "calc(100vh - 56px)" }} gap="4" overflow="hidden">
       {/* Header */}
       <HStack justify="space-between" flexWrap="wrap" gap="2">
         <HStack gap="2">

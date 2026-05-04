@@ -39,6 +39,10 @@ RUN chmod +x ./deploy.sh
 # Create uploads folder
 RUN mkdir -p /app/uploads
 
+# Embed git commit from build arg
+ARG GIT_COMMIT=unknown
+ENV GIT_COMMIT=$GIT_COMMIT
+
 # Environment variables
 ENV NODE_ENV=production
 ENV PORT=3000

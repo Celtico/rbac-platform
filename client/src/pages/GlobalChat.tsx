@@ -12,6 +12,7 @@ import {
   Badge,
   IconButton,
   Textarea,
+  Table,
 } from "@chakra-ui/react";
 import {
   Bot,
@@ -26,6 +27,17 @@ import {
   X,
   PenSquare,
 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import {
+  BarChart, LineChart, PieChart,
+  Bar, Line, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+} from "recharts";
+import {
+  ChartRoot, ChartTooltip, useChart,
+  BarListRoot, BarListContent, BarListBar, BarListValue, BarListLabel,
+} from "@chakra-ui/charts";
 import { io, Socket } from "socket.io-client";
 import {
   getChatConversations,
@@ -36,6 +48,191 @@ import {
   type ChatMessage,
 } from "../api";
 import { useTheme } from "../context/ThemeContext";
+
+/* ── Chart + Markdown helpers ───────────────────────────────────────── */
+
+type ChartDef = {
+  type: "bar" | "line" | "pie" | "barlist";
+  title?: string;
+  data: Record<string, any>[];
+  series?: { name: string; color?: string }[];
+  xKey?: string;
+};
+
+type MsgPart = { kind: "text"; content: string } | { kind: "chart"; def: ChartDef };
+
+function parseMessage(content: string): MsgPart[] {
+  const parts: MsgPart[] = [];
+  const re = /:::chart\n([\s\S]*?)\n:::/g;
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(content)) !== null) {
+    if (m.index > last) parts.push({ kind: "text", content: content.slice(last, m.index) });
+    try { parts.push({ kind: "chart", def: JSON.parse(m[1]) }); } catch { /* skip bad JSON */ }
+    last = re.lastIndex;
+  }
+  if (last < content.length) parts.push({ kind: "text", content: content.slice(last) });
+  return parts;
+}
+
+const PIE_COLORS = ["#863bff", "#a855f7", "#c084fc", "#e879f9", "#f0abfc"];
+
+function BarChartBlock({ def }: { def: ChartDef }) {
+  const series = def.series?.length
+    ? def.series
+    : [{ name: Object.keys(def.data[0] ?? {}).find(k => k !== (def.xKey ?? "name")) ?? "value", color: "purple.500" }];
+  const chart = useChart({ data: def.data, series });
+  return (
+    <Box my="3">
+      {def.title && <Text fontWeight="semibold" fontSize="sm" mb="2">{def.title}</Text>}
+      <ChartRoot chart={chart} h="220px">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={chart.data}>
+            <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.3} />
+            <XAxis dataKey={def.xKey ?? "name"} tick={{ fontSize: 11 }} />
+            <YAxis tick={{ fontSize: 11 }} width={40} />
+            <Tooltip content={<ChartTooltip />} />
+            {chart.series.map(s => (
+              <Bar key={String(s.name)} dataKey={String(s.name)} fill={chart.color(s.color)} radius={[4, 4, 0, 0]} />
+            ))}
+          </BarChart>
+        </ResponsiveContainer>
+      </ChartRoot>
+    </Box>
+  );
+}
+
+function LineChartBlock({ def }: { def: ChartDef }) {
+  const series = def.series?.length
+    ? def.series
+    : [{ name: Object.keys(def.data[0] ?? {}).find(k => k !== (def.xKey ?? "name")) ?? "value", color: "purple.500" }];
+  const chart = useChart({ data: def.data, series });
+  return (
+    <Box my="3">
+      {def.title && <Text fontWeight="semibold" fontSize="sm" mb="2">{def.title}</Text>}
+      <ChartRoot chart={chart} h="220px">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={chart.data}>
+            <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.3} />
+            <XAxis dataKey={def.xKey ?? "name"} tick={{ fontSize: 11 }} />
+            <YAxis tick={{ fontSize: 11 }} width={40} />
+            <Tooltip content={<ChartTooltip />} />
+            {chart.series.map(s => (
+              <Line key={String(s.name)} dataKey={String(s.name)} stroke={chart.color(s.color)} strokeWidth={2} dot={false} />
+            ))}
+          </LineChart>
+        </ResponsiveContainer>
+      </ChartRoot>
+    </Box>
+  );
+}
+
+function PieChartBlock({ def }: { def: ChartDef }) {
+  const valueKey = def.series?.[0]?.name ?? "value";
+  return (
+    <Box my="3">
+      {def.title && <Text fontWeight="semibold" fontSize="sm" mb="2">{def.title}</Text>}
+      <ResponsiveContainer width="100%" height={220}>
+        <PieChart>
+          <Pie data={def.data} dataKey={valueKey} nameKey={def.xKey ?? "name"} cx="50%" cy="50%" outerRadius={80} label>
+            {def.data.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+          </Pie>
+          <Tooltip />
+        </PieChart>
+      </ResponsiveContainer>
+    </Box>
+  );
+}
+
+function BarListBlock({ def }: { def: ChartDef }) {
+  const listData = def.data.map(d => ({ name: String(d[def.xKey ?? "name"] ?? ""), value: Number(d.value ?? 0) }));
+  const chart = useChart({ data: listData });
+  return (
+    <Box my="3">
+      {def.title && <Text fontWeight="semibold" fontSize="sm" mb="2">{def.title}</Text>}
+      <BarListRoot chart={chart} colorPalette="purple">
+        <BarListContent>
+          <BarListLabel title="Nom" />
+          <BarListBar tooltip />
+          <BarListValue />
+        </BarListContent>
+      </BarListRoot>
+    </Box>
+  );
+}
+
+function ChartBlock({ def }: { def: ChartDef }) {
+  if (!def?.data?.length) return null;
+  if (def.type === "line") return <LineChartBlock def={def} />;
+  if (def.type === "pie") return <PieChartBlock def={def} />;
+  if (def.type === "barlist") return <BarListBlock def={def} />;
+  return <BarChartBlock def={def} />;
+}
+
+function MessageContent({ content }: { content: string }) {
+  const parts = parseMessage(content);
+  return (
+    <>
+      {parts.map((part, i) =>
+        part.kind === "chart" ? (
+          <ChartBlock key={i} def={part.def} />
+        ) : (
+          <ReactMarkdown
+            key={i}
+            remarkPlugins={[remarkGfm]}
+            components={{
+              p: ({ children }) => <Text fontSize="sm" lineHeight="tall" mb="2">{children}</Text>,
+              strong: ({ children }) => <Text as="strong" fontWeight="semibold">{children}</Text>,
+              em: ({ children }) => <Text as="em" fontStyle="italic">{children}</Text>,
+              h1: ({ children }) => <Text fontSize="lg" fontWeight="bold" mt="3" mb="1">{children}</Text>,
+              h2: ({ children }) => <Text fontSize="md" fontWeight="bold" mt="3" mb="1">{children}</Text>,
+              h3: ({ children }) => <Text fontSize="sm" fontWeight="bold" mt="2" mb="1">{children}</Text>,
+              ul: ({ children }) => <Box as="ul" pl="5" mb="2" fontSize="sm" lineHeight="tall">{children}</Box>,
+              ol: ({ children }) => <Box as="ol" pl="5" mb="2" fontSize="sm" lineHeight="tall">{children}</Box>,
+              li: ({ children }) => <Box as="li" mb="0.5">{children}</Box>,
+              blockquote: ({ children }) => (
+                <Box borderLeft="3px solid" borderColor="purple.400" pl="3" my="2" opacity={0.8}>{children}</Box>
+              ),
+              code: ({ children, className }) => {
+                const isBlock = className?.startsWith("language-");
+                return isBlock ? (
+                  <Box
+                    as="pre" bg="gray.100" _dark={{ bg: "gray.900" }}
+                    borderRadius="md" p="3" my="2" overflowX="auto"
+                    fontSize="xs" fontFamily="mono" lineHeight="tall"
+                  >
+                    <code>{children}</code>
+                  </Box>
+                ) : (
+                  <Box
+                    as="code" bg="gray.100" _dark={{ bg: "gray.900" }}
+                    px="1" borderRadius="sm" fontSize="xs" fontFamily="mono"
+                  >
+                    {children}
+                  </Box>
+                );
+              },
+              table: ({ children }) => (
+                <Box overflowX="auto" my="2">
+                  <Table.Root size="sm" variant="outline">{children}</Table.Root>
+                </Box>
+              ),
+              thead: ({ children }) => <Table.Header>{children}</Table.Header>,
+              tbody: ({ children }) => <Table.Body>{children}</Table.Body>,
+              tr: ({ children }) => <Table.Row>{children}</Table.Row>,
+              th: ({ children }) => <Table.ColumnHeader fontSize="xs" fontWeight="semibold">{children}</Table.ColumnHeader>,
+              td: ({ children }) => <Table.Cell fontSize="xs">{children}</Table.Cell>,
+            }}
+          >
+            {part.content}
+          </ReactMarkdown>
+        )
+      )}
+    </>
+  );
+}
+
+/* ── End helpers ─────────────────────────────────────────────────────── */
 
 const EXAMPLES = [
   "Quantes fotos hi ha a la galeria?",
@@ -419,9 +616,7 @@ const GlobalChat: React.FC = () => {
                             <Bot size={14} color="white" />
                           </Box>
                           <Box flex="1" minW="0">
-                            <Text fontSize="sm" lineHeight="tall" whiteSpace="pre-wrap">
-                              {msg.content}
-                            </Text>
+                            <MessageContent content={msg.content} />
                             {msg.intent && (
                               <HStack gap="1.5" mt="2">
                                 <Zap size={11} color="#863bff" />

@@ -78,6 +78,7 @@ function saveHistory(records: DeployRecord[]): void {
 }
 
 function getCurrentCommit(cwd: string): string {
+  if (process.env.GIT_COMMIT) return process.env.GIT_COMMIT;
   try {
     return execSync('git log -1 --format="%h - %s"', { encoding: 'utf8', cwd }).trim();
   } catch {

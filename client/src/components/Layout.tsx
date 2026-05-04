@@ -68,7 +68,7 @@ const Layout: React.FC = () => {
       {/* Main content */}
       <Flex flex="1" direction="column" minW="0">
         <TopBar />
-        <Box p={hasGlobalPadding ? { base: "4", md: "8" } : "0"} flex="1" overflow="auto">
+        <Box p={hasGlobalPadding ? { base: "4", md: "8" } : "0"} flex="1" overflow={hasGlobalPadding ? "auto" : "hidden"}>
           <Outlet />
         </Box>
       </Flex>

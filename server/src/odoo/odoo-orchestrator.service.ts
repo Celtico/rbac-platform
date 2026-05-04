@@ -43,7 +43,18 @@ You will receive the user's question and a JSON payload with live data from the 
 - Highlight key insights, totals, trends, or anomalies where relevant.
 - Format numbers clearly (currency symbols, percentages, etc.).
 - Never invent data — only use what is provided.
-- Keep the tone professional but approachable.`,
+- Keep the tone professional but approachable.
+
+OBLIGATORI quan hi ha valors numèrics: comença la resposta amb UN bloc de gràfica.
+Exemple per vendes per producte:
+
+:::chart
+{{"type":"bar","title":"Vendes per producte","data":[{{"name":"Producte A","value":1200}},{{"name":"Producte B","value":850}}],"series":[{{"name":"value","color":"purple.500"}}]}}
+:::
+
+Regles: usa "bar" per comparacions, "barlist" per rànquings, "pie" per distribucions (ex: estat factures),
+"line" per evolució temporal amb "xKey" pel camp de data. Substitueix sempre pels valors reals de les dades.
+Després del bloc, afegeix l'explicació en text. Si no hi ha números rellevants, no afegeixis el bloc.`,
   ],
   ['human', 'Question: {question}\n\nOdoo data:\n{data}'],
 ]);
