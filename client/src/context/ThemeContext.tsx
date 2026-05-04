@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useColorMode } from "../components/ui/color-mode";
 import { ThemeContext } from "./ThemeContext";
-import type { ColorTheme, RadiusSize, FontFamily, FontSize } from "./ThemeContext";
+import type {
+  ColorTheme,
+  RadiusSize,
+  FontFamily,
+  FontSize,
+} from "./ThemeContext";
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -9,10 +14,10 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
   const { colorMode, toggleColorMode } = useColorMode();
 
   const [theme, setThemeState] = useState<ColorTheme>(
-    (localStorage.getItem("app-theme") as ColorTheme) || "sky"
+    (localStorage.getItem("app-theme") as ColorTheme) || "midnight"
   );
   const [radius, setRadiusState] = useState<RadiusSize>(
-    (localStorage.getItem("app-radius") as RadiusSize) || "full"
+    (localStorage.getItem("app-radius") as RadiusSize) || "md"
   );
   const [font, setFontState] = useState<FontFamily>(
     (localStorage.getItem("app-font") as FontFamily) || "system"
@@ -22,7 +27,11 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   const fontSizePxMap: Record<FontSize, string> = {
-    xs: "13px", sm: "14px", md: "16px", lg: "18px", xl: "20px",
+    xs: "13px",
+    sm: "14px",
+    md: "16px",
+    lg: "18px",
+    xl: "20px",
   };
 
   useEffect(() => {
