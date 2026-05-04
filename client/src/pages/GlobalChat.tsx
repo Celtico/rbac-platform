@@ -145,8 +145,8 @@ function PieChartBlock({ def }: { def: ChartDef }) {
 }
 
 function BarListBlock({ def }: { def: ChartDef }) {
-  const listData = def.data.map(d => ({ name: String(d[def.xKey ?? "name"] ?? ""), value: Number(d.value ?? 0) }));
-  const chart = useChart({ data: listData });
+  const listData: { name: string; value: number; href?: string }[] = def.data.map(d => ({ name: String(d[def.xKey ?? "name"] ?? ""), value: Number(d.value ?? 0) }));
+  const chart = useChart<{ name: string; value: number; href?: string }>({ data: listData });
   return (
     <Box my="3">
       {def.title && <Text fontWeight="semibold" fontSize="sm" mb="2">{def.title}</Text>}
