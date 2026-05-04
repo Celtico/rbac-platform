@@ -330,19 +330,16 @@ const METRICS = [
 
 const LiveDataSection: React.FC<{ isDark: boolean }> = ({ isDark }) => {
   const [data, setData] = useState(INITIAL_DATA);
-  const [hour, setHour] = useState(18);
   const [pulse, setPulse] = useState(false);
+  const hourRef = useRef(18);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     timerRef.current = setInterval(() => {
-      setHour(h => {
-        const next = (h + 1) % 24;
-        setData(prev => [...prev.slice(-11), genPoint(next)]);
-        setPulse(true);
-        setTimeout(() => setPulse(false), 400);
-        return next;
-      });
+      hourRef.current = (hourRef.current + 1) % 24;
+      setData(prev => [...prev.slice(-11), genPoint(hourRef.current)]);
+      setPulse(true);
+      setTimeout(() => setPulse(false), 400);
     }, 1800);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, []);
@@ -426,7 +423,7 @@ const LiveDataSection: React.FC<{ isDark: boolean }> = ({ isDark }) => {
                   color={m.color}
                   style={{ transition: "all 0.4s" }}
                 >
-                  {(last as Record<string,number>)[m.key]}{m.unit}
+                  {(last as { t: string; vendes: number; cpu: number; usuaris: number })[m.key as "vendes"|"cpu"|"usuaris"]}{m.unit}
                 </Text>
                 <Text fontSize="2xs" color="fg.muted" textTransform="uppercase" letterSpacing="wide">{m.label}</Text>
               </Box>
