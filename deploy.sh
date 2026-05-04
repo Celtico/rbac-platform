@@ -31,8 +31,11 @@ if [ -d ".git" ]; then
     echo "Actualitzant des de Git (pull origin main)..." >> "$LOG_FILE"
     git config --global --add safe.directory "$PROJECT_DIR"
     git pull origin main >> "$LOG_FILE" 2>&1
+    export GIT_COMMIT=$(git log -1 --format="%h - %s" 2>/dev/null || echo "unknown")
+    echo "Commit actual: $GIT_COMMIT" >> "$LOG_FILE"
 else
     echo "AVÍS: No s'ha trobat directori .git, saltant actualització." >> "$LOG_FILE"
+    export GIT_COMMIT="unknown"
 fi
 
 # 3. Reconstruir i reiniciar contenidors

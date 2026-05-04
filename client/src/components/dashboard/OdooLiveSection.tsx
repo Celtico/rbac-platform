@@ -85,40 +85,40 @@ const DataPanel: React.FC<DataPanelProps> = ({
         </Box>
       ) : (
         <Box overflowX="auto">
-        <Table.Root size="sm">
-          <Table.Header>
-            <Table.Row>
-              {columns.map((c) => (
-                <Table.ColumnHeader
-                  key={c.label}
-                  textAlign={c.align ?? "left"}
-                  px="5"
-                  py="2"
-                  fontSize="xs"
-                >
-                  {c.label}
-                </Table.ColumnHeader>
-              ))}
-            </Table.Row>
-          </Table.Header>
-          <Table.Body>
-            {rows.map((row, i) => (
-              <Table.Row key={i}>
+          <Table.Root size="sm">
+            <Table.Header>
+              <Table.Row>
                 {columns.map((c) => (
-                  <Table.Cell
+                  <Table.ColumnHeader
                     key={c.label}
                     textAlign={c.align ?? "left"}
                     px="5"
-                    py="3"
-                    fontSize="sm"
+                    py="2"
+                    fontSize="xs"
                   >
-                    {c.render(row)}
-                  </Table.Cell>
+                    {c.label}
+                  </Table.ColumnHeader>
                 ))}
               </Table.Row>
-            ))}
-          </Table.Body>
-        </Table.Root>
+            </Table.Header>
+            <Table.Body>
+              {rows.map((row, i) => (
+                <Table.Row key={i}>
+                  {columns.map((c) => (
+                    <Table.Cell
+                      key={c.label}
+                      textAlign={c.align ?? "left"}
+                      px="5"
+                      py="3"
+                      fontSize="sm"
+                    >
+                      {c.render(row)}
+                    </Table.Cell>
+                  ))}
+                </Table.Row>
+              ))}
+            </Table.Body>
+          </Table.Root>
         </Box>
       )}
     </Box>
@@ -139,12 +139,12 @@ const OdooLiveSection: React.FC = () => {
         ? (data as OdooRecord[])
         : (data as { data?: OdooRecord[] }).data ?? [];
 
-    odooRawData("sales", 2)
+    odooRawData("sales", 5)
       .then(({ data }) => setSales(toRows(data)))
       .catch(() => setSales([]))
       .finally(() => setLoadingSales(false));
 
-    odooRawData("invoices", 2)
+    odooRawData("invoices", 5)
       .then(({ data }) => {
         const all = toRows(data);
         setInvoices(
@@ -157,7 +157,7 @@ const OdooLiveSection: React.FC = () => {
       .catch(() => setInvoices([]))
       .finally(() => setLoadingInvoices(false));
 
-    odooRawData("crm", 2)
+    odooRawData("crm", 5)
       .then(({ data }) => setCrm(toRows(data)))
       .catch(() => setCrm([]))
       .finally(() => setLoadingCrm(false));
