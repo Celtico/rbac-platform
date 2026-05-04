@@ -11,12 +11,12 @@ export function ColorModeProvider(props: ThemeProviderProps) {
 }
 
 export function useColorMode() {
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
   const toggleColorMode = () => {
-    setTheme(theme === "light" ? "dark" : "light");
+    setTheme(resolvedTheme === "light" ? "dark" : "light");
   };
   return {
-    colorMode: theme,
+    colorMode: resolvedTheme ?? "light",
     setColorMode: setTheme,
     toggleColorMode,
   };
