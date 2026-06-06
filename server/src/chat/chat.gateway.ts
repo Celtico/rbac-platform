@@ -2,6 +2,7 @@ import {
   WebSocketGateway,
   WebSocketServer,
   SubscribeMessage,
+  OnGatewayInit,
   OnGatewayConnection,
   OnGatewayDisconnect,
   MessageBody,
@@ -12,8 +13,10 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Logger } from '@nestjs/common';
+import * as crypto from 'crypto';
 import { ChatService } from './chat.service';
 import { ChatOrchestratorService, ConversationMessage } from './chat-orchestrator.service';
+import { SessionsService } from '../sessions/sessions.service';
 import { isMasterAdmin } from '../auth/is-master-admin';
 import { User } from '../users/entities/user.entity';
 import { Tenant } from '../tenants/entities/tenant.entity';
@@ -30,7 +33,9 @@ interface JwtPayload {
   namespace: 'chat',
   cors: { origin: true, credentials: true },
 })
-export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class ChatGateway
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+{
   @WebSocketServer()
   server: Server;
 
@@ -40,27 +45,66 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly jwtService: JwtService,
     private readonly chatService: ChatService,
     private readonly orchestrator: ChatOrchestratorService,
+    private readonly sessionsService: SessionsService,
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
     @InjectRepository(Tenant)
     private readonly tenantRepo: Repository<Tenant>,
   ) {}
 
+  afterInit(server: Server) {
+    // Authenticate and authorize at the handshake so a bad/revoked token is
+    // rejected BEFORE the connection is established (no connect-then-drop).
+    server.use(async (client: Socket, next: (err?: Error) => void) => {
+      try {
+        const token = client.handshake.auth?.token as string;
+        if (!token) throw new Error('No token');
+        const payload = this.jwtService.verify<JwtPayload>(token);
+
+        // Enforce session revocation on the socket too (mirrors the HTTP
+        // SessionValidationMiddleware): a token whose session is missing or
+        // revoked — e.g. via DeviceManager — must not be able to connect.
+        const tokenHash = crypto
+          .createHash('sha256')
+          .update(token)
+          .digest('hex');
+        const session = await this.sessionsService.findByHash(tokenHash);
+        if (!session || session.isRevoked) {
+          throw new Error('Session missing or revoked');
+        }
+
+        client.data.userId = payload.sub;
+        client.data.username = payload.username;
+        client.data.roles = payload.roles ?? [];
+        client.data.permissions = payload.permissions ?? [];
+        client.data.tokenHash = tokenHash;
+        next();
+      } catch {
+        this.logger.warn(`Rejected WS handshake: ${client.id}`);
+        next(new Error('Autenticació invàlida. Torna a iniciar sessió.'));
+      }
+    });
+  }
+
   handleConnection(client: Socket) {
-    try {
-      const token = client.handshake.auth?.token as string;
-      if (!token) throw new Error('No token');
-      const payload = this.jwtService.verify<JwtPayload>(token);
-      client.data.userId = payload.sub;
-      client.data.username = payload.username;
-      client.data.roles = payload.roles ?? [];
-      client.data.permissions = payload.permissions ?? [];
-      this.logger.log(`Client connected: ${payload.username} (${client.id})`);
-    } catch {
-      this.logger.warn(`Rejected WS connection: ${client.id}`);
-      client.emit('chat:error', { message: 'Autenticació invàlida. Torna a iniciar sessió.' });
+    this.logger.log(
+      `Client connected: ${client.data.username} (${client.id})`,
+    );
+  }
+
+  /** Returns true (and disconnects the client) if the session is no longer valid. */
+  private async sessionInvalidated(client: Socket): Promise<boolean> {
+    const tokenHash: string | undefined = client.data.tokenHash;
+    if (!tokenHash) return false;
+    const session = await this.sessionsService.findByHash(tokenHash);
+    if (!session || session.isRevoked) {
+      client.emit('chat:error', {
+        message: 'La sessió ha estat revocada. Torna a iniciar sessió.',
+      });
       client.disconnect();
+      return true;
     }
+    return false;
   }
 
   handleDisconnect(client: Socket) {
@@ -88,6 +132,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { conversationId: number; message: string },
   ) {
+    // Re-check the session on every message so a revocation takes effect on an
+    // already-open socket, not just at connection time.
+    if (await this.sessionInvalidated(client)) return;
+
     const permissions: string[] = client.data.permissions ?? [];
     const roles: string[] = client.data.roles ?? [];
     const userId: number = client.data.userId;

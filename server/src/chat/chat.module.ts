@@ -11,6 +11,7 @@ import { OdooModule } from '../odoo/odoo.module';
 import { AlbumsModule } from '../albums/albums.module';
 import { SystemModule } from '../system/system.module';
 import { UsersModule } from '../users/users.module';
+import { SessionsModule } from '../sessions/sessions.module';
 import { User } from '../users/entities/user.entity';
 import { Tenant } from '../tenants/entities/tenant.entity';
 import { jwtAsyncConfig } from '../auth/jwt.config';
@@ -23,6 +24,7 @@ import { jwtAsyncConfig } from '../auth/jwt.config';
     AlbumsModule,
     SystemModule,
     forwardRef(() => UsersModule),
+    SessionsModule,
   ],
   controllers: [ChatController],
   providers: [ChatService, ChatGateway, ChatOrchestratorService],

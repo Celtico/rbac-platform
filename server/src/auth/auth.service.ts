@@ -2,6 +2,7 @@ import {
   Injectable,
   forwardRef,
   Inject,
+  Logger,
 } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
@@ -11,6 +12,8 @@ import type { Request } from 'express';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     @Inject(forwardRef(() => UsersService))
     private usersService: UsersService,
@@ -43,12 +46,16 @@ export class AuthService {
     let hasOtherActiveSessions = false;
 
     if (req) {
+      // Session creation is critical: the SessionValidationMiddleware fails
+      // closed, so a token issued without a matching session would be rejected
+      // on the next request. Surface the error instead of swallowing it.
       try {
         const result = await this.sessionsService.createSession(user.id, access_token, req);
         isNewDevice = result.isNewDevice;
         hasOtherActiveSessions = result.hasOtherActiveSessions;
-      } catch {
-        // Non-critical — continue login even if session tracking fails
+      } catch (err) {
+        this.logger.error('Failed to create session during login', err as Error);
+        throw err;
       }
     }
 
