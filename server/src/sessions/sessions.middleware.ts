@@ -17,18 +17,34 @@ export class SessionValidationMiddleware implements NestMiddleware {
       return next();
     }
 
+    // Never block the authentication endpoints themselves: a client may still
+    // hold a stale/revoked token in storage, and re-login must always work.
+    // (req.path is "/" here because the middleware is route-mounted; the full
+    // path lives in originalUrl.)
+    const url = req.originalUrl;
+    if (url.includes('/auth/login') || url.includes('/auth/google')) {
+      return next();
+    }
+
     const token = authHeader.split(' ')[1];
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
 
     const session = await this.sessionsService.findByHash(tokenHash);
-    if (session) {
-      if (session.isRevoked) {
-        throw new UnauthorizedException('La sessió ha estat revocada. Torna a iniciar sessió.');
-      }
-      // Update lastSeen (throttled internally)
-      void this.sessionsService.touchSession(token);
+    // Fail closed: a bearer token must map to a live, non-revoked session.
+    // Every issued token gets a session at login, so a missing one means the
+    // session was deleted/never registered (or the token is forged/stale).
+    if (!session) {
+      throw new UnauthorizedException(
+        'Sessió no vàlida. Torna a iniciar sessió.',
+      );
     }
-    // If session not found (e.g. first request before session is created), allow through
+    if (session.isRevoked) {
+      throw new UnauthorizedException(
+        'La sessió ha estat revocada. Torna a iniciar sessió.',
+      );
+    }
+    // Update lastSeen (throttled internally)
+    void this.sessionsService.touchSession(token);
 
     next();
   }
