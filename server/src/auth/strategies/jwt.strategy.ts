@@ -7,7 +7,9 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import type { Request } from 'express';
 import { UsersService } from '../../users/users.service';
+import { AUTH_COOKIE, getCookie } from '../cookie.util';
 
 interface JwtPayload {
   sub: number;
@@ -22,7 +24,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     private readonly usersService: UsersService,
   ) {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      // Dual-mode: accept the JWT from the Authorization header OR the
+      // HttpOnly auth cookie.
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        ExtractJwt.fromAuthHeaderAsBearerToken(),
+        (req: Request) => getCookie(req, AUTH_COOKIE),
+      ]),
       ignoreExpiration: false,
       secretOrKey: config.getOrThrow<string>('JWT_SECRET'),
     });

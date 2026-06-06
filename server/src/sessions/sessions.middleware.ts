@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import type { Request, Response, NextFunction } from 'express';
 import { SessionsService } from './sessions.service';
+import { AUTH_COOKIE, getCookie } from '../auth/cookie.util';
 import * as crypto from 'crypto';
 
 @Injectable()
@@ -12,8 +13,13 @@ export class SessionValidationMiddleware implements NestMiddleware {
   constructor(private readonly sessionsService: SessionsService) {}
 
   async use(req: Request, _res: Response, next: NextFunction) {
+    // Accept the token from the Authorization header OR the HttpOnly cookie so
+    // session revocation applies regardless of which auth transport is used.
     const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith('Bearer ')) {
+    const token = authHeader?.startsWith('Bearer ')
+      ? authHeader.split(' ')[1]
+      : getCookie(req, AUTH_COOKIE);
+    if (!token) {
       return next();
     }
 
@@ -26,7 +32,6 @@ export class SessionValidationMiddleware implements NestMiddleware {
       return next();
     }
 
-    const token = authHeader.split(' ')[1];
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
 
     const session = await this.sessionsService.findByHash(tokenHash);
