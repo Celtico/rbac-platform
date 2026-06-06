@@ -1,7 +1,13 @@
 name: album-manager
 services:
   app:
-    build: .
+    build:
+      context: .
+      args:
+        GIT_COMMIT: ${GIT_COMMIT:-unknown}
+    env_file:
+      - path: server/.env
+        required: true
     ports:
       - "3000:3000"
     volumes:

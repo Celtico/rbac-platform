@@ -1,85 +1,383 @@
-@import "tailwindcss";
-@custom-variant dark (&:where(.dark, .dark *));
-@theme {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-primary: var(--primary-color);
-  --color-secondary: var(--secondary-color);
-  --color-accent: var(--accent-color);
-  --radius-custom: var(--radius-value);
-  --color-red-50: oklch(0.971 0.013 17.38);
-  --color-red-100: oklch(0.936 0.032 17.717);
+/* ─── Border radius ─────────────────────────────────────────────────────── */
+:root {
+  --chakra-radii-sm:   0.125rem;
+  --chakra-radii-md:   0.375rem;
+  --chakra-radii-lg:   0.5rem;
+  --chakra-radii-xl:   0.75rem;
+  --chakra-radii-2xl:  1rem;
+  --chakra-radii-3xl:  1.5rem;
+  --chakra-radii-full: 9999px;
 }
 
-@layer base {
-  :root {
-    --bg-color: #f3f4f6;
-    --text-color: #111827;
-    --primary-color: #3b82f6;
-    --secondary-color: #6366f1;
-    --accent-color: #f59e0b;
-    --radius-value: 0.25rem;
-    --background: var(--bg-color);
-    --foreground: var(--text-color);
-    color-scheme: light;
-  }
+[data-radius="none"] {
+  --chakra-radii-sm:   0;
+  --chakra-radii-md:   0;
+  --chakra-radii-lg:   0;
+  --chakra-radii-xl:   0;
+  --chakra-radii-2xl:  0;
+  --chakra-radii-3xl:  0;
+  --chakra-radii-full: 0;
+}
+[data-radius="sm"] {
+  --chakra-radii-sm:   0.0625rem;
+  --chakra-radii-md:   0.125rem;
+  --chakra-radii-lg:   0.1875rem;
+  --chakra-radii-xl:   0.25rem;
+  --chakra-radii-2xl:  0.375rem;
+  --chakra-radii-3xl:  0.5rem;
+  --chakra-radii-full: 9999px;
+}
+[data-radius="md"] {
+  --chakra-radii-sm:   0.125rem;
+  --chakra-radii-md:   0.375rem;
+  --chakra-radii-lg:   0.5rem;
+  --chakra-radii-xl:   0.75rem;
+  --chakra-radii-2xl:  1rem;
+  --chakra-radii-3xl:  1.5rem;
+  --chakra-radii-full: 9999px;
+}
+[data-radius="lg"] {
+  --chakra-radii-sm:   0.25rem;
+  --chakra-radii-md:   0.5rem;
+  --chakra-radii-lg:   0.75rem;
+  --chakra-radii-xl:   1rem;
+  --chakra-radii-2xl:  1.25rem;
+  --chakra-radii-3xl:  1.75rem;
+  --chakra-radii-full: 9999px;
+}
+[data-radius="xl"] {
+  --chakra-radii-sm:   0.375rem;
+  --chakra-radii-md:   0.75rem;
+  --chakra-radii-lg:   1rem;
+  --chakra-radii-xl:   1.25rem;
+  --chakra-radii-2xl:  1.5rem;
+  --chakra-radii-3xl:  2rem;
+  --chakra-radii-full: 9999px;
+}
+[data-radius="full"] {
+  --chakra-radii-sm:   0.5rem;
+  --chakra-radii-md:   1rem;
+  --chakra-radii-lg:   1.5rem;
+  --chakra-radii-xl:   2rem;
+  --chakra-radii-2xl:  2.5rem;
+  --chakra-radii-3xl:  3rem;
+  --chakra-radii-full: 9999px;
+}
 
-  .dark {
-    --bg-color: #111827;
-    --text-color: #f9fafb;
-    --primary-color: #60a5fa;
-    --secondary-color: #818cf8;
-    --accent-color: #fbbf24;
-    --background: var(--bg-color);
-    --foreground: var(--text-color);
-    color-scheme: dark;
-  }
+/* ─── Theme colours ─────────────────────────────────────────────────────── */
+/* Each theme overrides the Chakra purple scale (sidebar / active states)   */
+/* and the blue scale (settings / highlights). --theme-active is the raw    */
+/* hex used for the bottom-nav active icon colour.                           */
 
-  /* Theme definitions */
-  [data-theme='ocean'] {
-    --primary-color: #0ea5e9;
-    --secondary-color: #0891b2;
-    --accent-color: #2dd4bf;
-  }
-  .dark[data-theme='ocean'] {
-    --primary-color: #38bdf8;
-    --secondary-color: #22d3ee;
-    --accent-color: #5eead4;
-  }
+/* 1. DEFAULT — Indigo/Purple ─────────────────────────────────────────────── */
+[data-theme="default"] {
+  --theme-active: #863bff;
+  --chakra-colors-purple-50:  #faf5ff;
+  --chakra-colors-purple-100: #f3e8ff;
+  --chakra-colors-purple-200: #e9d5ff;
+  --chakra-colors-purple-300: #d8b4fe;
+  --chakra-colors-purple-400: #c084fc;
+  --chakra-colors-purple-500: #a855f7;
+  --chakra-colors-purple-600: #9333ea;
+  --chakra-colors-purple-700: #7e22ce;
+  --chakra-colors-purple-800: #6b21a8;
+  --chakra-colors-purple-900: #581c87;
+  --chakra-colors-purple-950: #3b0764;
+  --chakra-colors-blue-500:   #3b82f6;
+  --chakra-colors-blue-600:   #2563eb;
+  /* subtle violet-tinted neutrals
+  --chakra-colors-gray-50:  #faf9fc;
+  --chakra-colors-gray-100: #f3f2f7;
+  --chakra-colors-gray-200: #e6e4ef;
+  --chakra-colors-gray-300: #d0cde3;
+  --chakra-colors-gray-400: #9c98b4;
+  --chakra-colors-gray-500: #6b6882;
+  --chakra-colors-gray-600: #4e4b61;
+  --chakra-colors-gray-700: #393648;
+  --chakra-colors-gray-800: #201e2d;
+  --chakra-colors-gray-900: #12101c; */
+}
 
-  [data-theme='forest'] {
-    --primary-color: #10b981;
-    --secondary-color: #059669;
-    --accent-color: #84cc16;
-  }
-  .dark[data-theme='forest'] {
-    --primary-color: #34d399;
-    --secondary-color: #10b981;
-    --accent-color: #bef264;
-  }
+/* 2. SKY — Sky Blue ──────────────────────────────────────────────────────── */
+[data-theme="sky"] {
+  --theme-active: #0ea5e9;
+  --chakra-colors-purple-50:  #f0f9ff;
+  --chakra-colors-purple-100: #e0f2fe;
+  --chakra-colors-purple-200: #bae6fd;
+  --chakra-colors-purple-300: #7dd3fc;
+  --chakra-colors-purple-400: #38bdf8;
+  --chakra-colors-purple-500: #0ea5e9;
+  --chakra-colors-purple-600: #0284c7;
+  --chakra-colors-purple-700: #0369a1;
+  --chakra-colors-purple-800: #075985;
+  --chakra-colors-purple-900: #0c4a6e;
+  --chakra-colors-purple-950: #082f49;
+  --chakra-colors-blue-500:   #0ea5e9;
+  --chakra-colors-blue-600:   #0284c7;
+  /* subtle blue-tinted neutrals (slate-like)
+  --chakra-colors-gray-50:  #f8fafc;
+  --chakra-colors-gray-100: #f1f5f9;
+  --chakra-colors-gray-200: #e2e8f0;
+  --chakra-colors-gray-300: #cbd5e1;
+  --chakra-colors-gray-400: #94a3b8;
+  --chakra-colors-gray-500: #64748b;
+  --chakra-colors-gray-600: #475569;
+  --chakra-colors-gray-700: #334155;
+  --chakra-colors-gray-800: #1e293b;
+  --chakra-colors-gray-900: #0f172a;*/
+}
 
-  [data-theme='sunset'] {
-    --primary-color: #f43f5e;
-    --secondary-color: #e11d48;
-    --accent-color: #f97316;
-  }
-  .dark[data-theme='sunset'] {
-    --primary-color: #fb7185;
-    --secondary-color: #f43f5e;
-    --accent-color: #fdba74;
-  }
+/* 3. OCEAN — Cyan / Teal ─────────────────────────────────────────────────── */
+[data-theme="ocean"] {
+  --theme-active: #06b6d4;
+  --chakra-colors-purple-50:  #ecfeff;
+  --chakra-colors-purple-100: #cffafe;
+  --chakra-colors-purple-200: #a5f3fc;
+  --chakra-colors-purple-300: #67e8f9;
+  --chakra-colors-purple-400: #22d3ee;
+  --chakra-colors-purple-500: #06b6d4;
+  --chakra-colors-purple-600: #0891b2;
+  --chakra-colors-purple-700: #0e7490;
+  --chakra-colors-purple-800: #155e75;
+  --chakra-colors-purple-900: #164e63;
+  --chakra-colors-purple-950: #083344;
+  --chakra-colors-blue-500:   #0891b2;
+  --chakra-colors-blue-600:   #0e7490;
+  /* subtle cyan-tinted neutrals
+  --chakra-colors-gray-50:  #f7fafb;
+  --chakra-colors-gray-100: #eef5f6;
+  --chakra-colors-gray-200: #ddeaed;
+  --chakra-colors-gray-300: #c6d8dc;
+  --chakra-colors-gray-400: #8fa4aa;
+  --chakra-colors-gray-500: #607279;
+  --chakra-colors-gray-600: #455459;
+  --chakra-colors-gray-700: #313e43;
+  --chakra-colors-gray-800: #1b2529;
+  --chakra-colors-gray-900: #0d1417;*/
+}
 
-  [data-radius='none'] { --radius-value: 0; }
-  [data-radius='sm'] { --radius-value: 0.125rem; }
-  [data-radius='md'] { --radius-value: 0.375rem; }
-  [data-radius='lg'] { --radius-value: 0.5rem; }
-  [data-radius='xl'] { --radius-value: 0.75rem; }
-  [data-radius='full'] { --radius-value: 9999px; }
+/* 4. FOREST — Emerald Green ──────────────────────────────────────────────── */
+[data-theme="forest"] {
+  --theme-active: #10b981;
+  --chakra-colors-purple-50:  #ecfdf5;
+  --chakra-colors-purple-100: #d1fae5;
+  --chakra-colors-purple-200: #a7f3d0;
+  --chakra-colors-purple-300: #6ee7b7;
+  --chakra-colors-purple-400: #34d399;
+  --chakra-colors-purple-500: #10b981;
+  --chakra-colors-purple-600: #059669;
+  --chakra-colors-purple-700: #047857;
+  --chakra-colors-purple-800: #065f46;
+  --chakra-colors-purple-900: #064e3b;
+  --chakra-colors-purple-950: #022c22;
+  --chakra-colors-blue-500:   #10b981;
+  --chakra-colors-blue-600:   #059669;
+  /* subtle green-tinted neutrals */
+  --chakra-colors-gray-50:  #f7faf8;
+  --chakra-colors-gray-100: #f0f5f1;
+  --chakra-colors-gray-200: #e1eae3;
+  --chakra-colors-gray-300: #c8d6cb;
+  --chakra-colors-gray-400: #90a595;
+  --chakra-colors-gray-500: #617568;
+  --chakra-colors-gray-600: #46564c;
+  --chakra-colors-gray-700: #333f37;
+  --chakra-colors-gray-800: #1c251f;
+  --chakra-colors-gray-900: #0e1410;
+}
 
-  body {
-    background-color: var(--bg-color);
-    color: var(--text-color);
-    font-size: 13px;
-    transition: background-color 0.2s, color 0.2s;
-  }
+/* 5. SUNSET — Rose / Pink ────────────────────────────────────────────────── */
+[data-theme="sunset"] {
+  --theme-active: #f43f5e;
+  --chakra-colors-purple-50:  #fff1f2;
+  --chakra-colors-purple-100: #ffe4e6;
+  --chakra-colors-purple-200: #fecdd3;
+  --chakra-colors-purple-300: #fda4af;
+  --chakra-colors-purple-400: #fb7185;
+  --chakra-colors-purple-500: #f43f5e;
+  --chakra-colors-purple-600: #e11d48;
+  --chakra-colors-purple-700: #be123c;
+  --chakra-colors-purple-800: #9f1239;
+  --chakra-colors-purple-900: #881337;
+  --chakra-colors-purple-950: #4c0519;
+  --chakra-colors-blue-500:   #f43f5e;
+  --chakra-colors-blue-600:   #e11d48;
+  /* subtle rose-tinted neutrals
+  --chakra-colors-gray-50:  #faf8f9;
+  --chakra-colors-gray-100: #f5f1f3;
+  --chakra-colors-gray-200: #eae3e6;
+  --chakra-colors-gray-300: #d5ccd0;
+  --chakra-colors-gray-400: #a0969b;
+  --chakra-colors-gray-500: #71676c;
+  --chakra-colors-gray-600: #534b4f;
+  --chakra-colors-gray-700: #3e383b;
+  --chakra-colors-gray-800: #241f21;
+  --chakra-colors-gray-900: #141112;*/
+}
+
+/* 6. VIOLET — Deep Violet ────────────────────────────────────────────────── */
+[data-theme="violet"] {
+  --theme-active: #8b5cf6;
+  --chakra-colors-purple-50:  #f5f3ff;
+  --chakra-colors-purple-100: #ede9fe;
+  --chakra-colors-purple-200: #ddd6fe;
+  --chakra-colors-purple-300: #c4b5fd;
+  --chakra-colors-purple-400: #a78bfa;
+  --chakra-colors-purple-500: #8b5cf6;
+  --chakra-colors-purple-600: #7c3aed;
+  --chakra-colors-purple-700: #6d28d9;
+  --chakra-colors-purple-800: #5b21b6;
+  --chakra-colors-purple-900: #4c1d95;
+  --chakra-colors-purple-950: #2e1065;
+  --chakra-colors-blue-500:   #8b5cf6;
+  --chakra-colors-blue-600:   #7c3aed;
+  /* subtle violet-tinted neutrals (stronger than default)
+  --chakra-colors-gray-50:  #f9f8ff;
+  --chakra-colors-gray-100: #f2f0fe;
+  --chakra-colors-gray-200: #e5e2fb;
+  --chakra-colors-gray-300: #cec9f4;
+  --chakra-colors-gray-400: #9994bc;
+  --chakra-colors-gray-500: #6b678e;
+  --chakra-colors-gray-600: #4e4b6a;
+  --chakra-colors-gray-700: #38364f;
+  --chakra-colors-gray-800: #201e30;
+  --chakra-colors-gray-900: #11101c;*/
+}
+
+/* 7. AMBER — Warm Amber ──────────────────────────────────────────────────── */
+[data-theme="amber"] {
+  --theme-active: #f59e0b;
+  --chakra-colors-purple-50:  #fffbeb;
+  --chakra-colors-purple-100: #fef3c7;
+  --chakra-colors-purple-200: #fde68a;
+  --chakra-colors-purple-300: #fcd34d;
+  --chakra-colors-purple-400: #fbbf24;
+  --chakra-colors-purple-500: #f59e0b;
+  --chakra-colors-purple-600: #d97706;
+  --chakra-colors-purple-700: #b45309;
+  --chakra-colors-purple-800: #92400e;
+  --chakra-colors-purple-900: #78350f;
+  --chakra-colors-purple-950: #451a03;
+  --chakra-colors-blue-500:   #f59e0b;
+  --chakra-colors-blue-600:   #d97706;
+  /* subtle warm amber-tinted neutrals
+  --chakra-colors-gray-50:  #faf9f5;
+  --chakra-colors-gray-100: #f5f3ec;
+  --chakra-colors-gray-200: #ece6d8;
+  --chakra-colors-gray-300: #d7cfbe;
+  --chakra-colors-gray-400: #a29a86;
+  --chakra-colors-gray-500: #726b5c;
+  --chakra-colors-gray-600: #544e43;
+  --chakra-colors-gray-700: #3e3930;
+  --chakra-colors-gray-800: #23201a;
+  --chakra-colors-gray-900: #14120d;*/
+}
+
+/* 8. CORAL — Orange / Coral ──────────────────────────────────────────────── */
+[data-theme="coral"] {
+  --theme-active: #f97316;
+  --chakra-colors-purple-50:  #fff7ed;
+  --chakra-colors-purple-100: #ffedd5;
+  --chakra-colors-purple-200: #fed7aa;
+  --chakra-colors-purple-300: #fdba74;
+  --chakra-colors-purple-400: #fb923c;
+  --chakra-colors-purple-500: #f97316;
+  --chakra-colors-purple-600: #ea580c;
+  --chakra-colors-purple-700: #c2410c;
+  --chakra-colors-purple-800: #9a3412;
+  --chakra-colors-purple-900: #7c2d12;
+  --chakra-colors-purple-950: #431407;
+  --chakra-colors-blue-500:   #f97316;
+  --chakra-colors-blue-600:   #ea580c;
+  /* subtle orange-tinted neutrals
+  --chakra-colors-gray-50:  #faf8f6;
+  --chakra-colors-gray-100: #f5f0eb;
+  --chakra-colors-gray-200: #ece3d9;
+  --chakra-colors-gray-300: #d7ccc1;
+  --chakra-colors-gray-400: #a29589;
+  --chakra-colors-gray-500: #72675c;
+  --chakra-colors-gray-600: #544c43;
+  --chakra-colors-gray-700: #3e3831;
+  --chakra-colors-gray-800: #23201a;
+  --chakra-colors-gray-900: #14120d;*/
+}
+
+/* 9. CRIMSON — Deep Red ──────────────────────────────────────────────────── */
+[data-theme="crimson"] {
+  --theme-active: #ef4444;
+  --chakra-colors-purple-50:  #fef2f2;
+  --chakra-colors-purple-100: #fee2e2;
+  --chakra-colors-purple-200: #fecaca;
+  --chakra-colors-purple-300: #fca5a5;
+  --chakra-colors-purple-400: #f87171;
+  --chakra-colors-purple-500: #ef4444;
+  --chakra-colors-purple-600: #dc2626;
+  --chakra-colors-purple-700: #b91c1c;
+  --chakra-colors-purple-800: #991b1b;
+  --chakra-colors-purple-900: #7f1d1d;
+  --chakra-colors-purple-950: #450a0a;
+  --chakra-colors-blue-500:   #ef4444;
+  --chakra-colors-blue-600:   #dc2626;
+  /* subtle red-tinted neutrals
+  --chakra-colors-gray-50:  #faf8f8;
+  --chakra-colors-gray-100: #f5f0f0;
+  --chakra-colors-gray-200: #ece2e2;
+  --chakra-colors-gray-300: #d6cccc;
+  --chakra-colors-gray-400: #a19595;
+  --chakra-colors-gray-500: #726666;
+  --chakra-colors-gray-600: #544b4b;
+  --chakra-colors-gray-700: #3e3737;
+  --chakra-colors-gray-800: #231e1e;
+  --chakra-colors-gray-900: #141010;*/
+}
+
+/* 10. MIDNIGHT — Navy Blue ───────────────────────────────────────────────── */
+[data-theme="midnight"] {
+  --theme-active: #1d4ed8;
+  --chakra-colors-purple-50:  #eff6ff;
+  --chakra-colors-purple-100: #dbeafe;
+  --chakra-colors-purple-200: #bfdbfe;
+  --chakra-colors-purple-300: #93c5fd;
+  --chakra-colors-purple-400: #60a5fa;
+  --chakra-colors-purple-500: #3b82f6;
+  --chakra-colors-purple-600: #2563eb;
+  --chakra-colors-purple-700: #1d4ed8;
+  --chakra-colors-purple-800: #1e40af;
+  --chakra-colors-purple-900: #1e3a8a;
+  --chakra-colors-purple-950: #172554;
+  --chakra-colors-blue-500:   #3b82f6;
+  --chakra-colors-blue-600:   #2563eb;
+  /* subtle navy-tinted neutrals
+  --chakra-colors-gray-50:  #f7f9fb;
+  --chakra-colors-gray-100: #f0f3f7;
+  --chakra-colors-gray-200: #e1e6ef;
+  --chakra-colors-gray-300: #cad2e2;
+  --chakra-colors-gray-400: #929db5;
+  --chakra-colors-gray-500: #636e87;
+  --chakra-colors-gray-600: #475163;
+  --chakra-colors-gray-700: #343c4c;
+  --chakra-colors-gray-800: #1c2233;
+  --chakra-colors-gray-900: #0e121e; */
+}
+
+/* ─── Font families ──────────────────────────────────────────────────────── */
+:root {
+  --app-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+[data-font="system"]   { --app-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+[data-font="inter"]    { --app-font: 'Inter', sans-serif; }
+[data-font="nunito"]   { --app-font: 'Nunito', sans-serif; }
+[data-font="poppins"]  { --app-font: 'Poppins', sans-serif; }
+[data-font="lato"]     { --app-font: 'Lato', sans-serif; }
+[data-font="playfair"] { --app-font: 'Playfair Display', serif; }
+[data-font="mono"]     { --app-font: 'JetBrains Mono', monospace; }
+
+/* ─── Base styles ────────────────────────────────────────────────────────── */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--app-font);
+}
+
+input, textarea, select {
+  font-size: 16px !important;
 }

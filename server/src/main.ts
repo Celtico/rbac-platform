@@ -1,11 +1,14 @@
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
+import { IoAdapter } from '@nestjs/platform-socket.io';
 import { AppModule } from './app.module';
+import { AppLoggerService } from './logger/app-logger.service';
 import * as fs from 'fs';
 import { join } from 'path';
 
 async function bootstrap() {
+  /*
   const uploadDir = join(process.cwd(), 'uploads');
   console.log(`### Checking uploads directory: ${uploadDir} ###`);
   if (!fs.existsSync(uploadDir)) {
@@ -24,16 +27,20 @@ async function bootstrap() {
   if (!fs.existsSync(dataDir)) {
     console.log(`### Creating data directory: ${dataDir} ###`);
     fs.mkdirSync(dataDir, { recursive: true });
-  }
+  }*/
 
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  app.useWebSocketAdapter(new IoAdapter(app));
+
+  const appLogger = app.get(AppLoggerService);
+  app.useLogger(appLogger);
 
   app.enableCors({
     origin: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
   app.setGlobalPrefix('api');
 
   const config = new DocumentBuilder()

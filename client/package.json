@@ -1,5 +1,5 @@
 {
-  "name": "untitled3",
+  "name": "client",
   "private": true,
   "version": "0.0.36",
   "type": "module",
@@ -11,27 +11,35 @@
     "cypress": "npx cypress open"
   },
   "dependencies": {
+    "@chakra-ui/charts": "^3.35.0",
+    "@chakra-ui/react": "^3.34.0",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
     "axios": "^1.14.0",
+    "framer-motion": "^12.38.0",
+    "jwt-decode": "^4.0.0",
     "lucide-react": "^1.7.0",
+    "next-themes": "^0.4.6",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-    "react-router-dom": "^7.13.2"
+    "react-markdown": "^10.1.0",
+    "react-router-dom": "^7.13.2",
+    "recharts": "^3.8.1",
+    "remark-gfm": "^4.0.1",
+    "socket.io-client": "^4.8.3",
+    "unsplash-js": "^7.0.20"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
-    "@tailwindcss/vite": "^4.2.2",
     "@types/node": "^24.12.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
-    "autoprefixer": "^10.4.27",
     "cypress": "^15.13.0",
     "eslint": "^9.39.4",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.4.0",
-    "postcss": "^8.5.8",
-    "tailwindcss": "^4.2.2",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.57.0",
     "vite": "^8.0.1"

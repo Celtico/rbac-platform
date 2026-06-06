@@ -1,12 +1,29 @@
 import React, { useState } from "react";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/AuthContext.ts";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
+import NewDeviceWarningModal from "../components/NewDeviceWarningModal";
+import ConcurrentSessionModal from "../components/ConcurrentSessionModal";
+import {
+  Box,
+  Button,
+  Container,
+  Field,
+  Heading,
+  Input,
+  VStack,
+  IconButton,
+  Separator,
+  Text,
+} from "@chakra-ui/react";
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [showNewDeviceModal, setShowNewDeviceModal] = useState(false);
+  const [showConcurrentModal, setShowConcurrentModal] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -15,66 +32,153 @@ const Login: React.FC = () => {
     try {
       const response = await api.post("/auth/login", { username, password });
       login(response.data.access_token, response.data.user);
-      navigate("/admin");
+
+      if (response.data.isNewDevice) {
+        setShowNewDeviceModal(true);
+      } else if (response.data.hasOtherActiveSessions) {
+        setShowConcurrentModal(true);
+      } else {
+        navigate("/admin");
+      }
     } catch (err: any) {
       setError(err.response?.data?.message || "Login failed");
     }
   };
 
+  const handleNewDeviceClose = () => {
+    setShowNewDeviceModal(false);
+    if (showConcurrentModal) {
+      // Will show concurrent modal next
+    } else {
+      navigate("/admin");
+    }
+  };
+
+  const handleConcurrentClose = () => {
+    setShowConcurrentModal(false);
+    navigate("/admin");
+  };
+
   return (
-    <div
+    <>
+      {showNewDeviceModal && (
+        <NewDeviceWarningModal onClose={handleNewDeviceClose} />
+      )}
+      {!showNewDeviceModal && showConcurrentModal && (
+        <ConcurrentSessionModal onClose={handleConcurrentClose} />
+      )}
+    <Box
       id="login-page"
-      className="flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-900 transition-colors"
+      minH="100vh"
+      display="flex"
+      alignItems="center"
+      justifyContent="center"
+      bg="bg.muted"
     >
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white dark:bg-gray-800 p-8 rounded shadow-md w-96 transition-colors"
-      >
-        <h2 className="text-2xl font-bold mb-6 text-center text-gray-800 dark:text-white">
-          Login
-        </h2>
-        {error && (
-          <div
-            id="login-error"
-            className="mb-4 p-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-sm rounded"
-          >
-            {error}
-          </div>
-        )}
-        <div className="mb-4">
-          <label className="block text-gray-700 dark:text-gray-300 mb-2">
-            Username
-          </label>
-          <input
-            id="username"
-            type="text"
-            className="w-full p-2 border dark:border-gray-700 rounded focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-900 dark:text-white"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-          />
-        </div>
-        <div className="mb-6">
-          <label className="block text-gray-700 dark:text-gray-300 mb-2">
-            Password
-          </label>
-          <input
-            id="password"
-            type="password"
-            className="w-full p-2 border dark:border-gray-700 rounded focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-900 dark:text-white"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
-        <button
-          id="login-button"
-          className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition font-semibold"
+      <Container maxW="md">
+        <Box
+          as="form"
+          onSubmit={handleSubmit}
+          bg="bg.panel"
+          p="8"
+          rounded="md"
+          shadow="md"
         >
-          Sign In
-        </button>
-      </form>
-    </div>
+          <VStack gap="6" align="stretch">
+            <Heading size="xl" textAlign="center">
+              Login
+            </Heading>
+
+            {error && (
+              <Box
+                id="login-error"
+                p="3"
+                bg="red.subtle"
+                color="red.fg"
+                rounded="sm"
+                fontSize="sm"
+              >
+                {error}
+              </Box>
+            )}
+
+            <VStack gap="4">
+              <Field.Root>
+                <Field.Label htmlFor="username">Username</Field.Label>
+                <Input
+                  id="username"
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                />
+              </Field.Root>
+
+              <Field.Root>
+                <Field.Label htmlFor="password">Password</Field.Label>
+                <Box position="relative" w="full">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    pr="10"
+                  />
+                  <IconButton
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    variant="ghost"
+                    size="sm"
+                    position="absolute"
+                    right="1"
+                    top="50%"
+                    transform="translateY(-50%)"
+                    onClick={() => setShowPassword((v) => !v)}
+                    tabIndex={-1}
+                  >
+                    {showPassword ? "🙈" : "👁"}
+                  </IconButton>
+                </Box>
+              </Field.Root>
+            </VStack>
+
+            <Button
+              id="login-button"
+              type="submit"
+              colorPalette="blue"
+              size="lg"
+              fontWeight="bold"
+            >
+              Sign In
+            </Button>
+
+            <Box position="relative" py="2">
+              <Separator />
+              <Text
+                position="absolute"
+                top="50%"
+                left="50%"
+                transform="translate(-50%, -50%)"
+                bg="bg.panel"
+                px="3"
+                fontSize="xs"
+                color="fg.muted"
+              >
+                o
+              </Text>
+            </Box>
+
+            <a href="/api/auth/google" style={{ textDecoration: "none", display: "block" }}>
+              <Button variant="outline" size="lg" width="full">
+                <Box as="span" mr="2" fontSize="lg">G</Box>
+                Continua amb Google
+              </Button>
+            </a>
+          </VStack>
+        </Box>
+      </Container>
+    </Box>
+    </>
   );
 };
 

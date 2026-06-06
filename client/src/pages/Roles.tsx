@@ -1,12 +1,32 @@
 import React, { useEffect, useState } from "react";
 import api from "../api";
-import { useAuth } from "../context/AuthContext";
-import { Plus, Edit2, Trash2 } from "lucide-react";
+import { useAuth } from "../context/AuthContext.ts";
+import { Plus, Edit2, Trash2, Shield } from "lucide-react";
+import {
+  Box,
+  Button,
+  Dialog,
+  EmptyState,
+  Flex,
+  Heading,
+  IconButton,
+  Input,
+  Stack,
+  Table,
+  Badge,
+  Field,
+  Checkbox,
+  VStack,
+  HStack,
+  Text,
+} from "@chakra-ui/react";
+import { toaster } from "../components/ui/toaster";
+import { useTheme } from "../context/ThemeContext";
 
 interface Role {
   id: number;
   name: string;
-  permissions: any[];
+  permissions: { id: number; name: string }[];
 }
 
 interface Permission {
@@ -18,7 +38,10 @@ const RolesPage: React.FC = () => {
   const [roles, setRoles] = useState<Role[]>([]);
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const { hasPermission } = useAuth();
+  const { mode } = useTheme();
   const [editing, setEditing] = useState<any | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Role | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -29,7 +52,8 @@ const RolesPage: React.FC = () => {
       setRoles(rRes.data);
       setPermissions(pRes.data);
     } catch (err) {
-      console.error(err);
+      console.error("Error fetching roles/permissions:", err);
+      toaster.create({ type: "error", title: "Error carregant rols" });
     }
   };
 
@@ -37,181 +61,322 @@ const RolesPage: React.FC = () => {
     fetchData();
   }, []);
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm("Are you sure?")) return;
-    await api.delete(`/roles/${id}`);
-    fetchData();
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await api.delete(`/roles/${deleteTarget.id}`);
+      toaster.create({ type: "success", title: `"${deleteTarget.name}" eliminat` });
+      fetchData();
+    } catch {
+      toaster.create({ type: "error", title: "Error eliminant el rol" });
+    } finally {
+      setDeleteTarget(null);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSaving(true);
     const payload = {
       name: editing.name,
       permissionIds: editing.permissionIds || [],
     };
 
-    if (editing.id) {
-      await api.patch(`/roles/${editing.id}`, payload);
-    } else {
-      await api.post("/roles", payload);
+    try {
+      if (editing.id) {
+        await api.patch(`/roles/${editing.id}`, payload);
+        toaster.create({ type: "success", title: "Rol actualitzat" });
+      } else {
+        await api.post("/roles", payload);
+        toaster.create({ type: "success", title: "Rol creat" });
+      }
+      setEditing(null);
+      fetchData();
+    } catch {
+      toaster.create({ type: "error", title: "Error desant el rol" });
+    } finally {
+      setSaving(false);
     }
-    setEditing(null);
-    fetchData();
   };
 
+  const headerBg = mode === "light" ? "gray.50" : "gray.800";
+  const borderColor = mode === "light" ? "gray.200" : "gray.700";
+
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold dark:text-white transition-colors">
-          Roles Management
-        </h1>
+    <Box>
+      <Flex justify="space-between" align="center" mb="8" wrap="wrap" gap="4">
+        <HStack gap="3">
+          <Heading size="xl">Gestió de Rols</Heading>
+          <Badge colorPalette="purple" variant="subtle" borderRadius="full" px="2">
+            {roles.length}
+          </Badge>
+        </HStack>
         {hasPermission("manage:roles") && (
-          <button
+          <Button
+            colorPalette="purple"
             onClick={() => setEditing({ name: "", permissionIds: [] })}
-            className="bg-green-500 text-white px-4 py-2 rounded flex items-center hover:bg-green-600 transition shadow-sm"
+            size="sm"
           >
-            <Plus className="w-4 h-4 mr-2" /> Add Role
-          </button>
+            <Plus size={16} />
+            <Box as="span" display={{ base: "none", sm: "inline" }} ml="2">
+              Nou Rol
+            </Box>
+          </Button>
         )}
-      </div>
+      </Flex>
 
-      {editing && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <form
-            onSubmit={handleSubmit}
-            className="bg-white dark:bg-gray-800 p-6 rounded shadow-lg w-full max-w-md transition-colors"
-          >
-            <h2 className="text-xl font-bold mb-4 dark:text-white">
-              {editing.id ? "Edit" : "Add"} Role
-            </h2>
-            <div className="space-y-4">
-              <input
-                className="w-full p-2 border dark:border-gray-700 rounded dark:bg-gray-900 dark:text-white"
-                placeholder="Role Name"
-                value={editing.name}
-                onChange={(e) =>
-                  setEditing({ ...editing, name: e.target.value })
-                }
-                required
-              />
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Permissions
-                </label>
-                <div className="space-y-1 max-h-48 overflow-y-auto border dark:border-gray-700 p-2 rounded dark:bg-gray-900">
-                  {permissions.map((perm) => (
-                    <label
-                      key={perm.id}
-                      className="flex items-center dark:text-gray-300"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={editing.permissionIds?.includes(perm.id)}
-                        onChange={(e) => {
-                          const ids = editing.permissionIds || [];
-                          if (e.target.checked) {
-                            setEditing({
-                              ...editing,
-                              permissionIds: [...ids, perm.id],
-                            });
-                          } else {
-                            setEditing({
-                              ...editing,
-                              permissionIds: ids.filter(
-                                (id: number) => id !== perm.id
-                              ),
-                            });
-                          }
-                        }}
-                        className="mr-2"
-                      />
-                      {perm.name}
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <div className="flex justify-end mt-6 space-x-2">
-              <button
-                type="button"
-                onClick={() => setEditing(null)}
-                className="px-4 py-2 text-gray-600 dark:text-gray-400"
+      <Box
+        bg="bg.panel"
+        rounded="xl"
+        shadow="sm"
+        overflowX="auto"
+        borderWidth="1px"
+        borderColor={borderColor}
+      >
+        <Table.Root size="sm">
+          <Table.Header>
+            <Table.Row bg={headerBg}>
+              <Table.ColumnHeader
+                fontSize="xs"
+                textTransform="uppercase"
+                letterSpacing="wide"
+                color="fg.muted"
+                fontWeight="semibold"
+                py="3"
+                w="12"
+                pl="4"
               >
-                Cancel
-              </button>
-              <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition">
-                Save
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      <div className="bg-white dark:bg-gray-800 rounded shadow overflow-hidden transition-colors">
-        <table className="w-full">
-          <thead className="bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                Role Name
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                Permissions
-              </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                #
+              </Table.ColumnHeader>
+              <Table.ColumnHeader
+                fontSize="xs"
+                textTransform="uppercase"
+                letterSpacing="wide"
+                color="fg.muted"
+                fontWeight="semibold"
+                py="3"
+              >
+                Nom del Rol
+              </Table.ColumnHeader>
+              <Table.ColumnHeader
+                fontSize="xs"
+                textTransform="uppercase"
+                letterSpacing="wide"
+                color="fg.muted"
+                fontWeight="semibold"
+                py="3"
+              >
+                Permisos
+              </Table.ColumnHeader>
+              <Table.ColumnHeader
+                fontSize="xs"
+                textTransform="uppercase"
+                letterSpacing="wide"
+                color="fg.muted"
+                fontWeight="semibold"
+                py="3"
+                textAlign="right"
+                pr="4"
+              >
+                Accions
+              </Table.ColumnHeader>
+            </Table.Row>
+          </Table.Header>
+          <Table.Body>
             {roles.map((role) => (
-              <tr
+              <Table.Row
                 key={role.id}
-                className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                _hover={{ bg: mode === "light" ? "gray.50" : "gray.700/40" }}
+                transition="background 0.15s"
               >
-                <td className="px-6 py-4 dark:text-gray-300 font-medium">
-                  {role.name}
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex flex-wrap gap-1">
+                <Table.Cell pl="4" color="fg.muted" fontSize="xs" w="12">
+                  {role.id}
+                </Table.Cell>
+                <Table.Cell py="3">
+                  <HStack gap="2">
+                    <Shield size={14} color="#9333ea" />
+                    <Text fontWeight="semibold" fontSize="sm">{role.name}</Text>
+                  </HStack>
+                </Table.Cell>
+                <Table.Cell py="3">
+                  <Flex gap="1.5" flexWrap="wrap">
                     {role.permissions.map((p) => (
-                      <span
+                      <Badge
                         key={p.id}
-                        className="bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 text-xs px-2 py-1 rounded"
+                        colorPalette="purple"
+                        variant="outline"
+                        size="sm"
+                        fontFamily="mono"
+                        fontSize="xs"
                       >
                         {p.name}
-                      </span>
+                      </Badge>
                     ))}
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-right space-x-2">
+                    {role.permissions.length === 0 && (
+                      <Text fontSize="xs" color="fg.muted">Sense permisos</Text>
+                    )}
+                  </Flex>
+                </Table.Cell>
+                <Table.Cell textAlign="right" pr="4" py="3">
                   {hasPermission("manage:roles") && (
-                    <>
-                      <button
+                    <HStack gap="1" justify="flex-end">
+                      <IconButton
+                        aria-label="Editar rol"
+                        variant="ghost"
+                        colorPalette="blue"
+                        size="xs"
                         onClick={() =>
                           setEditing({
                             ...role,
                             permissionIds: role.permissions.map((p) => p.id),
                           })
                         }
-                        className="text-blue-500 hover:text-blue-700 dark:hover:text-blue-400 transition-colors"
                       >
-                        <Edit2 className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(role.id)}
-                        className="text-red-500 hover:text-red-700 dark:hover:text-red-400 transition-colors"
+                        <Edit2 size={13} />
+                      </IconButton>
+                      <IconButton
+                        aria-label="Eliminar rol"
+                        variant="ghost"
+                        colorPalette="red"
+                        size="xs"
+                        onClick={() => setDeleteTarget(role)}
                       >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </>
+                        <Trash2 size={13} />
+                      </IconButton>
+                    </HStack>
                   )}
-                </td>
-              </tr>
+                </Table.Cell>
+              </Table.Row>
             ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+          </Table.Body>
+        </Table.Root>
+        {roles.length === 0 && (
+          <EmptyState.Root py="12">
+            <EmptyState.Content>
+              <EmptyState.Indicator>
+                <Shield size={32} />
+              </EmptyState.Indicator>
+              <EmptyState.Title>Cap rol</EmptyState.Title>
+              <EmptyState.Description>
+                Crea el primer rol per gestionar els permisos.
+              </EmptyState.Description>
+            </EmptyState.Content>
+          </EmptyState.Root>
+        )}
+      </Box>
+
+      {/* Edit / Create modal */}
+      <Dialog.Root
+        open={!!editing}
+        onOpenChange={({ open }) => { if (!open) setEditing(null); }}
+      >
+        <Dialog.Backdrop />
+        <Dialog.Positioner>
+          <Dialog.Content>
+            <Dialog.Header>
+              <Dialog.Title>{editing?.id ? "Editar" : "Nou"} Rol</Dialog.Title>
+              <Dialog.CloseTrigger />
+            </Dialog.Header>
+            <Dialog.Body>
+              <form id="role-form" onSubmit={handleSubmit}>
+                <VStack gap="4" align="stretch">
+                  <Field.Root>
+                    <Field.Label>Nom del Rol</Field.Label>
+                    <Input
+                      placeholder="Nom del rol"
+                      value={editing?.name || ""}
+                      onChange={(e) =>
+                        setEditing({ ...editing, name: e.target.value })
+                      }
+                      required
+                    />
+                  </Field.Root>
+
+                  <Box>
+                    <Text fontWeight="medium" mb="2" fontSize="sm">
+                      Permisos
+                    </Text>
+                    <Stack
+                      gap="2"
+                      maxH="48"
+                      overflowY="auto"
+                      p="2"
+                      borderWidth="1px"
+                      rounded="md"
+                    >
+                      {permissions.map((perm) => (
+                        <Checkbox.Root
+                          key={perm.id}
+                          checked={editing?.permissionIds?.includes(perm.id)}
+                          onCheckedChange={(details) => {
+                            const ids = editing?.permissionIds || [];
+                            if (details.checked) {
+                              setEditing({ ...editing, permissionIds: [...ids, perm.id] });
+                            } else {
+                              setEditing({
+                                ...editing,
+                                permissionIds: ids.filter((id: number) => id !== perm.id),
+                              });
+                            }
+                          }}
+                        >
+                          <Checkbox.HiddenInput />
+                          <Checkbox.Control>
+                            <Checkbox.Indicator />
+                          </Checkbox.Control>
+                          <Checkbox.Label fontSize="sm" fontFamily="mono">{perm.name}</Checkbox.Label>
+                        </Checkbox.Root>
+                      ))}
+                    </Stack>
+                  </Box>
+                </VStack>
+              </form>
+            </Dialog.Body>
+            <Dialog.Footer>
+              <Button variant="ghost" onClick={() => setEditing(null)}>
+                Cancel·lar
+              </Button>
+              <Button
+                type="submit"
+                form="role-form"
+                colorPalette="purple"
+                loading={saving}
+              >
+                Desar
+              </Button>
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Dialog.Root>
+
+      {/* Delete confirmation */}
+      <Dialog.Root
+        open={!!deleteTarget}
+        onOpenChange={({ open }) => { if (!open) setDeleteTarget(null); }}
+        role="alertdialog"
+      >
+        <Dialog.Backdrop />
+        <Dialog.Positioner>
+          <Dialog.Content>
+            <Dialog.Header>
+              <Dialog.Title>Eliminar Rol</Dialog.Title>
+            </Dialog.Header>
+            <Dialog.Body>
+              Segur que vols eliminar el rol{" "}
+              <strong>{deleteTarget?.name}</strong>? Aquesta acció no es pot desfer.
+            </Dialog.Body>
+            <Dialog.Footer>
+              <Button variant="outline" onClick={() => setDeleteTarget(null)}>
+                Cancel·lar
+              </Button>
+              <Button colorPalette="red" onClick={handleDelete} ml="2">
+                Eliminar
+              </Button>
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Dialog.Root>
+    </Box>
   );
 };
 

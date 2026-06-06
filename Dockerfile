@@ -5,6 +5,7 @@ WORKDIR /app/client
 COPY client/package*.json ./
 RUN npm install
 COPY client/ ./
+COPY server/package.json /app/server/package.json
 RUN npm run build
 
 # 2. Build Backend
@@ -37,6 +38,10 @@ RUN chmod +x ./deploy.sh
 
 # Create uploads folder
 RUN mkdir -p /app/uploads
+
+# Embed git commit from build arg
+ARG GIT_COMMIT=unknown
+ENV GIT_COMMIT=$GIT_COMMIT
 
 # Environment variables
 ENV NODE_ENV=production

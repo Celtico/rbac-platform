@@ -1,36 +1,39 @@
-import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "./context/AuthContext";
-import { ThemeProvider } from "./context/ThemeContext";
+import { AuthProvider } from "./context/AuthContext.tsx";
+import { ThemeProvider } from "./context/ThemeContext.tsx";
+import { NavConfigProvider } from "./context/NavConfigContext.tsx";
+import { Toaster } from "./components/ui/toaster";
 import Layout from "./components/Layout";
+import ProtectedRoute from "./components/ProtectedRoute";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Albums from "./pages/Albums";
 import Users from "./pages/Users";
 import Roles from "./pages/Roles";
 import Permissions from "./pages/Permissions";
-import Settings from "./pages/Settings";
+import SettingsStyles from "./pages/SettingsStyles";
+import SettingsDeploy from "./pages/SettingsDeploy";
+import SettingsSidebar from "./pages/SettingsSidebar";
+import Tenants from "./pages/Tenants";
+import AuthCallback from "./pages/AuthCallback";
 import PublicAlbums from "./pages/PublicAlbums";
-
-const ProtectedRoute: React.FC<{
-  children: React.ReactNode;
-  permission?: string;
-}> = ({ children, permission }) => {
-  const { user, hasPermission } = useAuth();
-  if (!user) return <Navigate to="/login" />;
-  if (permission && !hasPermission(permission)) return <Navigate to="/admin" />;
-  return <>{children}</>;
-};
+import GlobalChat from "./pages/GlobalChat";
+import SystemLogs from "./pages/SystemLogs";
+import DeviceManager from "./pages/DeviceManager";
+import ServerStats from "./pages/ServerStats";
+import OdooManager from "./pages/OdooManager";
 
 function App() {
-  console.log("App Rendering");
   return (
     <ThemeProvider>
+      <NavConfigProvider>
       <AuthProvider>
+        <Toaster />
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<PublicAlbums />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/admin" element={<Layout />}>
               <Route
                 index
@@ -41,20 +44,41 @@ function App() {
                 }
               />
               <Route
-                path="albums"
+                path="photos"
                 element={
-                  <ProtectedRoute permission="read:albums">
+                  <ProtectedRoute permission="read:photos">
                     <Albums />
                   </ProtectedRoute>
                 }
               />
               <Route
-                path="settings"
+                path="settings/styles"
                 element={
                   <ProtectedRoute>
-                    <Settings />
+                    <SettingsStyles />
                   </ProtectedRoute>
                 }
+              />
+              <Route
+                path="settings/deploy"
+                element={
+                  <ProtectedRoute>
+                    <SettingsDeploy />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="settings/sidebar"
+                element={
+                  <ProtectedRoute>
+                    <SettingsSidebar />
+                  </ProtectedRoute>
+                }
+              />
+              {/* Legacy redirect */}
+              <Route
+                path="settings"
+                element={<Navigate to="/admin/settings/styles" replace />}
               />
               <Route
                 path="users"
@@ -80,6 +104,54 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="chat"
+                element={
+                  <ProtectedRoute permission="use:chat">
+                    <GlobalChat />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="logs"
+                element={
+                  <ProtectedRoute permission="read:logsystem">
+                    <SystemLogs />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="settings/devices"
+                element={
+                  <ProtectedRoute>
+                    <DeviceManager />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="tenants"
+                element={
+                  <ProtectedRoute permission="read:tenants">
+                    <Tenants />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="system/stats"
+                element={
+                  <ProtectedRoute permission="read:logsystem">
+                    <ServerStats />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="odoo"
+                element={
+                  <ProtectedRoute permission="use:ai">
+                    <OdooManager />
+                  </ProtectedRoute>
+                }
+              />
               {/* Fallback for unknown routes inside /admin */}
               <Route path="*" element={<Navigate to="/admin" />} />
             </Route>
@@ -88,6 +160,7 @@ function App() {
           </Routes>
         </BrowserRouter>
       </AuthProvider>
+      </NavConfigProvider>
     </ThemeProvider>
   );
 }

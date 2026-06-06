@@ -1,82 +1,80 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
-
-export type ColorTheme = "default" | "ocean" | "forest" | "sunset";
-export type RadiusSize = "none" | "sm" | "md" | "lg" | "xl" | "full";
-type Mode = "light" | "dark";
-
-interface ThemeContextType {
-  mode: Mode;
-  theme: ColorTheme;
-  radius: RadiusSize;
-  toggleMode: () => void;
-  setTheme: (theme: ColorTheme) => void;
-  setRadius: (radius: RadiusSize) => void;
-}
-
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+import React, { useState, useEffect } from "react";
+import { useColorMode } from "../components/ui/color-mode";
+import { ThemeContext } from "./ThemeContext";
+import type {
+  ColorTheme,
+  RadiusSize,
+  FontFamily,
+  FontSize,
+} from "./ThemeContext";
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [mode, setMode] = useState<Mode>(() => {
-    const savedMode = localStorage.getItem("theme-mode");
-    if (savedMode === "dark" || savedMode === "light") return savedMode;
-    return window.matchMedia("(prefers-color-scheme: dark)").matches
-      ? "dark"
-      : "light";
-  });
+  const { colorMode, toggleColorMode } = useColorMode();
 
-  const [theme, setThemeState] = useState<ColorTheme>(() => {
-    return (localStorage.getItem("theme-color") as ColorTheme) || "default";
-  });
+  const [theme, setThemeState] = useState<ColorTheme>(
+    (localStorage.getItem("app-theme") as ColorTheme) || "midnight"
+  );
+  const [radius, setRadiusState] = useState<RadiusSize>(
+    (localStorage.getItem("app-radius") as RadiusSize) || "md"
+  );
+  const [font, setFontState] = useState<FontFamily>(
+    (localStorage.getItem("app-font") as FontFamily) || "system"
+  );
+  const [fontSize, setFontSizeState] = useState<FontSize>(
+    (localStorage.getItem("app-font-size") as FontSize) || "md"
+  );
 
-  const [radius, setRadiusState] = useState<RadiusSize>(() => {
-    return (localStorage.getItem("theme-radius") as RadiusSize) || "md";
-  });
+  const fontSizePxMap: Record<FontSize, string> = {
+    xs: "13px",
+    sm: "14px",
+    md: "16px",
+    lg: "18px",
+    xl: "20px",
+  };
 
   useEffect(() => {
-    const root = window.document.documentElement;
+    localStorage.setItem("app-theme", theme);
+    document.documentElement.setAttribute("data-theme", theme);
+  }, [theme]);
 
-    // Manage Dark Mode
-    if (mode === "dark") {
-      root.classList.add("dark");
-      root.classList.remove("light");
-    } else {
-      root.classList.remove("dark");
-      root.classList.add("light");
-    }
-    localStorage.setItem("theme-mode", mode);
+  useEffect(() => {
+    localStorage.setItem("app-radius", radius);
+    document.documentElement.setAttribute("data-radius", radius);
+  }, [radius]);
 
-    // Manage Color Theme
-    root.setAttribute("data-theme", theme);
-    localStorage.setItem("theme-color", theme);
+  useEffect(() => {
+    localStorage.setItem("app-font", font);
+    document.documentElement.setAttribute("data-font", font);
+  }, [font]);
 
-    // Manage Radius
-    root.setAttribute("data-radius", radius);
-    localStorage.setItem("theme-radius", radius);
-  }, [mode, theme, radius]);
-
-  const toggleMode = () => {
-    setMode((prev) => (prev === "light" ? "dark" : "light"));
-  };
+  useEffect(() => {
+    localStorage.setItem("app-font-size", fontSize);
+    document.documentElement.style.fontSize = fontSizePxMap[fontSize];
+  }, [fontSize]);
 
   const setTheme = (newTheme: ColorTheme) => setThemeState(newTheme);
   const setRadius = (newRadius: RadiusSize) => setRadiusState(newRadius);
+  const setFont = (newFont: FontFamily) => setFontState(newFont);
+  const setFontSize = (newSize: FontSize) => setFontSizeState(newSize);
 
   return (
     <ThemeContext.Provider
-      value={{ mode, theme, radius, toggleMode, setTheme, setRadius }}
+      value={{
+        mode: colorMode as "light" | "dark",
+        theme,
+        radius,
+        font,
+        fontSize,
+        toggleMode: toggleColorMode,
+        setTheme,
+        setRadius,
+        setFont,
+        setFontSize,
+      }}
     >
       {children}
     </ThemeContext.Provider>
   );
-};
-
-// eslint-disable-next-line react-refresh/only-export-components
-export const useTheme = () => {
-  const context = useContext(ThemeContext);
-  if (context === undefined) {
-    throw new Error("useTheme must be used within a ThemeProvider");
-  }
-  return context;
 };
