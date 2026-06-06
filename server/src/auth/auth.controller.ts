@@ -41,6 +41,8 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   // Stricter limit on login to slow credential brute-forcing: 5 attempts / minute.
+  // @Public skips the global JWT guard (login is authenticated by LocalAuthGuard).
+  @Public()
   @Throttle({ default: { ttl: 60000, limit: 5 } })
   @UseGuards(LocalAuthGuard)
   @Post('login')
@@ -77,6 +79,7 @@ export class AuthController {
     return req.user;
   }
 
+  @Public()
   @Get('google')
   @UseGuards(GoogleAuthGuard)
   @ApiOperation({ summary: 'Redirect to Google OAuth' })
@@ -84,6 +87,7 @@ export class AuthController {
     // Passport handles the redirect
   }
 
+  @Public()
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
   @ApiOperation({ summary: 'Google OAuth callback' })

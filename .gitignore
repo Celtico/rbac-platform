@@ -2,6 +2,10 @@ node_modules/
 dist/
 db.sqlite
 
+# User-uploaded images are runtime data, not source — served from a volume.
+/uploads/*
+!/uploads/.gitkeep
+
 # Variables d'entorn i secrets — mai a git
 .env
 .env.local

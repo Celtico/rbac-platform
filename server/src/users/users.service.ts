@@ -12,6 +12,9 @@ import { Role } from '../roles/entities/role.entity';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 
+// bcrypt cost factor (raised from 10 to 12 to keep pace with hardware).
+const SALT_ROUNDS = 12;
+
 @Injectable()
 export class UsersService {
   constructor(
@@ -23,7 +26,7 @@ export class UsersService {
 
   async create(createUserDto: CreateUserDto) {
     const { password, roleIds, ...rest } = createUserDto;
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
     const user = this.usersRepository.create({
       ...rest,
       password: hashedPassword,
@@ -85,7 +88,7 @@ export class UsersService {
     const newUser = this.usersRepository.create({
       username: profile.email,
       googleId: profile.googleId,
-      password: await bcrypt.hash(crypto.randomUUID(), 10),
+      password: await bcrypt.hash(crypto.randomUUID(), SALT_ROUNDS),
       roles: invitatRole ? [invitatRole] : [],
     });
     return this.usersRepository.save(newUser);
@@ -114,7 +117,7 @@ export class UsersService {
     if (!user) throw new NotFoundException(`User #${id} not found`);
 
     if (password) {
-      user.password = await bcrypt.hash(password, 10);
+      user.password = await bcrypt.hash(password, SALT_ROUNDS);
     }
 
     if (roleIds) {

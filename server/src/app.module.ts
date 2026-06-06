@@ -3,6 +3,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+import { RolesGuard } from './auth/guards/roles.guard';
 import { join } from 'path';
 import { AppController } from './app.controller';
 import { DeployController } from './deploy/deploy.controller';
@@ -82,7 +84,12 @@ import { SessionValidationMiddleware } from './sessions/sessions.middleware';
   providers: [
     AppService,
     SeedService,
+    // Global guards (order matters): rate-limit → authenticate (JWT, honours
+    // @Public) → authorize (roles/permissions). Routes are protected by default;
+    // opt out with @Public(). Per-controller @UseGuards remain as belt-and-braces.
     { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: RolesGuard },
   ],
 })
 export class AppModule implements NestModule {

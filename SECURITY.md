@@ -147,8 +147,8 @@ Es va muntar el backend en local amb una **BD nova de prova** (la BD original es
 ### [x] B2 · Swagger exposat públicament en producció — ✅ Resolt (MR !31)
 - **On:** `main.ts:46-53`. → Desactivar `/api/docs` quan `NODE_ENV=production` o protegir-lo.
 
-### [ ] B3 · bcrypt amb cost 10
-- **On:** `users/users.service.ts:22,84,108`. → Pujar a 12 i fer-ho configurable.
+### [x] B3 · bcrypt amb cost 10 — ✅ Resolt (MR !43, integració)
+- **On:** `users/users.service.ts`. ✅ Cost pujat a 12 (constant `SALT_ROUNDS`).
 
 ### [ ] B4 · Càrregues LLM ineficients (cost de tokens i latència)
 - **On:** `chat-orchestrator.service.ts:405-413` (carrega 200 àlbums i els passa sencers a l'LLM), `odoo/odoo-client.service.ts:315-336` (`getMostSoldProduct` baixa 200 línies i agrega en JS). → Filtrar per intenció i limitar a N petit; usar `read_group` d'Odoo.
@@ -162,11 +162,11 @@ Es va muntar el backend en local amb una **BD nova de prova** (la BD original es
 ### [ ] B7 · Restes de depuració i tipatge feble
 - **On:** `client/src/context/AuthContext.tsx:11`, `client/src/main.tsx`. `console.log` deixats; ús abundant de `any`; `key={i}` en taules. → Netejar i tipar.
 
-### [ ] B8 · `uploads/` versionat a git
-- **On:** repo arrel (`uploads/`, 16 fitxers). → Treure del control de versions (`.gitignore`) i servir des d'emmagatzematge persistent.
+### [x] B8 · `uploads/` versionat a git — ✅ Resolt (MR !43, integració)
+- **On:** repo arrel. ✅ Tret del control de versions (`/uploads/*` a `.gitignore`, només `.gitkeep`); els fitxers físics es mantenen i se serveixen del volum.
 
-### [ ] B9 · Sense guard JWT global
-- **On:** guards aplicats manualment per controlador. Un controlador nou que oblidi `@UseGuards` queda obert. → Registrar `JwtAuthGuard`+`RolesGuard` com a `APP_GUARD` amb opt-out `@Public()`.
+### [x] B9 · Sense guard JWT global — ✅ Resolt (MR !43, integració)
+- **On:** `app.module.ts`. ✅ `JwtAuthGuard`+`RolesGuard` registrats com a `APP_GUARD` (després del `ThrottlerGuard`); rutes protegides per defecte amb opt-out `@Public()` (login, OAuth, exchange, logout, stream SSE, àlbums públics, root). Verificat: públiques OK sense token, protegides 401 sense token / 200 amb.
 
 ---
 
