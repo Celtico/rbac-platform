@@ -88,10 +88,11 @@ Es va muntar el backend en local amb una **BD nova de prova** (la BD original es
 
 ## 🟡 Mitjans
 
-### [ ] M1 · Permisos/rols dins del JWT no es refresquen
-- **On:** `auth/strategies/jwt.strategy.ts:16-23`, `auth/auth.service.ts:34-40`
-- **Risc:** `validate()` retorna rols/permisos del payload del token sense rellegir la BD. Revocar un rol no té efecte fins que el token expira (1 dia).
-- **Correcció:** Carregar rols/permisos frescos de la BD a `JwtStrategy.validate`, o usar tokens de vida curta amb refresh tokens.
+### [x] M1 · Permisos/rols dins del JWT no es refresquen — ✅ Resolt (MR !41, rutes HTTP)
+- **On:** `auth/strategies/jwt.strategy.ts`
+- **Risc:** `validate()` retornava rols/permisos del payload del token sense rellegir la BD. Revocar un rol no tenia efecte fins que el token expirava (1 dia).
+- ✅ **Fet:** `JwtStrategy.validate` carrega l'usuari de la BD i en deriva rols/permisos frescos a cada petició; rebutja tokens d'usuaris eliminats. Verificat en viu.
+- ⏳ **Pendent (menor):** el gateway WebSocket encara usa els permisos del payload (mitigat per la revalidació de sessió d'A1/A2).
 
 ### [~] M2 · Token JWT a la query string (SSE i callback OAuth) — 🟡 Parcial (MR !39)
 - **On:** `logger/logs.controller.ts`, `auth/auth.controller.ts:57-59`, `client/src/pages/AuthCallback.tsx:11-19`
