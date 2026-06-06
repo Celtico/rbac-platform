@@ -11,9 +11,9 @@ import {
   Logger,
   Request,
 } from '@nestjs/common';
-import { execSync, execFileSync, spawn } from 'child_process';
-import { join } from 'path';
-import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { execSync, execFileSync } from 'child_process';
+import { join, dirname } from 'path';
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Permissions } from '../auth/decorators/roles.decorator';
@@ -28,14 +28,13 @@ interface DeployRecord {
   status: 'success' | 'pending' | 'rollback';
 }
 
-// Ordered by preference: data volume first (Docker, always a directory mount → reliable),
-// then legacy paths, then local-dev fallback
+// Writable locations only (the host repo is now mounted read-only, so it must
+// NOT be a write target). The ./data volume is the canonical store.
 const HISTORY_PATHS = [
-  '/app/data/deploy-history.json',           // Docker: ./data volume (persistent directory mount)
-  '/app/deploy-history.json',                // Docker: legacy file-level mount
-  '/app/album-manager/deploy-history.json',  // legacy
-  join(__dirname, '..', '..', 'deploy-history.json'), // local dev (server/dist/ or server/src/)
-  join(process.cwd(), 'deploy-history.json'), // last-resort fallback
+  '/app/data/deploy-history.json',                    // Docker: ./data volume
+  join(process.cwd(), 'data', 'deploy-history.json'), // dev: <repo>/data
+  join(__dirname, '..', '..', 'data', 'deploy-history.json'),
+  join(process.cwd(), 'deploy-history.json'),         // last-resort fallback
   '/tmp/deploy-history.json',
 ];
 
@@ -78,6 +77,40 @@ function saveHistory(records: DeployRecord[]): void {
   }
 }
 
+// The web app has NO Docker access. A deploy is requested by writing this file
+// to the shared ./data volume; deploy-watcher.sh on the HOST consumes it and
+// performs the privileged build/restart from git origin. See DEPLOY.md.
+const DEPLOY_REQUEST_PATHS = [
+  '/app/data/deploy-request.json',
+  join(__dirname, '..', '..', 'data', 'deploy-request.json'),
+  join(process.cwd(), 'data', 'deploy-request.json'),
+  '/tmp/deploy-request.json',
+];
+
+function writeDeployRequest(payload: {
+  type: 'deploy' | 'rollback';
+  commit?: string;
+  requestedBy: string;
+}): string {
+  const body = JSON.stringify(
+    { ...payload, requestedAt: new Date().toISOString() },
+    null,
+    2,
+  );
+  for (const p of DEPLOY_REQUEST_PATHS) {
+    try {
+      mkdirSync(dirname(p), { recursive: true });
+      writeFileSync(p, body);
+      return p;
+    } catch {
+      /* try next location */
+    }
+  }
+  throw new InternalServerErrorException(
+    'No s\'ha pogut registrar la sol·licitud de desplegament.',
+  );
+}
+
 function getCurrentCommit(cwd: string): string {
   if (process.env.GIT_COMMIT) return process.env.GIT_COMMIT;
   try {
@@ -95,15 +128,6 @@ function findGitDir(): string | null {
   return null;
 }
 
-function findScriptPath(): string | null {
-  const paths = [
-    join(__dirname, '..', '..', 'deploy.sh'),
-    join(process.cwd(), 'deploy.sh'),
-    join(process.cwd(), '..', 'deploy.sh'),
-  ];
-  return paths.find(existsSync) ?? null;
-}
-
 @ApiTags('deploy')
 @ApiBearerAuth()
 @Controller('deploy')
@@ -113,14 +137,10 @@ export class DeployController {
 
   @Post()
   @Permissions('manage:deploy')
-  @ApiOperation({ summary: 'Executa el script de desplegament' })
+  @ApiOperation({ summary: 'Sol·licita un desplegament (el processa el host)' })
   deploy(@Request() req: { user: { username: string } }) {
-    const scriptPath = findScriptPath();
-    if (!scriptPath) {
-      throw new InternalServerErrorException('Script de desplegament no trobat.');
-    }
-
-    // Save history record before deploying
+    // Save history record (kept as "pending" — the host watcher does the work;
+    // we no longer optimistically report success from here).
     const gitDir = findGitDir();
     const commit = gitDir ? getCurrentCommit(gitDir) : 'unknown';
     let version = 'unknown';
@@ -147,25 +167,15 @@ export class DeployController {
     history.unshift(record);
     saveHistory(history);
 
-    this.logger.log(`Iniciant desplegament en segon pla: ${scriptPath}`);
-    const scriptDir = join(scriptPath, '..');
-
-    setTimeout(() => {
-      const subprocess = spawn('bash', [scriptPath], {
-        cwd: scriptDir,
-        detached: true,
-        stdio: 'ignore',
-      });
-      subprocess.unref();
-
-      // Mark as success (optimistic — script runs detached)
-      const updated = loadHistory();
-      const rec = updated.find((r) => r.id === record.id);
-      if (rec) { rec.status = 'success'; saveHistory(updated); }
-    }, 500);
+    const requestPath = writeDeployRequest({
+      type: 'deploy',
+      requestedBy: req.user?.username ?? 'unknown',
+    });
+    this.logger.log(`Sol·licitud de desplegament registrada a ${requestPath}`);
 
     return {
-      message: "El desplegament s'ha iniciat correctament. El servidor es reiniciarà en breu.",
+      message:
+        "Sol·licitud de desplegament registrada. El host la processarà en breu i el servidor es reiniciarà.",
     };
   }
 
@@ -182,21 +192,15 @@ export class DeployController {
       throw new BadRequestException('Hash de commit no vàlid.');
     }
 
-    const scriptPath = findScriptPath();
-    if (!scriptPath) {
-      throw new InternalServerErrorException('Script de desplegament no trobat.');
-    }
-
+    // Best-effort existence check if the repo is readable from here; the host
+    // watcher re-validates the hash and performs the authoritative checkout.
     const gitDir = findGitDir();
-    if (!gitDir) {
-      throw new NotFoundException('Repositori git no trobat.');
-    }
-
-    // Validate commit exists (execFileSync: sense shell, sense interpolació)
-    try {
-      execFileSync('git', ['cat-file', '-t', commitHash], { cwd: gitDir, stdio: 'pipe' });
-    } catch {
-      throw new NotFoundException(`Commit "${commitHash}" no trobat al repositori.`);
+    if (gitDir) {
+      try {
+        execFileSync('git', ['cat-file', '-t', commitHash], { cwd: gitDir, stdio: 'pipe' });
+      } catch {
+        throw new NotFoundException(`Commit "${commitHash}" no trobat al repositori.`);
+      }
     }
 
     const record: DeployRecord = {
@@ -211,25 +215,15 @@ export class DeployController {
     history.unshift(record);
     saveHistory(history);
 
-    this.logger.log(`Iniciant rollback al commit ${commitHash}`);
-    const scriptDir = join(scriptPath, '..');
-
-    setTimeout(() => {
-      try {
-        execFileSync('git', ['checkout', commitHash], { cwd: gitDir, stdio: 'pipe' });
-      } catch (e) {
-        this.logger.error(`Error fent git checkout: ${e}`);
-      }
-      const subprocess = spawn('bash', [scriptPath], {
-        cwd: scriptDir,
-        detached: true,
-        stdio: 'ignore',
-      });
-      subprocess.unref();
-    }, 500);
+    const requestPath = writeDeployRequest({
+      type: 'rollback',
+      commit: commitHash,
+      requestedBy: req.user?.username ?? 'unknown',
+    });
+    this.logger.log(`Sol·licitud de rollback a ${commitHash} registrada a ${requestPath}`);
 
     return {
-      message: `Rollback al commit ${commitHash} iniciat. El servidor es reiniciarà en breu.`,
+      message: `Sol·licitud de rollback al commit ${commitHash} registrada. El host la processarà en breu.`,
     };
   }
 
@@ -245,6 +239,8 @@ export class DeployController {
   @ApiOperation({ summary: 'Obté els logs del darrer desplegament' })
   getLogs() {
     const pathsToTry = [
+      '/app/data/deploy.log', // shared volume — where deploy-watcher.sh writes
+      join(process.cwd(), 'data', 'deploy.log'),
       join(process.cwd(), 'deploy.log'),
       '/app/album-manager/deploy.log',
       '/app/deploy.log',
