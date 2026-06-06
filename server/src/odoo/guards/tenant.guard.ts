@@ -9,6 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Tenant } from '../../tenants/entities/tenant.entity';
+import { decryptSecret } from '../../tenants/tenant-crypto';
 
 export interface OdooConfig {
   url: string;
@@ -62,7 +63,7 @@ export class TenantGuard implements CanActivate {
           url: tenant.odooUrl,
           db: tenant.odooDb,
           user: tenant.odooUser,
-          password: tenant.odooPassword,
+          password: decryptSecret(tenant.odooPassword),
           tenantId: tenant.id,
           tenantName: tenant.name,
         };
@@ -83,7 +84,7 @@ export class TenantGuard implements CanActivate {
         url: defaultTenant.odooUrl,
         db: defaultTenant.odooDb,
         user: defaultTenant.odooUser,
-        password: defaultTenant.odooPassword,
+        password: decryptSecret(defaultTenant.odooPassword),
         tenantId: defaultTenant.id,
         tenantName: defaultTenant.name,
       };

@@ -20,6 +20,7 @@ import { SessionsService } from '../sessions/sessions.service';
 import { isMasterAdmin } from '../auth/is-master-admin';
 import { User } from '../users/entities/user.entity';
 import { Tenant } from '../tenants/entities/tenant.entity';
+import { decryptSecret } from '../tenants/tenant-crypto';
 import { OdooConfig } from '../odoo/guards/tenant.guard';
 
 interface JwtPayload {
@@ -244,7 +245,7 @@ export class ChatGateway
             url: tenant.odooUrl,
             db: tenant.odooDb,
             user: tenant.odooUser,
-            password: tenant.odooPassword,
+            password: decryptSecret(tenant.odooPassword),
             tenantId: tenant.id,
             tenantName: tenant.name,
           };
@@ -261,7 +262,7 @@ export class ChatGateway
           url: defaultTenant.odooUrl,
           db: defaultTenant.odooDb,
           user: defaultTenant.odooUser,
-          password: defaultTenant.odooPassword,
+          password: decryptSecret(defaultTenant.odooPassword),
           tenantId: defaultTenant.id,
           tenantName: defaultTenant.name,
         };
