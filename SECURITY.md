@@ -141,8 +141,10 @@ Es va muntar el backend en local amb una **BD nova de prova** (la BD original es
 
 ## 🟢 Baixos / deute tècnic / rendiment
 
-### [ ] B1 · `synchronize: true` en producció
-- **On:** `app.module.ts:53`. Risc de pèrdua de dades en canvis d'esquema. → Adoptar migracions TypeORM.
+### [x] B1 · `synchronize: true` en producció — ✅ Resolt (MR !43, integració)
+- **On:** `app.module.ts`, `server/src/data-source.ts`, `server/src/migrations/`.
+- ✅ **Fet:** esquema gestionat per **migracions TypeORM**. En producció `synchronize` està desactivat i les migracions pendents s'apliquen a l'arrencada (`migrationsRun`); en dev `synchronize` segueix actiu per comoditat. Migració inicial generada; scripts `migration:generate/run/revert`. Verificat en local: BD nova arrenca via migració; BD existent **sense** baseline falla i **amb** baseline arrenca (procediment documentat a `DEPLOY.md`).
+- ⚠️ **Acció de desplegament:** la BD de producció existent necessita el **baseline d'un sol cop** (vegeu `DEPLOY.md`) abans del primer desplegament amb migracions.
 
 ### [x] B2 · Swagger exposat públicament en producció — ✅ Resolt (MR !31)
 - **On:** `main.ts:46-53`. → Desactivar `/api/docs` quan `NODE_ENV=production` o protegir-lo.

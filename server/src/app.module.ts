@@ -57,7 +57,13 @@ import { SessionValidationMiddleware } from './sessions/sessions.middleware';
         ChatConversation,
         ChatMessage,
       ],
-      synchronize: true,
+      migrations: [join(__dirname, 'migrations', '*.{js,ts}')],
+      // Dev keeps auto-sync for convenience; production never auto-alters the
+      // schema (data-loss risk) — it applies versioned migrations on boot.
+      synchronize:
+        process.env.DB_SYNCHRONIZE === 'true' ||
+        process.env.NODE_ENV !== 'production',
+      migrationsRun: process.env.NODE_ENV === 'production',
     }),
     ServeStaticModule.forRoot({
       rootPath: join(process.cwd(), 'uploads'),

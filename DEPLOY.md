@@ -75,6 +75,35 @@ sudo systemctl enable --now album-deploy.timer
 On the host: `./deploy.sh` (build + restart). It refuses to run inside a
 container on purpose.
 
+## Database & migrations
+
+The schema is managed by **TypeORM migrations**, not `synchronize`:
+- **Dev**: `synchronize` is on by default (set `DB_SYNCHRONIZE=false` to opt out).
+- **Production** (`NODE_ENV=production`): `synchronize` is **off**; pending
+  migrations run automatically on boot (`migrationsRun`).
+
+CLI (from `server/`): `npm run migration:generate src/migrations/<Name>`,
+`npm run migration:run`, `npm run migration:revert`.
+
+### ⚠️ One-time baseline for the EXISTING production DB
+
+The current production `data/db.sqlite` was created by `synchronize` and has **no
+`migrations` table**, so the bundled `InitialSchema` migration would try to
+re-create existing tables and **fail on boot**. Before the first deploy with
+migrations, mark `InitialSchema` as already applied (run once, on the host, with
+the app stopped):
+
+```sh
+sqlite3 data/db.sqlite \
+  "CREATE TABLE IF NOT EXISTS migrations (id integer primary key autoincrement, timestamp bigint NOT NULL, name varchar NOT NULL);
+   INSERT INTO migrations (timestamp, name) VALUES (1780773266146, 'InitialSchema1780773266146');"
+```
+
+After this, `migrationsRun` sees `InitialSchema` as applied and only runs *future*
+migrations. (A fresh/empty DB needs no baseline — `InitialSchema` creates
+everything.) This procedure was validated locally against a copy of the
+synchronize-created schema.
+
 ## Notes
 - Never re-add `- /var/run/docker.sock:/var/run/docker.sock` to
   `docker-compose.yaml`. That single line reintroduces the host-RCE.

@@ -34,7 +34,7 @@ In dev, run the backend (`start:dev`) and frontend (`dev`) separately. In produc
 ## Architecture
 
 ### Single-server model
-`server/src/main.ts` mounts everything under the `/api` global prefix, attaches Swagger at `/api/docs`, enables the Socket.io WebSocket adapter, and uses a **custom logger** (`AppLoggerService`) so all Nest logs persist to the DB. `app.module.ts` also serves `/uploads` and `client/dist` via `ServeStaticModule`. TypeORM runs with `synchronize: true` against `data/db.sqlite` — **no migrations**; schema follows the entities automatically.
+`server/src/main.ts` mounts everything under the `/api` global prefix, attaches Swagger at `/api/docs`, enables the Socket.io WebSocket adapter, and uses a **custom logger** (`AppLoggerService`) so all Nest logs persist to the DB. `app.module.ts` also serves `/uploads` and `client/dist` via `ServeStaticModule`. TypeORM schema is managed by **migrations** (`server/src/migrations/`, datasource at `server/src/data-source.ts`): in production `synchronize` is off and pending migrations run on boot (`migrationsRun`); in dev `synchronize` stays on for convenience (`DB_SYNCHRONIZE=false` to opt out). See `DEPLOY.md` for the one-time baseline of the existing synchronize-created DB.
 
 ### Module layout (`server/src/`)
 Standard Nest modules: `auth`, `users`, `roles`, `permissions`, `albums` (photo gallery), `tenants`, `odoo`, `openai`, `system` (server stats), `chat`, `sessions`, `logger`, `deploy`. `common/seed.service.ts` seeds default users, roles, and permissions on boot.
