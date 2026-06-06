@@ -26,6 +26,7 @@ export class SeedService implements OnApplicationBootstrap {
       'read:roles',
       'manage:roles',
       'use:ai',
+      'write:odoo',
       'read:tenants',
       'manage:tenants',
       'manage:deploy',
