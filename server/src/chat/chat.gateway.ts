@@ -67,6 +67,21 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.logger.log(`Client disconnected: ${client.id}`);
   }
 
+  /**
+   * Build a safe conversation title from the first user message: drops control
+   * characters and angle brackets, collapses whitespace and caps the length.
+   * Defense-in-depth: the title is attacker-controlled and broadcast to the
+   * room (the frontend already escapes it when rendering).
+   */
+  private sanitizeTitle(raw: string): string {
+    let out = '';
+    for (const ch of raw ?? '') {
+      const code = ch.codePointAt(0) ?? 0;
+      out += code < 32 || code === 127 || ch === '<' || ch === '>' ? ' ' : ch;
+    }
+    return out.replace(/\s+/g, ' ').trim().slice(0, 60);
+  }
+
   @SubscribeMessage('chat:join')
   handleJoin(
     @ConnectedSocket() client: Socket,
@@ -123,7 +138,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     // Auto-title if this is the first message
     if (!conversation.messages || conversation.messages.length <= 1) {
-      const shortTitle = data.message.slice(0, 60).trim();
+      const shortTitle = this.sanitizeTitle(data.message);
       void this.chatService.updateTitle(data.conversationId, shortTitle);
       this.server.to(`conv:${data.conversationId}`).emit('chat:title_updated', {
         conversationId: data.conversationId,
