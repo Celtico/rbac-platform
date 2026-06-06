@@ -98,8 +98,22 @@ Crea el fitxer `server/.env.local` (ignorat per git). Variables disponibles:
 JWT_SECRET=<cadena_llarga_i_aleatòria>   # sense això, el servidor NO arrenca
 OPENAI_API_KEY=sk-...
 
+# --- Seguretat / producció ---
+# Contrasenyes dels comptes sembrats. Només es consulten quan el compte no
+# existeix (BD buida). En producció, si en falta alguna, l'arrencada AVORTA.
+SEED_ADMIN_PASSWORD=<forta>
+SEED_USER_PASSWORD=<forta>
+SEED_SUPERADMIN_PASSWORD=<forta>
+# Clau per xifrar en repòs les contrasenyes d'Odoo dels tenants (AES-256-GCM).
+# Si no es defineix, es deriva del JWT_SECRET (no canviïs el JWT_SECRET després).
+TENANT_ENCRYPTION_KEY=<forta_i_estable>
+# Orígens permesos pel CORS (separats per comes). Si no, s'usa CLIENT_URL.
+CORS_ORIGINS=https://album.serverscel.com
+
 # --- Opcional ---
 OPENAI_MODEL=gpt-4o-mini                 # model per defecte
+DB_SYNCHRONIZE=false                     # en dev és true per defecte; mai a prod
+SWAGGER_ENABLED=false                    # exposa /api/docs en prod si és true
 
 # OAuth Google (opcional)
 GOOGLE_CLIENT_ID=...
@@ -114,13 +128,13 @@ ODOO_USER=admin
 ODOO_PASSWORD=admin
 ```
 
-Per generar un `JWT_SECRET` segur:
+Per generar secrets segurs (`JWT_SECRET`, `TENANT_ENCRYPTION_KEY`):
 
 ```bash
 node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
 ```
 
-> ⚠️ **Seguretat:** `JWT_SECRET` és obligatori i no té cap valor per defecte; un secret feble o conegut permetria forjar tokens d'administrador. No el comparteixis mai ni el pugis a git.
+> ⚠️ **Seguretat:** `JWT_SECRET` és obligatori i no té cap valor per defecte; un secret feble o conegut permetria forjar tokens d'administrador. No comparteixis ni pugis a git cap d'aquests secrets.
 
 El frontend pot tenir un `client/.env.local` amb claus `VITE_*` (p. ex. `VITE_UNSPLASH_ACCESS_KEY`). Recorda que **qualsevol variable `VITE_` queda inclosa al bundle del client** i és pública.
 
@@ -164,6 +178,8 @@ L'aplicació queda disponible a `http://localhost:3000`.
 | `npm run lint` | ESLint amb `--fix` |
 | `npm test` | Tests unitaris (Jest) |
 | `npm run test:e2e` | Tests end-to-end |
+| `npm run migration:generate src/migrations/<Nom>` | Genera una migració TypeORM |
+| `npm run migration:run` / `migration:revert` | Aplica / reverteix migracions |
 
 **Frontend** (`client/`):
 
@@ -182,9 +198,11 @@ L'aplicació queda disponible a `http://localhost:3000`.
 untitled3/
 ├── server/                      # Backend NestJS
 │   └── src/
-│       ├── main.ts              # Bootstrap: prefix /api, Swagger, WS, logger
-│       ├── app.module.ts        # Mòdul arrel, TypeORM, ServeStatic, middleware
-│       ├── auth/                # JWT, Google OAuth, guards i decoradors RBAC
+│       ├── main.ts              # Bootstrap: prefix /api, helmet, CORS, Swagger, WS, logger
+│       ├── app.module.ts        # Mòdul arrel, TypeORM (migracions), guards globals, middleware
+│       ├── data-source.ts       # DataSource per a la CLI de migracions TypeORM
+│       ├── migrations/          # Migracions de l'esquema (InitialSchema…)
+│       ├── auth/                # JWT (header o cookie), Google OAuth, guards i decoradors RBAC
 │       ├── chat/                # Chat global: gateway WS + orquestrador LangChain
 │       ├── odoo/                # Client Odoo (JSON-RPC) + orquestrador ERP
 │       ├── openai/              # Accés directe a l'SDK d'OpenAI
@@ -209,11 +227,14 @@ untitled3/
 │       └── lib/                 # Utilitats
 │
 ├── odoo/                        # Instància Odoo vendoritzada (docker-compose propi)
-├── uploads/                     # Fitxers pujats (servits a /uploads)
+├── uploads/                     # Fitxers pujats (servits a /uploads; fora de git)
 ├── data/                        # Base de dades SQLite (db.sqlite)
 ├── Dockerfile                   # Imatge de l'aplicació
-├── docker-compose.yaml          # Orquestració de contenidors
-└── deploy.sh                    # Script de desplegament auto-reconstruïble
+├── docker-compose.yaml          # Orquestració de contenidors (sense socket Docker)
+├── deploy.sh                    # Build + reinici (només host)
+├── deploy-watcher.sh            # Watcher de desplegament al host (systemd/cron)
+├── DEPLOY.md                    # Model de desplegament i migracions
+└── SECURITY.md                  # Informe de seguretat i estat de les correccions
 ```
 
 ---
@@ -224,7 +245,7 @@ Per entendre l'arquitectura ràpidament, aquests són els fitxers clau:
 
 - **`server/src/main.ts`** — Bootstrap. Munta tot sota el prefix `/api`, activa Swagger a `/api/docs`, l'adaptador WebSocket de Socket.io i el logger personalitzat (`AppLoggerService`).
 
-- **`server/src/app.module.ts`** — Configuració de TypeORM (SQLite a `data/db.sqlite`), servei estàtic de `/uploads` i del client compilat, i registre del `SessionValidationMiddleware` a totes les rutes.
+- **`server/src/app.module.ts`** — Configuració de TypeORM (SQLite a `data/db.sqlite`, esquema per **migracions**; `synchronize` desactivat en producció), servei estàtic de `/uploads` i del client compilat, guards globals (`ThrottlerGuard` + `JwtAuthGuard` + `RolesGuard`, amb opt-out `@Public()`) i registre del `SessionValidationMiddleware` a totes les rutes.
 
 - **`server/src/chat/chat-orchestrator.service.ts`** — El cervell del chat. Patró de dues capes: un **router LLM** classifica el missatge en un domini, es comprova el permís, es carreguen **dades reals** del servei corresponent i un prompt **"analyst"** redacta la resposta en català (amb gràfiques `:::chart` quan hi ha números). Els dominis Odoo deleguen a l'orquestrador d'Odoo.
 
@@ -236,11 +257,11 @@ Per entendre l'arquitectura ràpidament, aquests són els fitxers clau:
   - `jwt.config.ts` — Configuració compartida del JWT; llegeix `JWT_SECRET` de l'entorn (obligatori).
   - `decorators/roles.decorator.ts` — Decoradors `@Public()`, `@Roles()`, `@Permissions()`.
 
-- **`server/src/sessions/sessions.middleware.ts`** — A cada petició, fa hash del token bearer i invalida la sessió si ha estat revocada (revocació de dispositius en temps real).
+- **`server/src/sessions/sessions.middleware.ts`** — A cada petició, agafa el token (capçalera Bearer o cookie), en fa hash i rebutja la petició si la sessió no existeix o ha estat revocada (revocació de dispositius en temps real, *fail-closed*).
 
 - **`server/src/logger/app-logger.service.ts`** — Logger global que persisteix cada log a la BD i el publica als subscriptors SSE.
 
-- **`client/src/api/index.ts`** — Instància única d'axios amb interceptors: injecta el token bearer i, davant d'un `401`, neteja la sessió i redirigeix a `/login`. Totes les crides a l'API tipades hi viuen.
+- **`client/src/api/index.ts`** — Instància única d'axios (`withCredentials`, per enviar la cookie d'auth) amb interceptors: injecta el token bearer i, davant d'un `401`, neteja la sessió i redirigeix a `/login`. Totes les crides a l'API tipades hi viuen.
 
 - **`client/src/context/`** — Estat global: `AuthContext` (usuari/token), `ThemeContext` (4 temes, mode dia/nit, cantons arrodonits) i `NavConfigContext`.
 
@@ -252,13 +273,16 @@ Documentació Swagger interactiva a **`/api/docs`** (requereix autenticació Bea
 
 | Mètode | Ruta | Descripció |
 |--------|------|-----------|
-| `POST` | `/api/auth/login` | Login amb usuari/contrasenya |
-| `GET` | `/api/auth/google` | Inici del flux OAuth Google |
+| `POST` | `/api/auth/login` | Login amb usuari/contrasenya (posa cookie HttpOnly + retorna token) |
+| `POST` | `/api/auth/logout` | Tanca la sessió (neteja la cookie) |
+| `GET` | `/api/auth/google` | Inici del flux OAuth Google (retorna un codi d'un sol ús) |
+| `POST` | `/api/auth/exchange` | Bescanvia el codi OAuth per token + usuari |
 | `GET/POST/DELETE` | `/api/chat/conversations` | Converses del chat |
-| `WS` | `/chat` (namespace) | Chat en temps real (Socket.io) |
+| `WS` | `/chat` (namespace) | Chat en temps real (Socket.io; revalida la sessió) |
 | `GET/DELETE` | `/api/sessions` | Gestió de sessions/dispositius |
-| `GET` | `/api/logs` | Historial de logs |
-| `GET` | `/api/logs/stream?token=` | Logs en temps real (SSE) |
+| `GET` | `/api/logs` | Historial de logs (secrets redactats) |
+| `GET` | `/api/logs/stream-ticket` | Obté un tiquet d'un sol ús per a l'SSE |
+| `GET` | `/api/logs/stream?ticket=` | Logs en temps real (SSE, autoritzat per tiquet) |
 | `GET` | `/api/system/stats` | Estadístiques del servidor |
 | `GET/POST` | `/api/photos` | Galeria de fotos |
 | `POST` | `/api/photos/upload` | Pujada d'imatges (només imatges, màx. 10 MB) |
@@ -274,7 +298,8 @@ Documentació Swagger interactiva a **`/api/docs`** (requereix autenticació Bea
 | `read:photos` / `write:photos` | Veure / pujar i editar fotos |
 | `read:users` / `manage:users` | Veure / gestionar usuaris |
 | `read:roles` / `manage:roles` | Veure / gestionar rols |
-| `use:ai` | Accés a Odoo AI |
+| `use:ai` | Lectura d'Odoo via IA |
+| `write:odoo` | Accions d'escriptura a Odoo (p. ex. crear factures) |
 | `use:chat` | Accés al Chat Global |
 | `read:tenants` / `manage:tenants` | Veure / gestionar tenants Odoo |
 | `manage:deploy` | Historial i rollback de desplegaments |
@@ -282,15 +307,18 @@ Documentació Swagger interactiva a **`/api/docs`** (requereix autenticació Bea
 
 ### Usuaris per defecte (seed)
 
-Es creen automàticament a la primera arrencada:
+Es creen només si no existeixen (BD buida). Les contrasenyes vénen de les
+variables `SEED_*`; **en producció, si en falta alguna, l'arrencada avorta** (no
+es creen mai comptes amb contrasenya feble). Els valors de sota són només els
+**defaults de desenvolupament** (quan no hi ha `SEED_*`):
 
-| Usuari | Contrasenya | Rol |
-|--------|-------------|-----|
-| `admin` | `adminpassword` | admin (tots els permisos) |
-| `celticopetit@gmail.com` | `celticopetit@gmail.com` | admin |
-| `user` | `userpassword` | user (fotos + chat) |
+| Usuari | Origen contrasenya | Default (només dev) | Rol |
+|--------|--------------------|---------------------|-----|
+| `admin` | `SEED_ADMIN_PASSWORD` | `adminpassword` | admin (tots els permisos) |
+| `celticopetit@gmail.com` | `SEED_SUPERADMIN_PASSWORD` | `celticopetit@gmail.com` | admin |
+| `user` | `SEED_USER_PASSWORD` | `userpassword` | user (fotos + chat) |
 
-> ⚠️ **Canvia aquestes contrasenyes abans de qualsevol desplegament real.** Són només per a desenvolupament.
+> ⚠️ **En producció defineix sempre les `SEED_*` amb contrasenyes fortes.** Els defaults de dev no s'han d'usar mai en un desplegament real.
 
 ---
 
@@ -302,11 +330,15 @@ Es creen automàticament a la primera arrencada:
 docker compose up -d --build
 ```
 
-L'aplicació queda disponible a `http://localhost:3000`. Les dades persisteixen a `./data` (SQLite) i `./uploads` (fitxers). Recorda definir `JWT_SECRET` i `OPENAI_API_KEY` a l'entorn del contenidor.
+L'aplicació queda disponible a `http://localhost:3000`. Les dades persisteixen a `./data` (SQLite) i `./uploads` (fitxers). Recorda definir les variables d'entorn de producció (`JWT_SECRET`, `OPENAI_API_KEY`, `SEED_*`, `TENANT_ENCRYPTION_KEY`, `CORS_ORIGINS`).
 
-### Script de desplegament
+> ⚠️ El contenidor **no** munta el socket de Docker (seria root al host). Vegeu el model complet a **[`DEPLOY.md`](./DEPLOY.md)**.
 
-`deploy.sh` és un script auto-reconstruïble per al servidor de producció: actualitza des de git i reconstrueix els contenidors Docker. L'historial es desa a `deploy-history.json` i és accessible amb el permís `manage:deploy`.
+### Desplegament i migracions
+
+El desplegament des de la UI (`manage:deploy`) **no executa Docker**: només escriu una sol·licitud que un **watcher al host** (`deploy-watcher.sh`, via systemd/cron) processa, desplegant des de git origin. L'esquema de BD el gestionen **migracions** (`synchronize` desactivat en producció).
+
+Passos i detalls (instal·lació del watcher, **baseline d'un sol cop** de la BD existent abans del primer deploy amb migracions): vegeu **[`DEPLOY.md`](./DEPLOY.md)**. L'historial de desplegaments es desa a `data/deploy-history.json` (permís `manage:deploy`).
 
 ---
 
