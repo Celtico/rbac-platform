@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeSanitize from "rehype-sanitize";
 import {
   BarChart, LineChart, PieChart,
   Bar, Line, Pie, Cell,
@@ -180,8 +181,27 @@ function MessageContent({ content }: { content: string }) {
           <ReactMarkdown
             key={i}
             remarkPlugins={[remarkGfm]}
+            // Sanitize the rendered HTML: LLM/assistant output is untrusted, so
+            // strip any dangerous markup and unsafe URL schemes (e.g. javascript:).
+            rehypePlugins={[rehypeSanitize]}
             components={{
               p: ({ children }) => <Text fontSize="sm" lineHeight="tall" mb="2">{children}</Text>,
+              a: ({ href, children }) => {
+                const safe =
+                  typeof href === "string" && /^(https?:|mailto:)/i.test(href);
+                return safe ? (
+                  <a
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: "#9f7aea", textDecoration: "underline" }}
+                  >
+                    {children}
+                  </a>
+                ) : (
+                  <span>{children}</span>
+                );
+              },
               strong: ({ children }) => <Text as="strong" fontWeight="semibold">{children}</Text>,
               em: ({ children }) => <Text as="em" fontStyle="italic">{children}</Text>,
               h1: ({ children }) => <Text fontSize="lg" fontWeight="bold" mt="3" mb="1">{children}</Text>,
