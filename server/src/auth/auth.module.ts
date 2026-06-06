@@ -8,16 +8,14 @@ import { JwtModule } from '@nestjs/jwt';
 import { LocalStrategy } from './strategies/local.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { GoogleStrategy } from './strategies/google.strategy';
+import { jwtAsyncConfig } from './jwt.config';
 
 @Module({
   imports: [
     forwardRef(() => UsersModule),
     SessionsModule,
     PassportModule,
-    JwtModule.register({
-      secret: 'SECRET_KEY', // In production use env vars
-      signOptions: { expiresIn: '1d' },
-    }),
+    JwtModule.registerAsync(jwtAsyncConfig),
   ],
   providers: [AuthService, LocalStrategy, JwtStrategy, GoogleStrategy],
   controllers: [AuthController],

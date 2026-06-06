@@ -14,6 +14,7 @@ import { Repository } from 'typeorm';
 import { Logger } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { ChatOrchestratorService, ConversationMessage } from './chat-orchestrator.service';
+import { isMasterAdmin } from '../auth/is-master-admin';
 import { User } from '../users/entities/user.entity';
 import { Tenant } from '../tenants/entities/tenant.entity';
 import { OdooConfig } from '../odoo/guards/tenant.guard';
@@ -90,9 +91,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const permissions: string[] = client.data.permissions ?? [];
     const roles: string[] = client.data.roles ?? [];
     const userId: number = client.data.userId;
-    const isMasterAdmin = client.data.username === 'admin' || client.data.username === 'celticopetit@gmail.com';
 
-    if (!isMasterAdmin && !permissions.includes('use:chat')) {
+    if (!isMasterAdmin({ roles }) && !permissions.includes('use:chat')) {
       client.emit('chat:error', {
         message: 'No tens permís per usar el xat. Contacta amb l\'administrador per obtenir el permís use:chat.',
       });

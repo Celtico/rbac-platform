@@ -4,15 +4,13 @@ import { JwtModule } from '@nestjs/jwt';
 import { AppLoggerService } from './app-logger.service';
 import { LogsController } from './logs.controller';
 import { LogEntry } from './entities/log-entry.entity';
+import { jwtAsyncConfig } from '../auth/jwt.config';
 
 @Global()
 @Module({
   imports: [
     TypeOrmModule.forFeature([LogEntry]),
-    JwtModule.register({
-      secret: 'SECRET_KEY',
-      signOptions: { expiresIn: '1d' },
-    }),
+    JwtModule.registerAsync(jwtAsyncConfig),
   ],
   controllers: [LogsController],
   providers: [AppLoggerService],
