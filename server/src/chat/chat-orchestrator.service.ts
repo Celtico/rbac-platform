@@ -440,11 +440,15 @@ export class ChatOrchestratorService {
 
   private async handlePhotos(question: string, history: string, confidence: number): Promise<OrchestratorResult> {
     try {
-      const result = await this.albumsService.findAll({ page: 1, limit: 200 });
+      // Cap how many albums we serialise into the LLM prompt: the analyst only
+      // needs a sample, and 200 items is a lot of (paid) tokens + latency. The
+      // real total is still reported via meta.totalItems.
+      const result = await this.albumsService.findAll({ page: 1, limit: 50 });
 
       const photos = result.items;
       const summary = {
         total: result.meta.totalItems,
+        shown: photos.length,
         photos: photos.map((p) => ({ id: p.id, title: p.title, description: p.description ?? '' })),
       };
       const data = JSON.stringify(summary, null, 2);

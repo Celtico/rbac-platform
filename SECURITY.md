@@ -150,8 +150,9 @@ Es va muntar el backend en local amb una **BD nova de prova** (la BD original es
 ### [x] B3 · bcrypt amb cost 10 — ✅ Resolt (MR !43, integració)
 - **On:** `users/users.service.ts`. ✅ Cost pujat a 12 (constant `SALT_ROUNDS`).
 
-### [ ] B4 · Càrregues LLM ineficients (cost de tokens i latència)
-- **On:** `chat-orchestrator.service.ts:405-413` (carrega 200 àlbums i els passa sencers a l'LLM), `odoo/odoo-client.service.ts:315-336` (`getMostSoldProduct` baixa 200 línies i agrega en JS). → Filtrar per intenció i limitar a N petit; usar `read_group` d'Odoo.
+### [x] B4 · Càrregues LLM ineficients (cost de tokens i latència) — ✅ Resolt (MR !43, integració)
+- **On:** `chat-orchestrator.service.ts`, `odoo/odoo-client.service.ts`.
+- ✅ **Fet:** `handlePhotos` passa com a molt 50 àlbums a l'LLM (abans 200; el total real es reporta via `meta.totalItems`). `getMostSoldProduct` agrega amb `read_group` d'Odoo (top-1 server-side) amb *fallback* a l'agregació JS acotada si el `read_group` falla. La part Odoo no s'ha pogut provar contra un Odoo real (per això el fallback).
 
 ### [ ] B5 · Gestió del socket del xat al frontend
 - **On:** `client/src/pages/GlobalChat.tsx:246-374`. Singleton mai desconnectat, re-subscripció dels handlers a cada canvi de conversa, token capturat de forma stale. → Gestionar el socket dins un `useEffect` amb cleanup i recrear-lo en canvi de token.
@@ -159,8 +160,10 @@ Es va muntar el backend en local amb una **BD nova de prova** (la BD original es
 ### [ ] B6 · Codi duplicat
 - **On:** `client/src/pages/AlbumForm.tsx` ↔ `PhotoForm.tsx`; `GlobalChat.tsx` `BarChartBlock` ↔ `LineChartBlock`. → Extreure hooks/components compartits.
 
-### [ ] B7 · Restes de depuració i tipatge feble
-- **On:** `client/src/context/AuthContext.tsx:11`, `client/src/main.tsx`. `console.log` deixats; ús abundant de `any`; `key={i}` en taules. → Netejar i tipar.
+### [~] B7 · Restes de depuració i tipatge feble — 🟡 Parcial (MR !43, integració)
+- **On:** `client/src/context/AuthContext.tsx`, `client/src/main.tsx`.
+- ✅ **Fet:** eliminats els `console.log` de depuració (es manté el `console.error` legítim).
+- ⏳ **Pendent (menor, estètic):** reduir l'ús de `any` i les `key={i}` en taules.
 
 ### [x] B8 · `uploads/` versionat a git — ✅ Resolt (MR !43, integració)
 - **On:** repo arrel. ✅ Tret del control de versions (`/uploads/*` a `.gitignore`, només `.gitkeep`); els fitxers físics es mantenen i se serveixen del volum.

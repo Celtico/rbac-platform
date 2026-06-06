@@ -8,7 +8,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [user, setUser] = useState<User | null>(() => {
     const storedUser = localStorage.getItem("user");
     const token = localStorage.getItem("token");
-    console.log(isTokenExpired(token));
     if (storedUser && token && !isTokenExpired(token)) {
       try {
         return JSON.parse(storedUser);

@@ -103,6 +103,31 @@ export class OdooClientService {
     });
   }
 
+  /** Aggregate server-side with Odoo's read_group (avoids pulling raw rows). */
+  async readGroup<T = Record<string, unknown>>(
+    cfg: OdooConfig,
+    model: string,
+    domain: unknown[][],
+    fields: string[],
+    groupby: string[],
+    kwargs: Record<string, unknown> = {},
+  ): Promise<T[]> {
+    const uid = await this.getUid(cfg);
+    return this.rpc<T[]>(cfg, {
+      service: 'object',
+      method: 'execute_kw',
+      args: [
+        cfg.db,
+        uid,
+        cfg.password,
+        model,
+        'read_group',
+        [domain, fields, groupby],
+        kwargs,
+      ],
+    });
+  }
+
   async count(
     cfg: OdooConfig,
     model: string,
@@ -313,26 +338,46 @@ export class OdooClientService {
   }
 
   async getMostSoldProduct(cfg: OdooConfig) {
-    const uid = await this.getUid(cfg);
-    // Get sale.order.line grouped by product to find the most sold
-    const lines = await this.searchRead<{ product_id: [number, string]; product_uom_qty: number }>(
-      cfg,
-      'sale.order.line',
-      [['order_id.state', 'in', ['sale', 'done']]],
-      ['product_id', 'product_uom_qty'],
-      200,
-    );
+    const domain = [['order_id.state', 'in', ['sale', 'done']]];
 
-    const totals: Record<number, { id: number; name: string; qty: number }> = {};
-    for (const line of lines) {
-      if (!line.product_id) continue;
-      const [pid, pname] = line.product_id;
-      if (!totals[pid]) totals[pid] = { id: pid, name: pname, qty: 0 };
-      totals[pid].qty += line.product_uom_qty ?? 0;
+    // Efficient path: let Odoo aggregate and sort, return only the top group.
+    try {
+      const groups = await this.readGroup<{
+        product_id: [number, string];
+        product_uom_qty: number;
+      }>(cfg, 'sale.order.line', domain, ['product_uom_qty'], ['product_id'], {
+        orderby: 'product_uom_qty desc',
+        limit: 1,
+        lazy: false,
+      });
+      const top = groups[0];
+      if (top?.product_id) {
+        return {
+          id: top.product_id[0],
+          name: top.product_id[1],
+          qty: top.product_uom_qty ?? 0,
+        };
+      }
+      return null;
+    } catch {
+      // Fallback: bounded fetch + aggregate in JS (keeps working if the Odoo
+      // version/permissions reject read_group with this grouping).
+      const lines = await this.searchRead<{
+        product_id: [number, string];
+        product_uom_qty: number;
+      }>(cfg, 'sale.order.line', domain, ['product_id', 'product_uom_qty'], 500);
+
+      const totals: Record<number, { id: number; name: string; qty: number }> =
+        {};
+      for (const line of lines) {
+        if (!line.product_id) continue;
+        const [pid, pname] = line.product_id;
+        if (!totals[pid]) totals[pid] = { id: pid, name: pname, qty: 0 };
+        totals[pid].qty += line.product_uom_qty ?? 0;
+      }
+      const sorted = Object.values(totals).sort((a, b) => b.qty - a.qty);
+      return sorted[0] ?? null;
     }
-
-    const sorted = Object.values(totals).sort((a, b) => b.qty - a.qty);
-    return sorted[0] ?? null;
   }
 
   async createInvoice(
