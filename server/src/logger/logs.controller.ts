@@ -17,6 +17,7 @@ import { LogEntry } from './entities/log-entry.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Permissions, Public } from '../auth/decorators/roles.decorator';
+import { isMasterAdmin } from '../auth/is-master-admin';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 
 @ApiTags('logs')
@@ -72,11 +73,12 @@ export class LogsController {
   streamLogs(@Query('token') token: string, @Req() req: Request, @Res() res: Response) {
     // Validate JWT manually (EventSource can't set Authorization header)
     try {
-      const payload = this.jwtService.verify(token) as { permissions?: string[]; username?: string };
+      const payload = this.jwtService.verify(token) as {
+        permissions?: string[];
+        roles?: string[];
+      };
       const permissions: string[] = payload.permissions ?? [];
-      const username: string = payload.username ?? '';
-      const isMasterAdmin = username === 'admin' || username === 'celticopetit@gmail.com';
-      if (!isMasterAdmin && !permissions.includes('read:logsystem')) {
+      if (!isMasterAdmin(payload) && !permissions.includes('read:logsystem')) {
         res.status(403).end();
         return;
       }

@@ -1,6 +1,11 @@
 node_modules/
 dist/
 db.sqlite
-.env
 
-server/env.local
+# Variables d'entorn i secrets — mai a git
+.env
+.env.local
+.env.*.local
+**/.env.local
+server/.env.local
+client/.env.local

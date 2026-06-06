@@ -7,10 +7,11 @@ import {
   UseGuards,
   InternalServerErrorException,
   NotFoundException,
+  BadRequestException,
   Logger,
   Request,
 } from '@nestjs/common';
-import { execSync, spawn } from 'child_process';
+import { execSync, execFileSync, spawn } from 'child_process';
 import { join } from 'path';
 import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -175,6 +176,12 @@ export class DeployController {
     @Param('commitHash') commitHash: string,
     @Request() req: { user: { username: string } },
   ) {
+    // Validar la forma del hash ABANS d'usar-lo: només hex (7-40 chars).
+    // Evita injecció de comandes (p.ex. "abc;rm -rf /") al subprocés git.
+    if (!/^[0-9a-f]{7,40}$/i.test(commitHash)) {
+      throw new BadRequestException('Hash de commit no vàlid.');
+    }
+
     const scriptPath = findScriptPath();
     if (!scriptPath) {
       throw new InternalServerErrorException('Script de desplegament no trobat.');
@@ -185,9 +192,9 @@ export class DeployController {
       throw new NotFoundException('Repositori git no trobat.');
     }
 
-    // Validate commit exists
+    // Validate commit exists (execFileSync: sense shell, sense interpolació)
     try {
-      execSync(`git cat-file -t ${commitHash}`, { cwd: gitDir, stdio: 'pipe' });
+      execFileSync('git', ['cat-file', '-t', commitHash], { cwd: gitDir, stdio: 'pipe' });
     } catch {
       throw new NotFoundException(`Commit "${commitHash}" no trobat al repositori.`);
     }
@@ -209,7 +216,7 @@ export class DeployController {
 
     setTimeout(() => {
       try {
-        execSync(`git checkout ${commitHash}`, { cwd: gitDir, stdio: 'pipe' });
+        execFileSync('git', ['checkout', commitHash], { cwd: gitDir, stdio: 'pipe' });
       } catch (e) {
         this.logger.error(`Error fent git checkout: ${e}`);
       }

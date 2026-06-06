@@ -7,6 +7,7 @@ import { OdooConfig } from '../odoo/guards/tenant.guard';
 import { SystemService } from '../system/system.service';
 import { AlbumsService } from '../albums/albums.service';
 import { UsersService } from '../users/users.service';
+import { isMasterAdmin } from '../auth/is-master-admin';
 
 export interface ConversationMessage {
   role: 'user' | 'assistant';
@@ -174,15 +175,13 @@ export class ChatOrchestratorService {
 
     // Permission check
     const requiredPermission = DOMAIN_PERMISSIONS[domain as GlobalDomain];
-    const isMasterAdmin =
-      userRoles.includes('admin') ||
-      userPermissions.includes('manage:users');
+    const masterAdmin = isMasterAdmin({ roles: userRoles });
 
-    if (domain === 'system' && !isMasterAdmin) {
+    if (domain === 'system' && !masterAdmin) {
       return this.permissionDenied(domain as GlobalDomain);
     }
 
-    if (requiredPermission && !isMasterAdmin && !userPermissions.includes(requiredPermission)) {
+    if (requiredPermission && !masterAdmin && !userPermissions.includes(requiredPermission)) {
       return this.permissionDenied(domain as GlobalDomain);
     }
 

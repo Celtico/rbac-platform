@@ -13,14 +13,12 @@ import { SystemModule } from '../system/system.module';
 import { UsersModule } from '../users/users.module';
 import { User } from '../users/entities/user.entity';
 import { Tenant } from '../tenants/entities/tenant.entity';
+import { jwtAsyncConfig } from '../auth/jwt.config';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([ChatConversation, ChatMessage, User, Tenant]),
-    JwtModule.register({
-      secret: 'SECRET_KEY',
-      signOptions: { expiresIn: '1d' },
-    }),
+    JwtModule.registerAsync(jwtAsyncConfig),
     forwardRef(() => OdooModule),
     AlbumsModule,
     SystemModule,

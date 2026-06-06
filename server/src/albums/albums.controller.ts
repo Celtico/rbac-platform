@@ -10,6 +10,7 @@ import {
   UseInterceptors,
   UploadedFile,
   Query,
+  BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -29,6 +30,10 @@ import {
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Permissions, Public } from '../auth/decorators/roles.decorator';
+
+// Només imatges: evita pujar HTML/SVG servits des de /uploads (XSS emmagatzemat).
+const ALLOWED_IMAGE_EXT = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10 MB
 
 @ApiTags('photos')
 @ApiBearerAuth()
@@ -59,6 +64,20 @@ export class AlbumsController {
   })
   @UseInterceptors(
     FileInterceptor('file', {
+      limits: { fileSize: MAX_UPLOAD_BYTES, files: 1 },
+      fileFilter: (req, file, cb) => {
+        const ext = extname(file.originalname).toLowerCase();
+        const isImageMime = file.mimetype.startsWith('image/');
+        if (!isImageMime || !ALLOWED_IMAGE_EXT.includes(ext)) {
+          return cb(
+            new BadRequestException(
+              'Només es permeten imatges (jpg, jpeg, png, gif, webp).',
+            ),
+            false,
+          );
+        }
+        cb(null, true);
+      },
       storage: diskStorage({
         destination: join(process.cwd(), 'uploads'),
         filename: (req, file, cb) => {
@@ -66,12 +85,17 @@ export class AlbumsController {
             .fill(null)
             .map(() => Math.round(Math.random() * 16).toString(16))
             .join('');
-          return cb(null, `${randomName}${extname(file.originalname)}`);
+          // Normalitzem l'extensió a minúscules i a la llista blanca.
+          const ext = extname(file.originalname).toLowerCase();
+          return cb(null, `${randomName}${ext}`);
         },
       }),
     }),
   )
   uploadFile(@UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('Cap fitxer rebut o fitxer rebutjat.');
+    }
     return {
       url: `/uploads/${file.filename}`,
     };
