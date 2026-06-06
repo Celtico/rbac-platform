@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { LogEntry } from './entities/log-entry.entity';
 import { EventEmitter } from 'events';
+import { redactString, redactValue } from './log-redact';
 
 @Injectable()
 export class AppLoggerService implements LoggerService {
@@ -49,9 +50,11 @@ export class AppLoggerService implements LoggerService {
     try {
       const entry = this.logRepo.create({
         level,
-        message: String(message),
+        message: redactString(String(message)),
         context: context ?? undefined,
-        metadata: metadata ?? null,
+        metadata: metadata
+          ? (redactValue(metadata) as Record<string, unknown>)
+          : null,
       });
       const saved = await this.logRepo.save(entry);
       this.emitter.emit('log', saved);

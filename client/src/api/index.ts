@@ -72,6 +72,11 @@ export const getLogs = (params?: {
     { params }
   );
 
+// Short-lived single-use ticket for the SSE log stream (avoids putting the JWT
+// in the EventSource URL).
+export const getLogStreamTicket = () =>
+  api.get<{ ticket: string; expiresInMs: number }>("/logs/stream-ticket");
+
 // Types
 export interface ChatConversation {
   id: number;
