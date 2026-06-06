@@ -154,11 +154,14 @@ Es va muntar el backend en local amb una **BD nova de prova** (la BD original es
 - **On:** `chat-orchestrator.service.ts`, `odoo/odoo-client.service.ts`.
 - ✅ **Fet:** `handlePhotos` passa com a molt 50 àlbums a l'LLM (abans 200; el total real es reporta via `meta.totalItems`). `getMostSoldProduct` agrega amb `read_group` d'Odoo (top-1 server-side) amb *fallback* a l'agregació JS acotada si el `read_group` falla. La part Odoo no s'ha pogut provar contra un Odoo real (per això el fallback).
 
-### [ ] B5 · Gestió del socket del xat al frontend
-- **On:** `client/src/pages/GlobalChat.tsx:246-374`. Singleton mai desconnectat, re-subscripció dels handlers a cada canvi de conversa, token capturat de forma stale. → Gestionar el socket dins un `useEffect` amb cleanup i recrear-lo en canvi de token.
+### [x] B5 · Gestió del socket del xat al frontend — ✅ Resolt (MR !43, integració)
+- **On:** `client/src/pages/GlobalChat.tsx`.
+- ✅ **Fet:** s'elimina el singleton de mòdul; el socket es crea dins un `useEffect` mount-once amb `socket.disconnect()` al cleanup; els handlers es registren un sol cop (un `activeConvIdRef` evita re-subscriure'ls a cada canvi de conversa). Validat amb `tsc`; el comportament en viu queda pendent de prova al navegador.
 
-### [ ] B6 · Codi duplicat
-- **On:** `client/src/pages/AlbumForm.tsx` ↔ `PhotoForm.tsx`; `GlobalChat.tsx` `BarChartBlock` ↔ `LineChartBlock`. → Extreure hooks/components compartits.
+### [~] B6 · Codi duplicat — 🟡 Parcial (MR !43, integració)
+- **On:** `GlobalChat.tsx` (charts), `client/src/pages/AlbumForm.tsx` ↔ `PhotoForm.tsx`.
+- ✅ **Fet:** `BarChartBlock`/`LineChartBlock` unificats en un `CartesianChartBlock` compartit.
+- ⏳ **Pendent:** `AlbumForm` i `PhotoForm` són ~95% idèntics (417 línies cadascun); unificar-los en un component genèric és valuós però arriscat de fer sense validació al navegador (CRUD amb upload/IA/Unsplash). Diferit.
 
 ### [~] B7 · Restes de depuració i tipatge feble — 🟡 Parcial (MR !43, integració)
 - **On:** `client/src/context/AuthContext.tsx`, `client/src/main.tsx`.

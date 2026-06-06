@@ -78,7 +78,19 @@ function parseMessage(content: string): MsgPart[] {
 
 const PIE_COLORS = ["#863bff", "#a855f7", "#c084fc", "#e879f9", "#f0abfc"];
 
-function BarChartBlock({ def }: { def: ChartDef }) {
+type ChartApi = ReturnType<typeof useChart<Record<string, any>>>;
+
+// Shared frame for the Bar and Line blocks (identical except the chart element
+// and how each series is drawn).
+function CartesianChartBlock({
+  def,
+  ChartComp,
+  renderSeries,
+}: {
+  def: ChartDef;
+  ChartComp: React.ElementType;
+  renderSeries: (s: ChartApi["series"][number], chart: ChartApi) => React.ReactNode;
+}) {
   const series = def.series?.length
     ? def.series
     : [{ name: Object.keys(def.data[0] ?? {}).find(k => k !== (def.xKey ?? "name")) ?? "value", color: "purple.500" }];
@@ -88,43 +100,40 @@ function BarChartBlock({ def }: { def: ChartDef }) {
       {def.title && <Text fontWeight="semibold" fontSize="sm" mb="2">{def.title}</Text>}
       <ChartRoot chart={chart} h="220px">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chart.data}>
+          <ChartComp data={chart.data}>
             <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.3} />
             <XAxis dataKey={def.xKey ?? "name"} tick={{ fontSize: 11 }} />
             <YAxis tick={{ fontSize: 11 }} width={40} />
             <Tooltip content={<ChartTooltip />} />
-            {chart.series.map(s => (
-              <Bar key={String(s.name)} dataKey={String(s.name)} fill={chart.color(s.color)} radius={[4, 4, 0, 0]} />
-            ))}
-          </BarChart>
+            {chart.series.map((s) => renderSeries(s, chart))}
+          </ChartComp>
         </ResponsiveContainer>
       </ChartRoot>
     </Box>
   );
 }
 
-function LineChartBlock({ def }: { def: ChartDef }) {
-  const series = def.series?.length
-    ? def.series
-    : [{ name: Object.keys(def.data[0] ?? {}).find(k => k !== (def.xKey ?? "name")) ?? "value", color: "purple.500" }];
-  const chart = useChart({ data: def.data, series });
+function BarChartBlock({ def }: { def: ChartDef }) {
   return (
-    <Box my="3">
-      {def.title && <Text fontWeight="semibold" fontSize="sm" mb="2">{def.title}</Text>}
-      <ChartRoot chart={chart} h="220px">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={chart.data}>
-            <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.3} />
-            <XAxis dataKey={def.xKey ?? "name"} tick={{ fontSize: 11 }} />
-            <YAxis tick={{ fontSize: 11 }} width={40} />
-            <Tooltip content={<ChartTooltip />} />
-            {chart.series.map(s => (
-              <Line key={String(s.name)} dataKey={String(s.name)} stroke={chart.color(s.color)} strokeWidth={2} dot={false} />
-            ))}
-          </LineChart>
-        </ResponsiveContainer>
-      </ChartRoot>
-    </Box>
+    <CartesianChartBlock
+      def={def}
+      ChartComp={BarChart}
+      renderSeries={(s, chart) => (
+        <Bar key={String(s.name)} dataKey={String(s.name)} fill={chart.color(s.color)} radius={[4, 4, 0, 0]} />
+      )}
+    />
+  );
+}
+
+function LineChartBlock({ def }: { def: ChartDef }) {
+  return (
+    <CartesianChartBlock
+      def={def}
+      ChartComp={LineChart}
+      renderSeries={(s, chart) => (
+        <Line key={String(s.name)} dataKey={String(s.name)} stroke={chart.color(s.color)} strokeWidth={2} dot={false} />
+      )}
+    />
   );
 }
 
@@ -263,19 +272,6 @@ const EXAMPLES = [
   "Ajuda'm a navegar per l'app",
 ];
 
-let socketInstance: Socket | null = null;
-
-function getSocket(): Socket {
-  if (!socketInstance || !socketInstance.connected) {
-    const token = localStorage.getItem("token") ?? "";
-    socketInstance = io("/chat", {
-      auth: { token },
-      path: "/socket.io",
-    });
-  }
-  return socketInstance;
-}
-
 /* Three bouncing dots typing indicator */
 const TypingDots: React.FC = () => (
   <HStack gap="1" py="1">
@@ -314,6 +310,9 @@ const GlobalChat: React.FC = () => {
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const socketRef = useRef<Socket | null>(null);
+  // Mirror of activeConvId so the (mount-once) socket handlers can read the
+  // current conversation without being re-subscribed on every change.
+  const activeConvIdRef = useRef<number | null>(null);
 
   const pageBg    = mode === "light" ? "gray.50"  : "gray.900";
   const sidebarBg = mode === "light" ? "white"    : "gray.800";
@@ -346,7 +345,13 @@ const GlobalChat: React.FC = () => {
   }, [activeConvId]);
 
   useEffect(() => {
-    const socket = getSocket();
+    activeConvIdRef.current = activeConvId;
+  }, [activeConvId]);
+
+  // Create the socket once, wire the handlers once, and disconnect on unmount.
+  useEffect(() => {
+    const token = localStorage.getItem("token") ?? "";
+    const socket = io("/chat", { auth: { token }, path: "/socket.io" });
     socketRef.current = socket;
 
     socket.on("connect", () => setIsConnected(true));
@@ -367,7 +372,7 @@ const GlobalChat: React.FC = () => {
       setIsTyping(false);
       setMessages((prev) => [
         ...prev,
-        { id: Date.now(), conversationId: activeConvId ?? 0, role: "assistant", content: err.message, createdAt: new Date().toISOString() },
+        { id: Date.now(), conversationId: activeConvIdRef.current ?? 0, role: "assistant", content: err.message, createdAt: new Date().toISOString() },
       ]);
       setTimeout(scrollToBottom, 50);
     });
@@ -380,11 +385,10 @@ const GlobalChat: React.FC = () => {
 
     setIsConnected(socket.connected);
     return () => {
-      socket.off("connect"); socket.off("disconnect");
-      socket.off("chat:message"); socket.off("chat:typing");
-      socket.off("chat:error"); socket.off("chat:title_updated");
+      socket.disconnect();
+      socketRef.current = null;
     };
-  }, [activeConvId]);
+  }, []);
 
   useEffect(() => {
     const socket = socketRef.current;
