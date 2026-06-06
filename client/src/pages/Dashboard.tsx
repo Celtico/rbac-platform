@@ -62,7 +62,7 @@ const Dashboard: React.FC = () => {
 
       {canUseAI && <OdooKpiSection onConnected={setOdooConnected} />}
       {canUseAI && odooConnected && <OdooLiveSection />}
-      <ServerStatsSection />
+      {hasPermission("read:logsystem") && <ServerStatsSection />}
 
       {/* Footer */}
       <Box mt="12" pt="6" borderTopWidth="1px">
