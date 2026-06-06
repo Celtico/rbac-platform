@@ -78,11 +78,12 @@ Es va muntar el backend en local amb una **BD nova de prova** (la BD original es
 - **Risc:** `odooPassword` només té `select: false` (no és xifrat). Amb accés al fitxer `data/db.sqlite` (vegeu C1) s'obtenen totes les credencials ERP.
 - **Correcció:** Xifrar en repòs (AES-GCM amb clau d'env/KMS) abans de persistir; desxifrar només a `findOneWithCredentials`.
 
-### [~] A5 · JWT a `localStorage` + sortida LLM renderitzada sense sanititzar — 🟡 Parcial
-- **On:** `client/src/api/index.ts:12`, `client/src/context/AuthContext.tsx`, `client/src/pages/GlobalChat.tsx`
-- **Risc:** El JWT viu a `localStorage`, robable per qualsevol XSS. El markdown de la sortida LLM es renderitzava sense `rehype-sanitize`, de manera que enllaços `javascript:` o `href` controlats pel model passaven.
-- ✅ **Fet (MR !35):** sanitització del markdown amb `rehype-sanitize` + component `a` que només permet `http(s)`/`mailto` amb `rel="noopener noreferrer"`. Verificat: `javascript:`, `<script>` i `onerror` eliminats.
-- ⏳ **Pendent:** moure el JWT de `localStorage` a una cookie `HttpOnly; Secure; SameSite` emesa pel backend (PR a part — afecta tot el flux d'auth, login, OAuth callback i el WS handshake).
+### [~] A5 · JWT a `localStorage` + sortida LLM renderitzada sense sanititzar — 🟡 Gairebé (MR !35, !42)
+- **On:** `client/src/api/index.ts`, `client/src/context/AuthContext.tsx`, `client/src/pages/GlobalChat.tsx`, `server/src/auth/*`
+- **Risc:** El JWT viu a `localStorage`, robable per qualsevol XSS. El markdown de la sortida LLM es renderitzava sense `rehype-sanitize`.
+- ✅ **Fet (MR !35):** sanitització del markdown amb `rehype-sanitize` + component `a` que només permet `http(s)`/`mailto`. Verificat.
+- ✅ **Fet (MR !42, dual-mode):** el login/OAuth posen una cookie `HttpOnly; Secure; SameSite=Lax`; backend i frontend l'accepten (dual amb el header). Verificat al backend (auth només-cookie funciona, logout la neteja).
+- ⏳ **Pendent (cutover):** retirar del tot el JWT de `localStorage` (i fer que el WS handshake llegeixi la cookie) per eliminar l'exposició XPS residual. Diferit perquè requereix validació en navegador.
 
 ---
 
@@ -94,11 +95,11 @@ Es va muntar el backend en local amb una **BD nova de prova** (la BD original es
 - ✅ **Fet:** `JwtStrategy.validate` carrega l'usuari de la BD i en deriva rols/permisos frescos a cada petició; rebutja tokens d'usuaris eliminats. Verificat en viu.
 - ⏳ **Pendent (menor):** el gateway WebSocket encara usa els permisos del payload (mitigat per la revalidació de sessió d'A1/A2).
 
-### [~] M2 · Token JWT a la query string (SSE i callback OAuth) — 🟡 Parcial (MR !39)
-- **On:** `logger/logs.controller.ts`, `auth/auth.controller.ts:57-59`, `client/src/pages/AuthCallback.tsx:11-19`
-- **Risc:** El token (i el `user` amb rols/permisos) viatja per la URL → queda a logs d'accés, proxies i historial del navegador.
-- ✅ **Fet (SSE):** el stream s'autoritza amb un tiquet d'un sol ús i vida curta (60s) via `GET /logs/stream-ticket`; el JWT ja no apareix mai a la URL del stream.
-- ⏳ **Pendent (OAuth callback):** el callback encara retorna `token`+`user` per query params; moure'ls a una cookie/sessió validada va lligat a A5-cookie (PR a part).
+### [x] M2 · Token JWT a la query string (SSE i callback OAuth) — ✅ Resolt (MR !39, !42)
+- **On:** `logger/logs.controller.ts`, `auth/auth.controller.ts`, `client/src/pages/AuthCallback.tsx`
+- **Risc:** El token (i el `user` amb rols/permisos) viatjava per la URL → quedava a logs d'accés, proxies i historial del navegador.
+- ✅ **Fet (SSE, MR !39):** el stream s'autoritza amb un tiquet d'un sol ús i vida curta (60s); el JWT ja no apareix a la URL del stream.
+- ✅ **Fet (OAuth, MR !42):** el callback ja no posa `token`+`user` a la URL; redirigeix amb un codi opac d'un sol ús que el frontend bescanvia per `POST /auth/exchange`. Verificat (rebuig de codi invàlid).
 
 ### [x] M3 · `GET /system/stats` sense permís — ✅ Resolt (MR !31)
 - **On:** `system/system.controller.ts:8`
