@@ -2,6 +2,9 @@ import axios from "axios";
 
 const api = axios.create({
   baseURL: "/api",
+  // Send the HttpOnly auth cookie alongside requests (dual-mode with the
+  // Authorization header).
+  withCredentials: true,
 });
 
 // Afegeix el proxy per a /api si es vol utilitzar en lloc de baseURL hardcoded
@@ -38,6 +41,12 @@ api.interceptors.response.use(
 );
 
 export default api;
+
+// Auth
+export const exchangeOAuthCode = (code: string) =>
+  api.post<{ access_token: string; user: unknown }>("/auth/exchange", { code });
+
+export const logout = () => api.post<{ success: boolean }>("/auth/logout");
 
 // Chat Global
 export const getChatConversations = () =>
