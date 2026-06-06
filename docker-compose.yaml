@@ -13,6 +13,11 @@ services:
     volumes:
       - ./data:/app/data
       - ./uploads:/app/uploads
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /home/cel/album-manager:/app/album-manager
+      # SECURITY: the Docker socket is intentionally NOT mounted. Giving the web
+      # app access to /var/run/docker.sock is equivalent to root on the host
+      # (container escape / RCE). Deployments are performed by deploy-watcher.sh
+      # running ON THE HOST; the app only writes a deploy-request file to ./data.
+      # The host repo is mounted read-only so the app can read deploy metadata
+      # but cannot tamper with the files the host watcher deploys from.
+      - /home/cel/album-manager:/app/album-manager:ro
     restart: always

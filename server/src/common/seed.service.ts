@@ -5,6 +5,15 @@ import { PermissionsService } from '../permissions/permissions.service';
 import { TenantsService } from '../tenants/tenants.service';
 import { Permission } from '../permissions/entities/permission.entity';
 
+// Insecure fallbacks used ONLY in non-production when the matching SEED_* env
+// var is absent, to keep local dev frictionless. In production a missing env
+// var aborts startup instead (see resolveSeedPassword).
+const DEV_SEED_DEFAULTS: Record<string, string> = {
+  'celticopetit@gmail.com': 'celticopetit@gmail.com',
+  admin: 'adminpassword',
+  user: 'userpassword',
+};
+
 @Injectable()
 export class SeedService implements OnApplicationBootstrap {
   constructor(
@@ -13,6 +22,30 @@ export class SeedService implements OnApplicationBootstrap {
     private permissionsService: PermissionsService,
     private tenantsService: TenantsService,
   ) {}
+
+  /**
+   * Resolve a seed user's password from its SEED_* env var. The default
+   * accounts are only ever created when missing, so this is called only for a
+   * fresh/empty database. In production a missing env var aborts startup
+   * (fail closed) rather than creating an account with a weak default.
+   */
+  private resolveSeedPassword(username: string, envKey: string): string {
+    const fromEnv = process.env[envKey]?.trim();
+    if (fromEnv) return fromEnv;
+
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(
+        `[seed] Refusing to create user "${username}" with a default password in production. ` +
+          `Set ${envKey} to a strong password and restart. Existing users are never modified, ` +
+          `so this only affects a fresh/empty database.`,
+      );
+    }
+
+    console.warn(
+      `[seed] ${envKey} not set — using an INSECURE dev default for "${username}". Never use this in production.`,
+    );
+    return DEV_SEED_DEFAULTS[username];
+  }
 
   async onApplicationBootstrap() {
     console.log('Checking and seeding initial data...');
@@ -26,6 +59,7 @@ export class SeedService implements OnApplicationBootstrap {
       'read:roles',
       'manage:roles',
       'use:ai',
+      'write:odoo',
       'read:tenants',
       'manage:tenants',
       'manage:deploy',
@@ -115,7 +149,10 @@ export class SeedService implements OnApplicationBootstrap {
     if (!existingUsers.find((u) => u.username === 'celticopetit@gmail.com')) {
       const u = await this.usersService.create({
         username: 'celticopetit@gmail.com',
-        password: 'celticopetit@gmail.com',
+        password: this.resolveSeedPassword(
+          'celticopetit@gmail.com',
+          'SEED_SUPERADMIN_PASSWORD',
+        ),
         roleIds: [adminRole.id],
       });
       if (defaultTenantId) {
@@ -126,7 +163,7 @@ export class SeedService implements OnApplicationBootstrap {
     if (!existingUsers.find((u) => u.username === 'admin')) {
       const u = await this.usersService.create({
         username: 'admin',
-        password: 'adminpassword',
+        password: this.resolveSeedPassword('admin', 'SEED_ADMIN_PASSWORD'),
         roleIds: [adminRole.id],
       });
       if (defaultTenantId) {
@@ -137,7 +174,7 @@ export class SeedService implements OnApplicationBootstrap {
     if (!existingUsers.find((u) => u.username === 'user')) {
       await this.usersService.create({
         username: 'user',
-        password: 'userpassword',
+        password: this.resolveSeedPassword('user', 'SEED_USER_PASSWORD'),
         roleIds: [userRole.id],
       });
     }

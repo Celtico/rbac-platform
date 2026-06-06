@@ -13,7 +13,7 @@ import {
   createListCollection,
 } from "@chakra-ui/react";
 import { ScrollText, Wifi, WifiOff, Trash2, PauseCircle, PlayCircle } from "lucide-react";
-import { getLogs, type LogEntryDTO } from "../api";
+import { getLogs, getLogStreamTicket, type LogEntryDTO } from "../api";
 import { useTheme } from "../context/ThemeContext";
 
 const LEVEL_COLORS: Record<string, string> = {
@@ -60,25 +60,49 @@ const SystemLogs: React.FC = () => {
       .finally(() => setLoadingHistory(false));
   }, []);
 
-  // SSE live stream
+  // SSE live stream — authorize with a short-lived single-use ticket instead of
+  // putting the JWT in the URL. Tickets are single-use, so reconnect fetches a
+  // fresh one.
   useEffect(() => {
-    const token = localStorage.getItem("token") ?? "";
-    const es = new EventSource(`/api/logs/stream?token=${encodeURIComponent(token)}`);
-    esRef.current = es;
+    let closed = false;
+    let es: EventSource | null = null;
+    let retry: ReturnType<typeof setTimeout> | null = null;
 
-    es.onopen = () => setSseConnected(true);
-    es.onerror = () => setSseConnected(false);
-    es.onmessage = (e) => {
+    const connect = async () => {
+      if (closed) return;
       try {
-        const entry: LogEntryDTO = JSON.parse(e.data as string);
-        setLogs((prev) => [...prev.slice(-499), entry]);
+        const { data } = await getLogStreamTicket();
+        if (closed) return;
+        es = new EventSource(
+          `/api/logs/stream?ticket=${encodeURIComponent(data.ticket)}`
+        );
+        esRef.current = es;
+
+        es.onopen = () => setSseConnected(true);
+        es.onmessage = (e) => {
+          try {
+            const entry: LogEntryDTO = JSON.parse(e.data as string);
+            setLogs((prev) => [...prev.slice(-499), entry]);
+          } catch {
+            // ignore malformed
+          }
+        };
+        es.onerror = () => {
+          setSseConnected(false);
+          es?.close();
+          if (!closed) retry = setTimeout(() => void connect(), 3000);
+        };
       } catch {
-        // ignore malformed
+        if (!closed) retry = setTimeout(() => void connect(), 5000);
       }
     };
 
+    void connect();
+
     return () => {
-      es.close();
+      closed = true;
+      if (retry) clearTimeout(retry);
+      es?.close();
       setSseConnected(false);
     };
   }, []);

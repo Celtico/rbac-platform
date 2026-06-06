@@ -2,6 +2,9 @@ import axios from "axios";
 
 const api = axios.create({
   baseURL: "/api",
+  // Send the HttpOnly auth cookie alongside requests (dual-mode with the
+  // Authorization header).
+  withCredentials: true,
 });
 
 // Afegeix el proxy per a /api si es vol utilitzar en lloc de baseURL hardcoded
@@ -39,6 +42,12 @@ api.interceptors.response.use(
 
 export default api;
 
+// Auth
+export const exchangeOAuthCode = (code: string) =>
+  api.post<{ access_token: string; user: unknown }>("/auth/exchange", { code });
+
+export const logout = () => api.post<{ success: boolean }>("/auth/logout");
+
 // Chat Global
 export const getChatConversations = () =>
   api.get<ChatConversation[]>("/chat/conversations");
@@ -71,6 +80,11 @@ export const getLogs = (params?: {
     "/logs",
     { params }
   );
+
+// Short-lived single-use ticket for the SSE log stream (avoids putting the JWT
+// in the EventSource URL).
+export const getLogStreamTicket = () =>
+  api.get<{ ticket: string; expiresInMs: number }>("/logs/stream-ticket");
 
 // Types
 export interface ChatConversation {

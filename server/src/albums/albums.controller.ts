@@ -15,6 +15,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
+import { randomUUID } from 'crypto';
 import { AlbumsService } from './albums.service';
 import { CreateAlbumDto } from './dto/create-album.dto';
 import { UpdateAlbumDto } from './dto/update-album.dto';
@@ -81,11 +82,9 @@ export class AlbumsController {
       storage: diskStorage({
         destination: join(process.cwd(), 'uploads'),
         filename: (req, file, cb) => {
-          const randomName = Array(32)
-            .fill(null)
-            .map(() => Math.round(Math.random() * 16).toString(16))
-            .join('');
-          // Normalitzem l'extensió a minúscules i a la llista blanca.
+          // Cryptographically-random name (no Math.random) so uploads can't be
+          // enumerated/guessed. Extension normalised to the lowercase allowlist.
+          const randomName = randomUUID().replace(/-/g, '');
           const ext = extname(file.originalname).toLowerCase();
           return cb(null, `${randomName}${ext}`);
         },
