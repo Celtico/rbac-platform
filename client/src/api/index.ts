@@ -11,22 +11,16 @@ const api = axios.create({
 // Per ara ho deixem així ja que el backend corre al 3000 i el frontend al 5173
 // però les imatges ja usen el proxy configurat a vite.config.ts
 
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+// The JWT travels in the HttpOnly cookie (sent via `withCredentials`), never
+// from JS — so there's no Authorization header to inject here anymore.
 
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
       console.warn(
-        "401 Unauthorized detected. Clearing token and redirecting..."
+        "401 Unauthorized detected. Clearing session and redirecting..."
       );
-      localStorage.removeItem("token");
       localStorage.removeItem("user");
 
       // Emitir un evento para que AuthContext se entere

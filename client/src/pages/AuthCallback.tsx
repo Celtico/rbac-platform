@@ -19,7 +19,7 @@ const AuthCallback: React.FC = () => {
     }
     exchangeOAuthCode(code)
       .then(({ data }) => {
-        login(data.access_token, data.user as User);
+        login(data.user as User);
         navigate("/admin", { replace: true });
       })
       .catch(() => navigate("/login", { replace: true }));

@@ -46,8 +46,12 @@ export class UsersController {
 
   @Patch(':id')
   @Permissions('manage:users')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(+id, updateUserDto);
+  update(
+    @Param('id') id: string,
+    @Body() updateUserDto: UpdateUserDto,
+    @Request() req: { user?: { userId: number } },
+  ) {
+    return this.usersService.update(+id, updateUserDto, req.user?.userId);
   }
 
   @Delete(':id')
