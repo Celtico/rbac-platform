@@ -46,3 +46,14 @@ export function isConfirmation(text: string | undefined | null): boolean {
   const createVerb = /\b(crea|fes|endavant)\b/.test(t);
   return affirmative && createVerb;
 }
+
+/**
+ * Whether `text` explicitly cancels/aborts a pending action. Used to let the
+ * user back out of a pending invoice confirmation deterministically.
+ */
+export function isCancellation(text: string | undefined | null): boolean {
+  const t = (text ?? '').toLowerCase().replace(/[`´’]/g, "'");
+  return /\b(cancel\w*|anul\w*|atura|para|deixa[\s-]?ho|no ho facis|millor no|descarta)\b/.test(
+    t,
+  );
+}
