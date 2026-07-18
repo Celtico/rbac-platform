@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
+import { SessionsService } from '../sessions/sessions.service';
 import { GoogleStrategy } from './strategies/google.strategy';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -36,6 +37,12 @@ describe('AuthService.login (Google user)', () => {
         {
           provide: JwtService,
           useValue: { sign: jest.fn().mockReturnValue('signed-jwt') },
+        },
+        {
+          // login() is called without a Request here, so createSession is
+          // never reached; a bare mock satisfies the DI graph.
+          provide: SessionsService,
+          useValue: { createSession: jest.fn() },
         },
       ],
     }).compile();
