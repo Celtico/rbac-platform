@@ -61,7 +61,7 @@ Each user may have an assigned `Tenant` (Odoo connection config); `TenantGuard` 
 - **Logs**: SSE at `GET /api/logs/stream?token=` (token in query string because EventSource can't set headers).
 
 ### Frontend (`client/src/`)
-- `api/index.ts` — single axios instance (`baseURL: /api`) with interceptors: injects the bearer token from `localStorage`, and on any `401` clears auth and redirects to `/login`. All typed API calls live here.
+- `api/index.ts` — single axios instance (`baseURL: /api`, `withCredentials: true`): the JWT rides in the `HttpOnly` auth cookie (never `localStorage`/JS), so there's no Authorization-header injection; on any `401` it clears the local `user` profile and redirects to `/login`. All typed API calls live here.
 - `context/` — `AuthContext`, `ThemeContext` (4 color themes + day/night + corner-radius levels, set from `/admin/settings/styles`), `NavConfigContext`. Each context is split into a `.ts` (definition) and `.tsx` (provider).
 - `pages/` — one component per route (GlobalChat, SystemLogs, DeviceManager, OdooManager, etc.).
 

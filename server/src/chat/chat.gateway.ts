@@ -15,13 +15,17 @@ import { Repository } from 'typeorm';
 import { Logger } from '@nestjs/common';
 import * as crypto from 'crypto';
 import { ChatService } from './chat.service';
-import { ChatOrchestratorService, ConversationMessage } from './chat-orchestrator.service';
+import {
+  ChatOrchestratorService,
+  ConversationMessage,
+} from './chat-orchestrator.service';
 import { SessionsService } from '../sessions/sessions.service';
 import { isMasterAdmin } from '../auth/is-master-admin';
 import { User } from '../users/entities/user.entity';
 import { Tenant } from '../tenants/entities/tenant.entity';
 import { decryptSecret } from '../tenants/tenant-crypto';
 import { OdooConfig } from '../odoo/guards/tenant.guard';
+import { AUTH_COOKIE, parseCookieHeader } from '../auth/cookie.util';
 
 interface JwtPayload {
   sub: number;
@@ -58,7 +62,12 @@ export class ChatGateway
     // rejected BEFORE the connection is established (no connect-then-drop).
     server.use(async (client: Socket, next: (err?: Error) => void) => {
       try {
-        const token = client.handshake.auth?.token as string;
+        // Read the JWT from the HttpOnly auth cookie (sent with the handshake
+        // when the client connects `withCredentials`). Falls back to the
+        // legacy `auth.token` for backward compatibility during the cutover.
+        const token =
+          parseCookieHeader(client.handshake.headers?.cookie, AUTH_COOKIE) ??
+          (client.handshake.auth?.token as string | undefined);
         if (!token) throw new Error('No token');
         const payload = this.jwtService.verify<JwtPayload>(token);
 
@@ -88,9 +97,7 @@ export class ChatGateway
   }
 
   handleConnection(client: Socket) {
-    this.logger.log(
-      `Client connected: ${client.data.username} (${client.id})`,
-    );
+    this.logger.log(`Client connected: ${client.data.username} (${client.id})`);
   }
 
   /** Returns true (and disconnects the client) if the session is no longer valid. */
@@ -110,6 +117,30 @@ export class ChatGateway
 
   handleDisconnect(client: Socket) {
     this.logger.log(`Client disconnected: ${client.id}`);
+  }
+
+  /**
+   * Resolve roles/permissions FRESH from the DB (mirrors JwtStrategy.validate on
+   * the HTTP side) instead of trusting the up-to-1-day-old token payload, so
+   * revoking a role/permission takes effect on the socket immediately. Returns
+   * null if the user no longer exists.
+   */
+  private async loadFreshAuth(
+    userId: number,
+  ): Promise<{ roles: string[]; permissions: string[] } | null> {
+    const user = await this.userRepo.findOne({
+      where: { id: userId },
+      relations: ['roles', 'roles.permissions'],
+    });
+    if (!user) return null;
+    const roles = user.roles?.map((r) => r.name) ?? [];
+    const permissions = [
+      ...new Set(
+        user.roles?.flatMap((r) => r.permissions?.map((p) => p.name) ?? []) ??
+          [],
+      ),
+    ];
+    return { roles, permissions };
   }
 
   /**
@@ -152,13 +183,25 @@ export class ChatGateway
     // already-open socket, not just at connection time.
     if (await this.sessionInvalidated(client)) return;
 
-    const permissions: string[] = client.data.permissions ?? [];
-    const roles: string[] = client.data.roles ?? [];
     const userId: number = client.data.userId;
+
+    // M1: refresh roles/permissions from the DB on every message rather than
+    // trusting the token payload — a revoked role/permission takes effect at
+    // once, and a deleted user is disconnected.
+    const fresh = await this.loadFreshAuth(userId);
+    if (!fresh) {
+      client.emit('chat:error', {
+        message: 'Usuari no trobat. Torna a iniciar sessió.',
+      });
+      client.disconnect();
+      return;
+    }
+    const { permissions, roles } = fresh;
 
     if (!isMasterAdmin({ roles }) && !permissions.includes('use:chat')) {
       client.emit('chat:error', {
-        message: 'No tens permís per usar el xat. Contacta amb l\'administrador per obtenir el permís use:chat.',
+        message:
+          "No tens permís per usar el xat. Contacta amb l'administrador per obtenir el permís use:chat.",
       });
       return;
     }
@@ -166,9 +209,14 @@ export class ChatGateway
     // Verify conversation ownership
     let conversation;
     try {
-      conversation = await this.chatService.getConversation(data.conversationId, userId);
+      conversation = await this.chatService.getConversation(
+        data.conversationId,
+        userId,
+      );
     } catch {
-      client.emit('chat:error', { message: 'Conversa no trobada o accés denegat.' });
+      client.emit('chat:error', {
+        message: 'Conversa no trobada o accés denegat.',
+      });
       return;
     }
 
@@ -207,7 +255,10 @@ export class ChatGateway
     const history: ConversationMessage[] = (conversation.messages ?? [])
       .filter((m) => m.id !== userMsg.id)
       .slice(-10)
-      .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }));
+      .map((m) => ({
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+      }));
 
     // Call global orchestrator
     try {
@@ -238,7 +289,8 @@ export class ChatGateway
     } catch (err) {
       this.logger.error(`Orchestrator error: ${err}`);
       client.emit('chat:error', {
-        message: 'S\'ha produït un error en processar la teva pregunta. Torna-ho a intentar.',
+        message:
+          "S'ha produït un error en processar la teva pregunta. Torna-ho a intentar.",
       });
     }
   }

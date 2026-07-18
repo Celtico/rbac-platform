@@ -102,7 +102,7 @@ export class UsersService {
     });
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto) {
+  async update(id: number, updateUserDto: UpdateUserDto, requesterId?: number) {
     const { roleIds, password, tenantId, ...rest } = updateUserDto;
 
     // Load current state (with roles) so we can guard against demoting the
@@ -121,6 +121,20 @@ export class UsersService {
     }
 
     if (roleIds) {
+      // M8: prevent self privilege escalation. A user cannot change their OWN
+      // roles unless they already hold the admin role — this stops a
+      // `manage:users` holder from granting themselves the admin role (which
+      // would otherwise pass RolesGuard). Admins may still reorganise roles;
+      // the last-admin guard below protects the demotion case.
+      if (
+        requesterId !== undefined &&
+        requesterId === +id &&
+        !this.hasAdminRole(current)
+      ) {
+        throw new BadRequestException(
+          'No pots modificar els teus propis rols.',
+        );
+      }
       const newRoles = await this.rolesRepository.findBy({ id: In(roleIds) });
       const wasAdmin = this.hasAdminRole(current);
       const willBeAdmin = newRoles.some((r) => r.name === 'admin');

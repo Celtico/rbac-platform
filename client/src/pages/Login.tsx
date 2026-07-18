@@ -31,7 +31,7 @@ const Login: React.FC = () => {
     e.preventDefault();
     try {
       const response = await api.post("/auth/login", { username, password });
-      login(response.data.access_token, response.data.user);
+      login(response.data.user);
 
       if (response.data.isNewDevice) {
         setShowNewDeviceModal(true);

@@ -14,9 +14,11 @@ export function authCookieOptions(): CookieOptions {
   };
 }
 
-/** Read a single cookie value from the raw Cookie header (no cookie-parser dep). */
-export function getCookie(req: Request, name: string): string | null {
-  const header = req.headers?.cookie;
+/** Parse a single cookie value from a raw Cookie header string (no cookie-parser dep). */
+export function parseCookieHeader(
+  header: string | undefined | null,
+  name: string,
+): string | null {
   if (!header) return null;
   for (const part of header.split(';')) {
     const eq = part.indexOf('=');
@@ -26,4 +28,9 @@ export function getCookie(req: Request, name: string): string | null {
     }
   }
   return null;
+}
+
+/** Read a single cookie value from an Express request. */
+export function getCookie(req: Request, name: string): string | null {
+  return parseCookieHeader(req.headers?.cookie, name);
 }

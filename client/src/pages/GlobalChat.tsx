@@ -350,8 +350,9 @@ const GlobalChat: React.FC = () => {
 
   // Create the socket once, wire the handlers once, and disconnect on unmount.
   useEffect(() => {
-    const token = localStorage.getItem("token") ?? "";
-    const socket = io("/chat", { auth: { token }, path: "/socket.io" });
+    // Auth travels via the HttpOnly cookie sent with the handshake; the gateway
+    // reads it server-side (no token in JS).
+    const socket = io("/chat", { withCredentials: true, path: "/socket.io" });
     socketRef.current = socket;
 
     socket.on("connect", () => setIsConnected(true));

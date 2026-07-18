@@ -78,12 +78,12 @@ Es va muntar el backend en local amb una **BD nova de prova** (la BD original es
 - **Risc:** `odooPassword` només té `select: false` (no és xifrat). Amb accés al fitxer `data/db.sqlite` (vegeu C1) s'obtenen totes les credencials ERP.
 - **Correcció:** Xifrar en repòs (AES-GCM amb clau d'env/KMS) abans de persistir; desxifrar només a `findOneWithCredentials`.
 
-### [~] A5 · JWT a `localStorage` + sortida LLM renderitzada sense sanititzar — 🟡 Gairebé (MR !35, !42)
+### [x] A5 · JWT a `localStorage` + sortida LLM renderitzada sense sanititzar — ✅ Resolt (MR !35, !42, cutover)
 - **On:** `client/src/api/index.ts`, `client/src/context/AuthContext.tsx`, `client/src/pages/GlobalChat.tsx`, `server/src/auth/*`
 - **Risc:** El JWT viu a `localStorage`, robable per qualsevol XSS. El markdown de la sortida LLM es renderitzava sense `rehype-sanitize`.
 - ✅ **Fet (MR !35):** sanitització del markdown amb `rehype-sanitize` + component `a` que només permet `http(s)`/`mailto`. Verificat.
 - ✅ **Fet (MR !42, dual-mode):** el login/OAuth posen una cookie `HttpOnly; Secure; SameSite=Lax`; backend i frontend l'accepten (dual amb el header). Verificat al backend (auth només-cookie funciona, logout la neteja).
-- ⏳ **Pendent (cutover):** retirar del tot el JWT de `localStorage` (i fer que el WS handshake llegeixi la cookie) per eliminar l'exposició XPS residual. Diferit perquè requereix validació en navegador.
+- ✅ **Fet (cutover):** el JWT ja **no** es guarda mai a `localStorage`/JS. El frontend viu només de la cookie `HttpOnly` (`withCredentials`); s'ha tret la injecció del header `Authorization` i el token del cos de login/exchange s'ignora. `AuthContext` només desa el perfil `user` (no secret) i en confirma la vigència amb `GET /auth/profile` al muntar. El handshake del WS (`chat.gateway.ts`) llegeix el JWT de la cookie del handshake via `parseCookieHeader` (amb *fallback* a `auth.token` per compatibilitat). Verificat: build/tsc de backend i frontend; test aïllat del handshake WS (cookie acceptada, sense-auth i cookie dolenta rebutjades, fallback legacy OK). **Pendent de validació funcional al navegador** (login → navegació → xat WS) abans de desplegar.
 
 ---
 
@@ -93,7 +93,7 @@ Es va muntar el backend en local amb una **BD nova de prova** (la BD original es
 - **On:** `auth/strategies/jwt.strategy.ts`
 - **Risc:** `validate()` retornava rols/permisos del payload del token sense rellegir la BD. Revocar un rol no tenia efecte fins que el token expirava (1 dia).
 - ✅ **Fet:** `JwtStrategy.validate` carrega l'usuari de la BD i en deriva rols/permisos frescos a cada petició; rebutja tokens d'usuaris eliminats. Verificat en viu.
-- ⏳ **Pendent (menor):** el gateway WebSocket encara usa els permisos del payload (mitigat per la revalidació de sessió d'A1/A2).
+- ✅ **Fet (gateway WS):** `chat.gateway.ts` refresca rols/permisos des de la BD a cada `chat:send` (`loadFreshAuth`, mirall de `JwtStrategy`); una revocació de rol/permís té efecte immediat al socket i un usuari eliminat es desconnecta. Verificat amb build/typecheck.
 
 ### [x] M2 · Token JWT a la query string (SSE i callback OAuth) — ✅ Resolt (MR !39, !42)
 - **On:** `logger/logs.controller.ts`, `auth/auth.controller.ts`, `client/src/pages/AuthCallback.tsx`
@@ -130,7 +130,7 @@ Es va muntar el backend en local amb una **BD nova de prova** (la BD original es
 - **On:** `users/users.controller.ts`, `users/users.service.ts`
 - **Risc:** Un titular de `manage:users` pot eliminar-se, eliminar l'últim admin, o atorgar-se el rol admin.
 - ✅ **Fet:** es bloqueja eliminar el propi compte, eliminar l'últim admin i treure-li el rol admin.
-- ⏳ **Pendent (menor):** restringir que un usuari s'autoatorgui el rol admin editant els seus propis `roleIds` (escalada de privilegis).
+- ✅ **Fet:** `users.service.update` rep el `requesterId` del controlador i bloqueja que un usuari modifiqui els seus **propis** `roleIds` si no és ja admin (evita que un titular de `manage:users` s'autoatorgui el rol admin). Verificat amb build/typecheck.
 
 ### [x] M9 · Títol automàtic de conversa sense sanititzar — ✅ Resolt (MR !38)
 - **On:** `chat/chat.gateway.ts`
