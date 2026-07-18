@@ -17,7 +17,7 @@ export class OdooService {
   ) {}
 
   chat(cfg: OdooConfig, dto: OdooQueryDto) {
-    return this.orchestrator.query(cfg, dto.question, dto.include_raw_data ?? false);
+    return this.orchestrator.query(cfg, dto.question, '', dto.include_raw_data ?? false);
   }
 
   async health(cfg: OdooConfig) {

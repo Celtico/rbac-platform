@@ -234,9 +234,9 @@ export class ChatOrchestratorService {
     if (!this.odooOrchestrator) {
       return { answer: 'El servei d\'Odoo no està disponible.', intent: 'odoo_read', confidence };
     }
-    // Pass history-enriched question to Odoo orchestrator
-    const fullQuestion = history ? `${history}\n\nPregunta actual: ${question}` : question;
-    return this.odooOrchestrator.query(odooConfig, fullQuestion);
+    // Route on the current question; the orchestrator uses `history` only for
+    // the analyst's context, not for classification (avoids "unknown" drift).
+    return this.odooOrchestrator.query(odooConfig, question, history);
   }
 
   private async handleOdooAction(
@@ -256,9 +256,20 @@ export class ChatOrchestratorService {
       return { answer: 'El servei d\'Odoo no està disponible.', intent: 'odoo_action', confidence };
     }
 
-    // Detect action type (currently: create invoice)
+    // Detect action type (currently: create invoice). Enter the invoice flow if
+    // the current message mentions an invoice OR an invoice conversation is
+    // already under way — the builder is multi-turn, and follow-up turns
+    // (articles, quantities, "confirma") no longer contain the word "factura",
+    // so gating only on the current message dropped them back into read queries.
     const lowerQ = question.toLowerCase();
-    if (lowerQ.includes('factura') || lowerQ.includes('invoice')) {
+    const lowerHistory = history.toLowerCase();
+    const invoiceInProgress =
+      lowerHistory.includes('factura') || lowerHistory.includes('invoice');
+    if (
+      lowerQ.includes('factura') ||
+      lowerQ.includes('invoice') ||
+      invoiceInProgress
+    ) {
       return this.handleCreateInvoice(question, history, odooConfig, confidence);
     }
 

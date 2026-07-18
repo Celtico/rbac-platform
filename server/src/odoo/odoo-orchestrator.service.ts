@@ -26,6 +26,11 @@ Given the user's question, classify it into EXACTLY ONE of these intents:
 - kpis        → dashboard, summary, general overview, key metrics
 - unknown     → anything outside the ERP domain
 
+Classify based ONLY on the user's question below. Tolerate minor spelling
+mistakes (e.g. "cients"/"clients", "factres"/"factures") and both Catalan and
+Spanish wording. Only use "unknown" when the question is genuinely unrelated to
+the ERP domains above.
+
 Reply with a JSON object (no markdown):
 {{"intent": "<intent>", "confidence": <0.0-1.0>}}`,
   ],
@@ -112,17 +117,26 @@ export class OdooOrchestratorService {
   async query(
     cfg: OdooConfig,
     question: string,
+    history = '',
     includeRawData = false,
   ): Promise<OrchestratorResult> {
+    // Route on the CURRENT question alone — feeding the whole conversation
+    // history here confuses the classifier (prior turns about other intents
+    // drag it to "unknown"). The history is still handed to the analyst below
+    // so follow-ups keep their context.
     const { intent, confidence } = await this.route(question);
     this.logger.log(
       `[${cfg.tenantName ?? 'default'}] "${question}" → ${intent} (${(confidence * 100).toFixed(0)}%)`,
     );
 
+    const analystQuestion = history
+      ? `${history}\n\nPregunta actual: ${question}`
+      : question;
+
     const rawData = await this.fetchData(cfg, intent as OdooIntent);
 
     if (rawData === null) {
-      const res = await this.fallbackChain.invoke({ question });
+      const res = await this.fallbackChain.invoke({ question: analystQuestion });
       return {
         answer: res.content as string,
         intent,
@@ -132,7 +146,10 @@ export class OdooOrchestratorService {
     }
 
     const data = JSON.stringify(rawData, null, 2);
-    const res = await this.analystChain.invoke({ question, data });
+    const res = await this.analystChain.invoke({
+      question: analystQuestion,
+      data,
+    });
 
     return {
       answer: res.content as string,
