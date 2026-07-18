@@ -15,8 +15,8 @@ describe('AppController', () => {
   });
 
   describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('My AppController');
+    it('should return "Api RESTful"', () => {
+      expect(appController.getHello()).toBe('Api RESTful');
     });
   });
 });
