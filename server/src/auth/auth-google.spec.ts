@@ -61,6 +61,19 @@ describe('AuthService.login (Google user)', () => {
     expect(result.user.permissions).toEqual([]);
   });
 
+  it('does not crash for a freshly-created user whose role has no permissions loaded', async () => {
+    // Regression: the first-ever Google login creates a user whose 'invitat'
+    // role was fetched without its permissions relation, so role.permissions is
+    // undefined. login() must tolerate this instead of throwing on `.map`.
+    const user = makeUser({ roles: [{ name: 'invitat' }] });
+
+    const result = await authService.login(user);
+
+    expect(result.access_token).toBe('signed-jwt');
+    expect(result.user.roles).toEqual(['invitat']);
+    expect(result.user.permissions).toEqual([]);
+  });
+
   it('calls jwtService.sign with correct payload', async () => {
     const user = makeUser();
     await authService.login(user);
