@@ -8,7 +8,11 @@ import { SystemService } from '../system/system.service';
 import { AlbumsService } from '../albums/albums.service';
 import { UsersService } from '../users/users.service';
 import { isMasterAdmin } from '../auth/is-master-admin';
-import { InvoiceParamsSchema, isConfirmation } from './odoo-action.validation';
+import {
+  InvoiceParamsSchema,
+  isConfirmation,
+  isCancellation,
+} from './odoo-action.validation';
 
 export interface ConversationMessage {
   role: 'user' | 'assistant';
@@ -142,6 +146,16 @@ const DOMAIN_LABELS: Record<GlobalDomain, string> = {
 // Service
 // ---------------------------------------------------------------------------
 
+interface PendingInvoice {
+  partnerName: string;
+  lines: { description: string; quantity: number; price: number }[];
+  total: number;
+  expiresAt: number;
+}
+
+// A pending invoice confirmation is only valid for a short window.
+const PENDING_INVOICE_TTL_MS = 10 * 60 * 1000; // 10 min
+
 @Injectable()
 export class ChatOrchestratorService {
   private readonly logger = new Logger(ChatOrchestratorService.name);
@@ -152,6 +166,13 @@ export class ChatOrchestratorService {
   private readonly analystChain;
   private readonly invoiceExtractorChain;
   private readonly photoExtractorChain;
+
+  // Pending invoice awaiting an explicit confirmation, keyed by conversation.
+  // The confirmation step is handled deterministically (see `query`) so it never
+  // depends on the LLM router — a bare "confirma" must not be misrouted to the
+  // general handler, which would let the model hallucinate a success with no
+  // actual Odoo write.
+  private readonly pendingInvoices = new Map<number, PendingInvoice>();
 
   constructor(
     @Optional() private readonly odooOrchestrator: OdooOrchestratorService,
@@ -179,14 +200,45 @@ export class ChatOrchestratorService {
     userRoles: string[],
     odooConfig?: OdooConfig | null,
     history: ConversationMessage[] = [],
+    conversationId?: number,
   ): Promise<OrchestratorResult> {
+    // Deterministic resolution of a pending invoice confirmation. This runs
+    // BEFORE the LLM router on purpose: a bare "confirma" doesn't look like
+    // odoo_action to the classifier, so relying on routing let a confirmation
+    // fall through to the general handler, which then hallucinated a "created"
+    // message without ever writing to Odoo.
+    const masterAdmin = isMasterAdmin({ roles: userRoles });
+    if (conversationId != null) {
+      const pending = this.getPendingInvoice(conversationId);
+      if (pending) {
+        if (isConfirmation(question)) {
+          this.pendingInvoices.delete(conversationId);
+          const writePerm = DOMAIN_PERMISSIONS.odoo_action;
+          if (writePerm && !masterAdmin && !userPermissions.includes(writePerm)) {
+            return this.permissionDenied('odoo_action');
+          }
+          return this.createPendingInvoice(odooConfig, pending);
+        }
+        if (isCancellation(question)) {
+          this.pendingInvoices.delete(conversationId);
+          return {
+            answer:
+              "D'acord, he descartat la factura. No s'ha creat res a Odoo.",
+            intent: 'odoo_action',
+            confidence: 1,
+          };
+        }
+        // Anything else abandons the pending confirmation and routes normally.
+        this.pendingInvoices.delete(conversationId);
+      }
+    }
+
     const historyText = this.formatHistory(history);
     const { domain, confidence } = await this.route(question, historyText);
     this.logger.log(`"${question}" → ${domain} (${(confidence * 100).toFixed(0)}%)`);
 
     // Permission check
     const requiredPermission = DOMAIN_PERMISSIONS[domain as GlobalDomain];
-    const masterAdmin = isMasterAdmin({ roles: userRoles });
 
     if (domain === 'system' && !masterAdmin) {
       return this.permissionDenied(domain as GlobalDomain);
@@ -200,7 +252,13 @@ export class ChatOrchestratorService {
       case 'odoo_read':
         return this.handleOdooRead(question, historyText, odooConfig, confidence);
       case 'odoo_action':
-        return this.handleOdooAction(question, historyText, odooConfig, confidence);
+        return this.handleOdooAction(
+          question,
+          historyText,
+          odooConfig,
+          confidence,
+          conversationId,
+        );
       case 'photos':
         return this.handlePhotos(question, historyText, confidence);
       case 'photos_action':
@@ -244,6 +302,7 @@ export class ChatOrchestratorService {
     history: string,
     odooConfig: OdooConfig | null | undefined,
     confidence: number,
+    conversationId?: number,
   ): Promise<OrchestratorResult> {
     if (!odooConfig) {
       return {
@@ -270,7 +329,13 @@ export class ChatOrchestratorService {
       lowerQ.includes('invoice') ||
       invoiceInProgress
     ) {
-      return this.handleCreateInvoice(question, history, odooConfig, confidence);
+      return this.handleCreateInvoice(
+        question,
+        history,
+        odooConfig,
+        confidence,
+        conversationId,
+      );
     }
 
     // Fallback: delegate to read orchestrator with action context
@@ -282,6 +347,7 @@ export class ChatOrchestratorService {
     history: string,
     odooConfig: OdooConfig,
     confidence: number,
+    conversationId?: number,
   ): Promise<OrchestratorResult> {
     try {
       // 1. Extract invoice parameters from conversation
@@ -373,6 +439,16 @@ export class ChatOrchestratorService {
       // single (possibly injected/low-confidence) classification from posting a
       // real, legally-binding invoice.
       if (!isConfirmation(question)) {
+        // Stash the fully-resolved invoice so the NEXT turn's "confirma" is
+        // handled deterministically in `query` (not via the LLM router).
+        if (conversationId != null) {
+          this.pendingInvoices.set(conversationId, {
+            partnerName: params.partner_name,
+            lines: resolvedLines,
+            total,
+            expiresAt: Date.now() + PENDING_INVOICE_TTL_MS,
+          });
+        }
         return {
           answer: `Revisa la factura abans de crear-la:\n\n**Client:** ${params.partner_name}\n\n${linesText}\n\n**Total: ${total.toFixed(2)}€**\n\n⚠️ Encara NO s'ha creat res a Odoo. Respon **"confirma"** per crear-la.`,
           intent: 'odoo_action',
@@ -380,20 +456,71 @@ export class ChatOrchestratorService {
         };
       }
 
-      // 4. Create the invoice (only after explicit confirmation)
-      const invoice = await this.odooClient.createInvoice(odooConfig, params.partner_name, resolvedLines);
-
-      return {
-        answer: `Factura creada correctament!\n\n**${invoice.name}**\nClient: ${params.partner_name}\n\n${linesText}\n\n**Total: ${total.toFixed(2)}€**`,
-        intent: 'odoo_action',
-        confidence,
-      };
+      // 4. Same-turn confirmation (e.g. "crea la factura … i confirma"): create
+      // directly. The common two-step flow instead goes through `query`'s
+      // deterministic path above.
+      return this.createPendingInvoice(odooConfig, {
+        partnerName: params.partner_name,
+        lines: resolvedLines,
+        total,
+        expiresAt: 0,
+      });
     } catch (err) {
       this.logger.error(`Error creating invoice: ${err}`);
       return {
         answer: `No he pogut crear la factura: ${(err as Error).message}`,
         intent: 'odoo_action',
         confidence,
+      };
+    }
+  }
+
+  /** Read a still-valid pending invoice for a conversation (evicts if expired). */
+  private getPendingInvoice(conversationId: number): PendingInvoice | null {
+    const pending = this.pendingInvoices.get(conversationId);
+    if (!pending) return null;
+    if (pending.expiresAt && pending.expiresAt < Date.now()) {
+      this.pendingInvoices.delete(conversationId);
+      return null;
+    }
+    return pending;
+  }
+
+  /** Actually write the invoice to Odoo and format the success message. */
+  private async createPendingInvoice(
+    odooConfig: OdooConfig | null | undefined,
+    pending: PendingInvoice,
+  ): Promise<OrchestratorResult> {
+    if (!odooConfig || !this.odooClient) {
+      return {
+        answer: "El servei d'Odoo no està disponible.",
+        intent: 'odoo_action',
+        confidence: 1,
+      };
+    }
+    try {
+      const invoice = await this.odooClient.createInvoice(
+        odooConfig,
+        pending.partnerName,
+        pending.lines,
+      );
+      const linesText = pending.lines
+        .map(
+          (l) =>
+            `- ${l.description}: ${l.quantity} x ${l.price}€ = ${(l.quantity * l.price).toFixed(2)}€`,
+        )
+        .join('\n');
+      return {
+        answer: `Factura creada correctament!\n\n**${invoice.name}**\nClient: ${pending.partnerName}\n\n${linesText}\n\n**Total: ${pending.total.toFixed(2)}€**`,
+        intent: 'odoo_action',
+        confidence: 1,
+      };
+    } catch (err) {
+      this.logger.error(`Error creating invoice: ${err}`);
+      return {
+        answer: `No he pogut crear la factura: ${(err as Error).message}`,
+        intent: 'odoo_action',
+        confidence: 1,
       };
     }
   }

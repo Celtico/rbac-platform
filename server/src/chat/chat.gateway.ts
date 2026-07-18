@@ -268,6 +268,7 @@ export class ChatGateway
         roles,
         odooConfig,
         history,
+        data.conversationId,
       );
 
       const assistantMsg = await this.chatService.saveMessage(
