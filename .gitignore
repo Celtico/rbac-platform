@@ -2,6 +2,14 @@ node_modules/
 dist/
 db.sqlite
 
+# macOS
+.DS_Store
+
+# Dades de runtime del desplegament (escrites per l'app / deploy-watcher)
+/deploy.log
+/data/*
+!/data/.gitkeep
+
 # User-uploaded images are runtime data, not source — served from a volume.
 /uploads/*
 !/uploads/.gitkeep
