@@ -34,11 +34,15 @@ export class AuthService {
   }
 
   async login(user: any, req?: Request) {
+    // Be defensive about partially-loaded users: a freshly-created user (or one
+    // loaded without the roles/permissions relations) must never crash login.
     const payload = {
       username: user.username,
       sub: user.id,
-      roles: user.roles.map((r) => r.name),
-      permissions: user.roles.flatMap((r) => r.permissions.map((p) => p.name)),
+      roles: (user.roles ?? []).map((r) => r.name),
+      permissions: (user.roles ?? []).flatMap((r) =>
+        (r.permissions ?? []).map((p) => p.name),
+      ),
     };
     const access_token = this.jwtService.sign(payload);
 

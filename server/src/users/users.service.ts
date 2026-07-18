@@ -81,9 +81,13 @@ export class UsersService {
       return this.usersRepository.save(user);
     }
 
-    // 3. Create new user — assign 'invitat' role by default
+    // 3. Create new user — assign 'invitat' role by default.
+    // Load the role WITH its permissions: the returned user flows straight into
+    // AuthService.login, which reads role.permissions. Without this relation
+    // permissions is undefined and login crashes on the very first Google login.
     const invitatRole = await this.rolesRepository.findOne({
       where: { name: 'invitat' },
+      relations: ['permissions'],
     });
     const newUser = this.usersRepository.create({
       username: profile.email,
