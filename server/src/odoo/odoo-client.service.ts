@@ -4,6 +4,10 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { OdooConfig } from './guards/tenant.guard';
+import {
+  isSimulatedOdooUrl,
+  SimulatedOdooService,
+} from './simulated/simulated-odoo.service';
 
 interface RpcPayload {
   service: string;
@@ -16,12 +20,17 @@ interface RpcPayload {
  * Every public method accepts an OdooConfig so the same service instance
  * can talk to different Odoo tenants within the same request cycle.
  * UIDs are cached per (url|db|user) key to avoid re-authenticating.
+ *
+ * A tenant whose Odoo URL is `simulated` never leaves the process: its calls
+ * are answered by `SimulatedOdooService` from the app's own database.
  */
 @Injectable()
 export class OdooClientService {
   private readonly logger = new Logger(OdooClientService.name);
   /** UID cache: key = `url|db|user` */
   private readonly uidCache = new Map<string, number>();
+
+  constructor(private readonly simulated: SimulatedOdooService) {}
 
   // ---------------------------------------------------------------------------
   // JSON-RPC core
@@ -32,6 +41,10 @@ export class OdooClientService {
   }
 
   private async rpc<T>(cfg: OdooConfig, payload: RpcPayload): Promise<T> {
+    if (isSimulatedOdooUrl(cfg.url)) {
+      return this.simulated.rpc<T>(payload);
+    }
+
     const body = {
       jsonrpc: '2.0',
       method: 'call',
@@ -183,7 +196,14 @@ export class OdooClientService {
       cfg,
       'crm.lead',
       [['type', '=', 'opportunity']],
-      ['name', 'partner_id', 'expected_revenue', 'probability', 'stage_id', 'user_id'],
+      [
+        'name',
+        'partner_id',
+        'expected_revenue',
+        'probability',
+        'stage_id',
+        'user_id',
+      ],
       limit,
       'expected_revenue desc',
     );
@@ -204,7 +224,10 @@ export class OdooClientService {
     return this.searchRead(
       cfg,
       'account.move',
-      [['move_type', '=', 'out_invoice'], ['state', '!=', 'cancel']],
+      [
+        ['move_type', '=', 'out_invoice'],
+        ['state', '!=', 'cancel'],
+      ],
       ['name', 'partner_id', 'amount_total', 'invoice_date', 'payment_state'],
       limit,
       'invoice_date desc',
@@ -249,18 +272,24 @@ export class OdooClientService {
 
     const [sales, customers, products, crm, invoices, employees] =
       await Promise.all([
-        safe(this.count(cfg, 'sale.order', [['state', 'in', ['sale', 'done']]])),
+        safe(
+          this.count(cfg, 'sale.order', [['state', 'in', ['sale', 'done']]]),
+        ),
         safe(this.count(cfg, 'res.partner', [['customer_rank', '>', 0]])),
         safe(this.count(cfg, 'product.template', [['sale_ok', '=', true]])),
-        safe(this.count(cfg, 'crm.lead', [
-          ['type', '=', 'opportunity'],
-          ['probability', '<', 100],
-        ])),
-        safe(this.count(cfg, 'account.move', [
-          ['move_type', '=', 'out_invoice'],
-          ['payment_state', 'in', ['not_paid', 'partial']],
-          ['state', '=', 'posted'],
-        ])),
+        safe(
+          this.count(cfg, 'crm.lead', [
+            ['type', '=', 'opportunity'],
+            ['probability', '<', 100],
+          ]),
+        ),
+        safe(
+          this.count(cfg, 'account.move', [
+            ['move_type', '=', 'out_invoice'],
+            ['payment_state', 'in', ['not_paid', 'partial']],
+            ['state', '=', 'posted'],
+          ]),
+        ),
         safe(this.count(cfg, 'hr.employee', [['active', '=', true]])),
       ]);
 
@@ -327,10 +356,17 @@ export class OdooClientService {
   }
 
   async findProductByName(cfg: OdooConfig, name: string) {
-    const results = await this.searchRead<{ id: number; name: string; list_price: number }>(
+    const results = await this.searchRead<{
+      id: number;
+      name: string;
+      list_price: number;
+    }>(
       cfg,
       'product.product',
-      [['name', 'ilike', name], ['sale_ok', '=', true]],
+      [
+        ['name', 'ilike', name],
+        ['sale_ok', '=', true],
+      ],
       ['id', 'name', 'list_price'],
       5,
     );
@@ -365,7 +401,13 @@ export class OdooClientService {
       const lines = await this.searchRead<{
         product_id: [number, string];
         product_uom_qty: number;
-      }>(cfg, 'sale.order.line', domain, ['product_id', 'product_uom_qty'], 500);
+      }>(
+        cfg,
+        'sale.order.line',
+        domain,
+        ['product_id', 'product_uom_qty'],
+        500,
+      );
 
       const totals: Record<number, { id: number; name: string; qty: number }> =
         {};

@@ -69,6 +69,8 @@ Each user may have an assigned `Tenant` (Odoo connection config); `TenantGuard` 
 
 `server/.env.local` (gitignored) holds `OPENAI_API_KEY`, optional `OPENAI_MODEL` (default `gpt-4o-mini`), Google OAuth (`GOOGLE_CLIENT_ID/SECRET`, `CLIENT_URL`), and Odoo (`ODOO_URL/DB/USER/PASSWORD`) for the Default tenant.
 
+A tenant whose Odoo URL is `simulated` (e.g. `ODOO_URL=simulated`) never leaves the process: `OdooClientService.rpc()` hands the JSON-RPC payload to `SimulatedOdooService` (`server/src/odoo/simulated/`), which answers `search_read`/`search_count`/`read_group`/`create`/`write`/`action_post` from the `odoo_sim_records` table (seeded with demo data when empty). New Odoo calls must be supported there too, or they fail with a 503 in simulated mode.
+
 Tenant Odoo passwords are encrypted at rest (AES-256-GCM); the key is `TENANT_ENCRYPTION_KEY` (falls back to a `JWT_SECRET`-derived key if unset — set a dedicated one and don't change it once tenants exist). Legacy plaintext rows are auto-encrypted on boot.
 
 Seed passwords are read from `SEED_ADMIN_PASSWORD`, `SEED_USER_PASSWORD`, `SEED_SUPERADMIN_PASSWORD`. They are **only** consulted when the corresponding default account does not yet exist (fresh/empty DB). In production a missing one **aborts startup** (fail closed); in dev an insecure default is used with a loud warning. CORS is restricted via `CORS_ORIGINS` (comma-separated) or `CLIENT_URL`; `SWAGGER_ENABLED=true` forces Swagger on in production (off by default).

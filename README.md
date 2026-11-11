@@ -128,6 +128,22 @@ ODOO_USER=admin
 ODOO_PASSWORD=admin
 ```
 
+#### Odoo simulat (sense instància d'Odoo)
+
+Si no tens cap Odoo a mà, posa `simulated` com a URL i el backend fa d'Odoo ell mateix:
+
+```env
+ODOO_URL=simulated
+ODOO_DB=demo
+ODOO_USER=demo
+ODOO_PASSWORD=demo
+```
+
+- Les dades (una fusteria fictícia: clients, productes, comandes, factures, compres, CRM, empleats i projectes) se sembren a la taula `odoo_sim_records` del mateix SQLite la primera vegada que la taula és buida.
+- Tot el que hi ha per sobre del client d'Odoo funciona igual: panell, gestor d'Odoo, xat amb IA i **creació de factures** (queden desades i numerades `FAC/AAAA/NNNNN`).
+- `ODOO_URL` només s'aplica quan es crea el tenant "Default" (BD buida). En una instal·lació existent, edita el tenant a **Admin → Tenants** i posa-hi `simulated` com a URL d'Odoo.
+- És una demo, no un ERP: no hi ha comptabilitat darrere de les factures. El codi és a `server/src/odoo/simulated/`.
+
 Per generar secrets segurs (`JWT_SECRET`, `TENANT_ENCRYPTION_KEY`):
 
 ```bash

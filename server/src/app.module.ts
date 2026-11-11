@@ -31,6 +31,7 @@ import { LogEntry } from './logger/entities/log-entry.entity';
 import { UserSession } from './sessions/entities/user-session.entity';
 import { ChatConversation } from './chat/entities/chat-conversation.entity';
 import { ChatMessage } from './chat/entities/chat-message.entity';
+import { OdooSimRecord } from './odoo/simulated/odoo-sim-record.entity';
 import { SeedService } from './common/seed.service';
 import { SessionValidationMiddleware } from './sessions/sessions.middleware';
 
@@ -56,6 +57,7 @@ import { SessionValidationMiddleware } from './sessions/sessions.middleware';
         UserSession,
         ChatConversation,
         ChatMessage,
+        OdooSimRecord,
       ],
       migrations: [join(__dirname, 'migrations', '*.{js,ts}')],
       // Dev keeps auto-sync for convenience; production never auto-alters the
