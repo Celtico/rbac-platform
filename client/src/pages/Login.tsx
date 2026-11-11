@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { useAuth } from "../context/AuthContext.ts";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
+import { IS_DEMO } from "../config";
+import { DEMO_USERS } from "../demo/users";
 import NewDeviceWarningModal from "../components/NewDeviceWarningModal";
 import ConcurrentSessionModal from "../components/ConcurrentSessionModal";
 import {
@@ -27,8 +29,12 @@ const Login: React.FC = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    void signIn(username, password);
+  };
+
+  const signIn = async (username: string, password: string) => {
     try {
       const response = await api.post("/auth/login", { username, password });
       login(response.data.user);
@@ -168,12 +174,43 @@ const Login: React.FC = () => {
               </Text>
             </Box>
 
-            <a href="/api/auth/google" style={{ textDecoration: "none", display: "block" }}>
-              <Button variant="outline" size="lg" width="full">
-                <Box as="span" mr="2" fontSize="lg">G</Box>
-                Continua amb Google
-              </Button>
-            </a>
+            {IS_DEMO ? (
+              <VStack id="demo-login" gap="3" align="stretch">
+                {DEMO_USERS.map((u) => (
+                  <Button
+                    key={u.username}
+                    id={`demo-login-${u.username}`}
+                    variant="outline"
+                    size="lg"
+                    width="full"
+                    onClick={() => void signIn(u.username, u.password)}
+                  >
+                    Entra com a {u.username}
+                    <Text as="span" ml="2" fontSize="xs" color="fg.muted" fontWeight="normal">
+                      {u.hint}
+                    </Text>
+                  </Button>
+                ))}
+                <Text fontSize="xs" color="fg.muted" textAlign="center">
+                  Demo sense servidor: l'Odoo i el xat són simulats i les dades es desen només al teu navegador.{" "}
+                  <button
+                    type="button"
+                    id="demo-reset"
+                    style={{ textDecoration: "underline", cursor: "pointer" }}
+                    onClick={() => void import("../demo/runtime").then((m) => m.resetDemo())}
+                  >
+                    Restableix les dades
+                  </button>
+                </Text>
+              </VStack>
+            ) : (
+              <a href="/api/auth/google" style={{ textDecoration: "none", display: "block" }}>
+                <Button variant="outline" size="lg" width="full">
+                  <Box as="span" mr="2" fontSize="lg">G</Box>
+                  Continua amb Google
+                </Button>
+              </a>
+            )}
           </VStack>
         </Box>
       </Container>

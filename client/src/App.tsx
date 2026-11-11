@@ -22,6 +22,7 @@ import SystemLogs from "./pages/SystemLogs";
 import DeviceManager from "./pages/DeviceManager";
 import ServerStats from "./pages/ServerStats";
 import OdooManager from "./pages/OdooManager";
+import { BASE_PATH } from "./config";
 
 function App() {
   return (
@@ -29,7 +30,7 @@ function App() {
       <NavConfigProvider>
       <AuthProvider>
         <Toaster />
-        <BrowserRouter>
+        <BrowserRouter basename={BASE_PATH || undefined}>
           <Routes>
             <Route path="/" element={<PublicAlbums />} />
             <Route path="/login" element={<Login />} />

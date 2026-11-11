@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { IS_DEMO } from "../config";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.ts";
 import { useNavConfig } from "../context/NavConfigContext.ts";
@@ -82,6 +83,7 @@ const Dashboard: React.FC = () => {
               <GitBranch size={14} color="currentColor" />
               <Text fontSize="xs" color="fg.muted">Codi font</Text>
             </a>
+            {!IS_DEMO && (
             <a
               href="/api/docs"
               target="_blank"
@@ -93,6 +95,7 @@ const Dashboard: React.FC = () => {
               <BookOpen size={14} color="currentColor" />
               <Text fontSize="xs" color="fg.muted">API Swagger</Text>
             </a>
+            )}
           </HStack>
         </HStack>
       </Box>

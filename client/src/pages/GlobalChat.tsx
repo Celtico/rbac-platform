@@ -39,7 +39,7 @@ import {
   ChartRoot, ChartTooltip, useChart,
   BarListRoot, BarListContent, BarListBar, BarListValue, BarListLabel,
 } from "@chakra-ui/charts";
-import { io, Socket } from "socket.io-client";
+import { createChatSocket, type ChatSocket } from "../lib/chatSocket";
 import {
   getChatConversations,
   createChatConversation,
@@ -309,7 +309,7 @@ const GlobalChat: React.FC = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const socketRef = useRef<Socket | null>(null);
+  const socketRef = useRef<ChatSocket | null>(null);
   // Mirror of activeConvId so the (mount-once) socket handlers can read the
   // current conversation without being re-subscribed on every change.
   const activeConvIdRef = useRef<number | null>(null);
@@ -350,9 +350,7 @@ const GlobalChat: React.FC = () => {
 
   // Create the socket once, wire the handlers once, and disconnect on unmount.
   useEffect(() => {
-    // Auth travels via the HttpOnly cookie sent with the handshake; the gateway
-    // reads it server-side (no token in JS).
-    const socket = io("/chat", { withCredentials: true, path: "/socket.io" });
+    const socket = createChatSocket();
     socketRef.current = socket;
 
     socket.on("connect", () => setIsConnected(true));

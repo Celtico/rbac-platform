@@ -128,6 +128,20 @@ ODOO_USER=admin
 ODOO_PASSWORD=admin
 ```
 
+#### Demo sense servidor (GitHub Pages)
+
+`VITE_DEMO=1` construeix el client com una **demo que funciona tota dins del navegador**, sense backend:
+
+```bash
+cd client && VITE_DEMO=1 npm run build   # o: VITE_DEMO=1 npm run dev
+```
+
+- Tot el que el client demana a `/api` ho respon `client/src/demo/` sobre un SQLite compilat a WebAssembly (sql.js), desat a IndexedDB al navegador de cada visitant.
+- Login amb un clic com a `admin` o `user`, i rols, permisos, tenants, galeria, sessions i logs funcionals.
+- L'Odoo és simulat (la mateixa fusteria fictícia) i el **xat no fa servir cap model d'IA**: classifica la pregunta amb paraules clau i respon amb les dades simulades, incloent-hi la creació de factures amb confirmació.
+- No hi ha OpenAI, ni Google, ni desplegament: cap secret entra al build.
+- El workflow `.github/workflows/pages.yml` la publica a GitHub Pages a cada push a `main` (a Settings → Pages, la font ha de ser **GitHub Actions**).
+
 #### Odoo simulat (sense instància d'Odoo)
 
 Si no tens cap Odoo a mà, posa `simulated` com a URL i el backend fa d'Odoo ell mateix:

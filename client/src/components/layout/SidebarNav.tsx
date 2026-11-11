@@ -1,4 +1,5 @@
 import React from "react";
+import { IS_DEMO } from "../../config";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.ts";
 import { useNavConfig } from "../../context/NavConfigContext.ts";
@@ -312,12 +313,14 @@ const SidebarNav: React.FC<{ isMobile?: boolean }> = ({ isMobile = false }) => {
               Web Pública
             </Button>
           </Link>
-          <a href="/api/docs" style={{ textDecoration: "none" }}>
-            <Button variant="ghost" justifyContent="flex-start" width="full" size="sm">
-              <Braces size={16} style={{ marginRight: "8px" }} />
-              Swagger API
-            </Button>
-          </a>
+          {!IS_DEMO && (
+            <a href="/api/docs" style={{ textDecoration: "none" }}>
+              <Button variant="ghost" justifyContent="flex-start" width="full" size="sm">
+                <Braces size={16} style={{ marginRight: "8px" }} />
+                Swagger API
+              </Button>
+            </a>
+          )}
         </CollapsibleSection>
       </>
     </VStack>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { IS_DEMO } from "../config";
 import {
   Box,
   Button,
@@ -69,7 +70,8 @@ const SystemLogs: React.FC = () => {
     let retry: ReturnType<typeof setTimeout> | null = null;
 
     const connect = async () => {
-      if (closed) return;
+      // La demo sense servidor no té flux en directe: només l'historial.
+      if (closed || IS_DEMO) return;
       try {
         const { data } = await getLogStreamTicket();
         if (closed) return;

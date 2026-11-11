@@ -69,6 +69,8 @@ Each user may have an assigned `Tenant` (Odoo connection config); `TenantGuard` 
 
 `server/.env.local` (gitignored) holds `OPENAI_API_KEY`, optional `OPENAI_MODEL` (default `gpt-4o-mini`), Google OAuth (`GOOGLE_CLIENT_ID/SECRET`, `CLIENT_URL`), and Odoo (`ODOO_URL/DB/USER/PASSWORD`) for the Default tenant.
 
+The client also builds as a **serverless demo** (`VITE_DEMO=1`, published to GitHub Pages by `.github/workflows/pages.yml`): an axios adapter and a fake chat socket route everything to `client/src/demo/` (sql.js SQLite persisted in IndexedDB, rule-based chat, no OpenAI/Google). `client/src/demo/server.ts` mirrors the NestJS routes — add new endpoints there too or they 404 in the demo.
+
 A tenant whose Odoo URL is `simulated` (e.g. `ODOO_URL=simulated`) never leaves the process: `OdooClientService.rpc()` hands the JSON-RPC payload to `SimulatedOdooService` (`server/src/odoo/simulated/`), which answers `search_read`/`search_count`/`read_group`/`create`/`write`/`action_post` from the `odoo_sim_records` table (seeded with demo data when empty). New Odoo calls must be supported there too, or they fail with a 503 in simulated mode.
 
 Tenant Odoo passwords are encrypted at rest (AES-256-GCM); the key is `TENANT_ENCRYPTION_KEY` (falls back to a `JWT_SECRET`-derived key if unset — set a dedicated one and don't change it once tenants exist). Legacy plaintext rows are auto-encrypted on boot.

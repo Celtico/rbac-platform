@@ -5,6 +5,8 @@ const { version } = JSON.parse(readFileSync("../server/package.json", "utf-8")) 
 
 // https://vite.dev/config/
 export default defineConfig({
+  // A GitHub Pages l'app pot viure sota /<repositori>/; el workflow ho passa a BASE_PATH.
+  base: process.env.BASE_PATH ? `${process.env.BASE_PATH.replace(/\/+$/, "")}/` : "/",
   define: {
     __APP_VERSION__: JSON.stringify(version),
   },

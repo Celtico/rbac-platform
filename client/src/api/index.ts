@@ -1,4 +1,5 @@
 import axios from "axios";
+import { IS_DEMO, appPath } from "../config";
 
 const api = axios.create({
   baseURL: "/api",
@@ -6,6 +7,12 @@ const api = axios.create({
   // Authorization header).
   withCredentials: true,
 });
+
+// Demo sense servidor: les peticions les respon el backend del navegador
+// (`src/demo/`), que es carrega a part per no entrar al bundle de l'app real.
+if (IS_DEMO) {
+  api.defaults.adapter = async (config) => (await import("../demo/adapter")).demoAdapter(config);
+}
 
 // Afegeix el proxy per a /api si es vol utilitzar en lloc de baseURL hardcoded
 // Per ara ho deixem així ja que el backend corre al 3000 i el frontend al 5173
@@ -26,8 +33,8 @@ api.interceptors.response.use(
       // Emitir un evento para que AuthContext se entere
       window.dispatchEvent(new Event("auth-error"));
 
-      if (window.location.pathname !== "/login") {
-        window.location.href = "/login";
+      if (window.location.pathname !== appPath("/login")) {
+        window.location.href = appPath("/login");
       }
     }
     return Promise.reject(error);
