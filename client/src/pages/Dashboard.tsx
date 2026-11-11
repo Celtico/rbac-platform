@@ -72,7 +72,7 @@ const Dashboard: React.FC = () => {
           </Text>
           <HStack gap="4">
             <a
-              href="https://gitwins.serverscel.com/cel/album-manager"
+              href="https://github.com/Celtico/rbac-platform"
               target="_blank"
               rel="noopener noreferrer"
               style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "6px", opacity: 0.5 }}

@@ -13,7 +13,8 @@
 
 set -u
 
-REPO="${ALBUM_REPO:-/home/cel/album-manager}"
+# Defaults to the folder this script lives in; override with ALBUM_REPO.
+REPO="${ALBUM_REPO:-$(cd "$(dirname "$0")" && pwd)}"
 REQ="$REPO/data/deploy-request.json"
 LOG="$REPO/data/deploy.log"
 

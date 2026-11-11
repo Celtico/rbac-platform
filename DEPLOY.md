@@ -27,8 +27,9 @@ pot influir en el que realment es desplega.
 El watcher s'ha d'executar al host amb un usuari del grup `docker`. Tria **o bé**
 un timer de systemd **o bé** cron.
 
-`ALBUM_REPO` per defecte és `/home/cel/album-manager`; sobreescriu-ho amb una
-variable d'entorn si cal.
+`ALBUM_REPO` per defecte és la carpeta on hi ha `deploy-watcher.sh` (on has
+clonat el repo); sobreescriu-ho amb una variable d'entorn si cal. Als exemples,
+`/ruta/al/rbac-platform` és aquesta carpeta.
 
 ### Opció A — timer de systemd (recomanat)
 
@@ -41,8 +42,8 @@ Description=Album Manager deploy watcher
 [Service]
 Type=oneshot
 User=cel
-Environment=ALBUM_REPO=/home/cel/album-manager
-ExecStart=/home/cel/album-manager/deploy-watcher.sh
+Environment=ALBUM_REPO=/ruta/al/rbac-platform
+ExecStart=/ruta/al/rbac-platform/deploy-watcher.sh
 ```
 
 `/etc/systemd/system/album-deploy.timer`:
@@ -68,8 +69,8 @@ sudo systemctl enable --now album-deploy.timer
 ### Opció B — cron
 
 ```cron
-* * * * * /home/cel/album-manager/deploy-watcher.sh
-* * * * * sleep 30; /home/cel/album-manager/deploy-watcher.sh
+* * * * * /ruta/al/rbac-platform/deploy-watcher.sh
+* * * * * sleep 30; /ruta/al/rbac-platform/deploy-watcher.sh
 ```
 
 ## Desplegament manual
@@ -112,4 +113,4 @@ l'esquema creat per `synchronize`.
 - No tornis a afegir mai `- /var/run/docker.sock:/var/run/docker.sock` al
   `docker-compose.yaml`. Aquesta única línia reintrodueix l'RCE al host.
 - El repositori es munta en només lectura dins el contenidor
-  (`/home/cel/album-manager:/app/album-manager:ro`).
+  (`.:/app/album-manager:ro`).
