@@ -2,6 +2,8 @@
 
 ![RBAC Platform: rols, permisos i un ERP simulat, dins del navegador](client/public/cover.png)
 
+![RBAC Platform: gestió d'empresa amb rols i un xat que factura](docs/cover-xat.png)
+
 Aplicació web full-stack de gestió empresarial amb control d'accés per rols (RBAC), chat intel·ligent amb IA, integració ERP Odoo, seguretat de sessions i monitorització en temps real.
 
 **Stack:** NestJS · React 19 · TypeScript · SQLite (TypeORM) · LangChain/OpenAI · Socket.io · Chakra UI · Vite
